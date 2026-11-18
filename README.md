@@ -12,4 +12,4 @@ The whole game is one HTML page (three.js for the world view). It runs as a clau
 
 ## Versions
 
-Each playable version is tagged (`v2`, `v3`, ...), so any earlier version can be checked out and rebuilt.
+`main` always holds the newest version. Each playable version is also saved as its own branch (`v2`, `v3`, ...), so any earlier version can be opened on GitHub, checked out and rebuilt, or restored. To play an older version, open `dist/index.html` from that branch.
