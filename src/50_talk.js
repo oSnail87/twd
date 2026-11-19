@@ -34,7 +34,7 @@ const INTENTS=[
   ["family",/\b(family|kids|children|wife|husband|mom|dad|mother|father|brother|sister|son|daughter|parents|grandkid|grandson)\b/],
   ["how",/\b(how are you|how'?re you|you ok|you okay|are you alright|holding up|how do you feel|how'?s it going|doing ok|you good)\b/],
   ["where",/\b(where('?s| is| are| did)|have you seen|seen \w+|know where)\b/],
-  ["outbreak",/\b(flu|virus|outbreak|the radio|on the radio|what'?s going on|what'?s happening|what is happening|what happened|sick people|epidemic|plague|disease|infection|the clinic)\b/],
+  ["outbreak",/\b(flu|virus|outbreak|the radio|on the radio|what'?s going on|what'?s happening|what is happening|what happened|sick people|epidemic|plague|disease|infection|the clinic|the hospital)\b/],
   ["favorite",/\b(favou?rite|what do you (like|love|enjoy)|for fun|hobbies|hobby)\b/],
   ["sleep_q",/\b(sleep (ok|okay|well|alright|at all)|get (any )?sleep|sleep last night|slept|tired)\b/],
   ["kidding",/\b(just kidding|jk|i'?m joking|only joking|kidding)\b/],
@@ -98,8 +98,10 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   const q=p.cv?.q;if(q&&(has("yes")||has("no"))&&intents.length<=2){p.cv.q=null;const y=has("yes");
     const A={bit:y?["What?! Get away from me!",-20,-10]:["Good. Keep it that way.",3,0],okay:y?["Good. Stay that way.",2,1]:["Yeah. Me neither. We'll get through it.",2,4],town:y?["Find anything worth the risk?",1,0]:["Smart. It's a graveyard in there.",1,0],
       eat:y?["Good. Don't skip meals, it makes you stupid.",1,1]:["Here. *pushes something into your hands* Don't argue.",3,5],group:y?["Then you should talk to "+(g?(g.leader==="you"?"yourself, apparently":fullName(P(g.leader)||p)):"someone who's in charge")+".",1,0]:["Lone wolf, huh. Doesn't last long out here.",0,0],
-      help:y?["Thank you. Really.",4,4]:["Right. Of course. Forget I asked.",-3,-3]}[q]||["Okay.",0,0];
-    say(A[0]);R.dt+=A[1];R.da+=A[2];if(q==="eat"&&!y&&p.pack){const f=Object.keys(p.pack).find(k=>ITEMS[k].eat);if(f&&feel(p)>10){p.pack[f]--;if(!p.pack[f])delete p.pack[f];invAdd(f);R.action="note:"+`${p.name} gives you ${ITEMS[f].n.toLowerCase()}.`}}
+      help:y?["Thank you. Really.",4,4]:["Right. Of course. Forget I asked.",-3,-3],
+      come:y?[pick(["Thank you. I'll stay close, I promise.","Okay. Okay. I'm right behind you.","*lets out a breath* Thank you."]),5,4]:[pick(["...Right. Okay.","Then go. Before they hear us.","*nods, not looking at you*"]),-3,-4],
+      hang:y?[pick(["Good. Sit.","*shifts over to make room*"]),2,3]:[pick(["Some other time, then.","Yeah. Okay."]),-1,-2]}[q]||["Okay.",0,0];
+    say(A[0]);R.dt+=A[1];R.da+=A[2];if(q==="come"&&y){R.action="follow";R.memory=`${pn} let me come with them.`;R.mv=5}if(q==="hang"&&y)R.action="bond:hang";if(q==="eat"&&!y&&p.pack){const f=Object.keys(p.pack).find(k=>ITEMS[k].eat);if(f&&feel(p)>10){p.pack[f]--;if(!p.pack[f])delete p.pack[f];invAdd(f);R.action="note:"+`${p.name} gives you ${ITEMS[f].n.toLowerCase()}.`}}
     return finish(p,R,out)}
   // the player confesses a bite
   if(has("bitten")){R.memory=`${pn} told me they were bitten.`;R.mv=-2;
@@ -162,9 +164,7 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     if(p.follow){say(pick(["I'm right here.","Where else would I be?","Right behind you."]));return finish(p,R,out)}
     if(isLeader&&!sameGroup){say(pick([`I've got people counting on me. I'm not leaving them to follow you around.`,`I lead ${g.name}. If anyone's following anyone, it's you following us.`]));R.ask="group";return finish(p,R,out)}
     if(isLeader&&sameGroup&&feel(p)<60){say(pick(["I've got a camp to run. Take someone else.","Can't. People need me here."]));return finish(p,R,out)}
-    if(!S.flags.alarm&&!p.fam.you&&!sameGroup){say(pick(["Come with you where? It's a Tuesday.","I've got things to do today. Maybe later."]));return finish(p,R,out)}
-    if(feel(p)>=10||p.fam.you||(!g&&feel(p)>=-5&&p.tr.social+p.tr.kind>1.1)||(!g&&p.hunger<35)){say(pick(["Lead the way.","Alright. Right behind you.","Sure. Let's go.",!g&&S.flags.alarm?"Better than sitting here waiting for them. Let's go.":"Okay."]));R.action="follow";R.memory=`Went along with ${pn}.`;R.mv=1}
-    else say(pick(["I don't know you well enough to follow you anywhere.","I'm staying put.","Maybe. Ask me again when I know you better."]));
+    const cw=comeWith(p,low,g,sameGroup);say(cw.line);if(cw.ok){R.action="follow";R.dt+=2;R.memory=`Went along with ${pn}.`;R.mv=2}
     return finish(p,R,out)}
   if(has("join_me")||has("follow_me")){
     if(sameGroup||(!g&&myG&&!myG.home&&p.group===myG?.id)){ // invite to follow
@@ -173,7 +173,7 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     if(isLeader){say(pick([`I've got people counting on me. I'm not leaving them to follow you around.`,`Cute. I lead ${g.name}. If anyone's joining anyone, it's you joining us.`]));R.ask="group";return finish(p,R,out)}
     const loyalty=g?(()=>{const L=P(g.leader);return 20+(L?relGet(p,L)/2:0)+members(g.id).filter(q=>relGet(p,q)>40).length*6+(g.stock.food>groupSize(g.id)*2?10:-10)})():0;
     const famIn=myG?members(myG.id).filter(q=>p.fam[q.id]).length:0;
-    const score=feel(p)+(p.fam.you?60:0)+famIn*30+(g?-loyalty:20)+(myG?.home?10:0)+(1-p.tr.ambit)*10+pl.sk.speak*3+(p.hunger<40?8:0)+(S.flags.alarm?0:-30);
+    const score=feel(p)+(p.fam.you?60:0)+famIn*30+(g?-loyalty:20)+(myG?.home?10:0)+(1-p.tr.ambit)*10+pl.sk.speak*3+(p.hunger<40?8:0)+(S.flags.alarm?0:-30)+Math.max(0,pull(p,low)-20)*.6;
     if(score>25){R.action="join_mine";say(pick([`...Yeah. Okay. I'm with you.`,`Better than being alone out here. I'm in.`,`You've been straight with me. I'll come.`,`If you've got a plan, I'll follow it.`]));R.dt+=6;R.memory=`Chose to go with ${pn}.`;R.mv=6}
     else if(!S.flags.alarm)say("Come with you where? It's a Tuesday.");
     else say(pick([`I don't know you well enough to bet my life on you.`,`I've got my people. ${g?`${g.name} is where I belong.`:"I'm staying put."}`,`Maybe. Ask me again when I know you better.`]));return finish(p,R,out)}
@@ -191,7 +191,7 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(has("romance")){if(p.partner==="you")say(pick(["I know. Me too.","*smiles* You already have me."]));
     else if(p.aff>=55&&p.age>=18&&pl.age>=18&&!p.partner&&!pl.partner&&attraction(p,{id:"you"})>.2){R.action="romance_yes";R.da+=6;say(pick(["*quiet for a moment* I was hoping you'd say something. Yes.","I didn't think anyone would want anything good out here. ...Yeah. Me too.","*kisses you* Does that answer it?"]));R.memory=`${pn} and I are together now.`;R.mv=10}
     else{say(p.partner?`I'm with ${P(p.partner)?.name||"someone"}. You know that.`:pl.partner?"Aren't you with someone?":p.aff>=30?"I... like you. I do. I just need more time.":"I don't think of you that way. Sorry.");R.da+=p.aff>=30?1:-2}return finish(p,R,out)}
-  if(has("flirt")){if(p.aff>=25&&attraction(p,{id:"you"})>.3&&p.age>=18){R.da+=4;say(pick(["*laughs* Stop it.","You're not so bad yourself.","*blushes* At the end of the world? Really?"]))}else{R.da-=1;say(pick(["...Thanks? I guess.","Weird time for that.","Okay."]))}return finish(p,R,out)}
+  if(has("flirt")){if(p.aff>=25&&attraction(p,{id:"you"})>.3&&p.age>=18&&pl.age>=18&&!p.fam.you){p.rom=clamp((p.rom||0)+3,0,100);R.da+=4;say(pick(["*laughs* Stop it.","You're not so bad yourself.","*blushes* At the end of the world? Really?"]))}else{R.da-=1;say(pick(["...Thanks? I guess.","Weird time for that.","Okay."]))}return finish(p,R,out)}
   // requests and items
   if(has("deliver")||has("help")&&p.want){const w=p.want;
     if(w&&w.type==="fetch"&&invHas(w.item,w.qty)){invTake(w.item,w.qty);p.pack[w.item]=(p.pack[w.item]||0)+w.qty;R.dt+=w.reward.trust;R.da+=w.reward.aff;p.want=null;say(pick(["You actually did it. Thank you. I mean it.","*stares at it* I didn't think you'd come back. Thank you.","I owe you one. A real one."]));R.memory=`${pn} brought me ${ITEMS[w.item].n.toLowerCase()} when I needed it.`;R.mv=8;
@@ -247,7 +247,7 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     say(topic==="food"?`${cap(v)}. ${pick(["What I wouldn't give for some right now.","God, I miss it.","Don't make me think about it."])}`:topic==="thing"?`${cap(p.facts.likes)}. Used to be, anyway.`:`${cap(v)}.`);R.da+=2;return finish(p,R,out)}
   if(has("outbreak")){const F=S.flags;const d=dayOf(S.t);
     say(!F.clinic?(p.tr.curious>.55?pick(["The flu thing? My cousin in the city says the hospitals are turning people away. That's not nothing.","Radio keeps saying 'unusual flu'. Unusual how? Nobody says."]):pick(["It's a flu. They'll have a shot for it by Christmas.","Every year it's something. We're fine out here."]))
-      :!F.alarm?pick(["Did you hear about the clinic? Somebody said a patient bit a nurse. Bit her.","There were sirens at the clinic this morning. Nobody's saying why.","Something happened at the clinic. People are saying things I don't want to repeat."])
+      :!F.alarm?pick(["Did you hear about the hospital? Somebody said a patient bit a nurse. Bit her.","There were sirens at the hospital this morning. Nobody's saying why.","Something happened at the hospital. People are saying things I don't want to repeat."])
       :d<=2?(p.tr.brave>.6?pick(["Stay indoors, they said. Like a door's going to stop that.","It's not a flu. I saw a man get up after he was dead. I watched it."]):pick(["I keep thinking I'll wake up.","They said stay inside. So I'm staying inside."]))
       :pick(["It's not a flu. Whatever it is, it's everywhere. Nobody's coming.","Radio's been static for days. I think we're it, out here.","I stopped asking what it is. Doesn't matter. It's here."]));R.da+=1;return finish(p,R,out)}
   if(has("sleep_q")&&!has("how")){say(p.mood<35?pick(["Not really. Every noise is one of them.","I don't sleep. I lie there and listen."]):!S.flags.alarm?pick(["Fine. Why, do I look tired?","Like a rock. You?"]):pick(["A few hours. Better than nothing.","On and off. You?","Like the dead. ...Bad choice of words."]));R.da+=1;return finish(p,R,out)}
@@ -279,7 +279,8 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
   p.trust=clamp(p.trust+r.dt*(1+pl.sk.speak*.03),-100,100);p.aff=clamp(p.aff+r.da,-100,100);if(r.memory)mem(p,r.memory,r.mv||0);skillUp("speak",.02);
   const note=x=>p.chat.push({w:"sys",x});const a=r.action||"";
   if(a.startsWith("note:"))note(a.slice(5));
-  if(a==="follow"){p.follow=true;note(`${p.name} is following you.`)}
+  if(a==="follow"){p.follow=true;p.plan=null;if(p.cv)p.cv.q=null;note(`${p.name} is following you.`);bringAlong(p,note)}
+  if(a.startsWith("bond:"))setTimeout(()=>{if(UI.talkTo===p.id)doBond(p,a.slice(5))},40);
   if(a==="stay"){p.follow=false;note(`${p.name} stops following you.`)}
   if(a==="trade")setTimeout(()=>openTrade(p.id),30);
   if(a==="attack"){const me=pl.sk.fight*8+(weapon()?ITEMS[weapon().id].dmg*3:0)+rnd(0,50),them=p.sk.fight*10+rnd(0,50);if(me>=them){p.health-=rnd(8,20);note(`${p.name} swings at you. You put them on the ground.`)}else{pl.hp-=rnd(6,16);note(`${p.name} swings at you and lands it.`)}for(const q of living())if(dist(q.x,q.z,pl.x,pl.z)<10&&q!==p)q.trust-=2}

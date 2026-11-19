@@ -27,7 +27,7 @@ const PLACES={
   church:{n:"St. Brigid's Church",r:[[-30,58,10,94]],site:{c:[-10,82],gw:10,gh:4},d:"A stone church and parish hall south of the river, with a walled cemetery. Pastor Grace keeps the doors open to anyone."},
   quarry:{n:"Redstone Quarry",r:[[60,-96,122,-58]],site:{c:[86,-72],gw:10,gh:6},d:"A gravel pit carved into red rock, with one road in. Hard to reach, harder to attack."},
   school:{n:"Limon High",r:[[58,6,90,36]],site:{c:[74,28],gw:8,gh:3},d:"The high school: chain-link fence, a gym full of cots, a cafeteria that ran out of food fast."},
-  town:{n:"Limon",r:[[0,-46,92,38]],d:"A town of two thousand people out where the plains meet the hills. Main Street, Birch Street, Elm Street. Shops, houses, a clinic. Everything you need, and everyone who didn't make it."},
+  town:{n:"Limon",r:[[0,-46,92,38]],d:"A town of two thousand people out where the plains meet the hills. Main Street, Birch Street, Elm Street. Shops, houses, a small hospital. Everything you need, and everyone who didn't make it."},
   road:{n:"Highway 9",r:[[23,-100,33,100]],d:"Two lanes of cracked asphalt running north and south. Abandoned cars with doors hanging open."},
   river:{n:"Cedar River",r:[[-130,42,130,52]],d:"Wide, slow, brown water. The highway bridge is the only dry crossing; there's a shallow ford to the west."},
   hills:{n:"Shale Hills",r:[[-130,52,-35,100],[10,52,130,100]],d:"Rocky slopes and scrub. Good stone, few people, long views."},
@@ -48,7 +48,7 @@ function onFord(x,z){return x>=-62&&x<=-52&&inRiver(x,z)}
 const BUILDINGS=[];
 (function(){
   const add=(id,n,type,x,z,w,d,face,extra={})=>BUILDINGS.push({id,n,type,x,z,w,d,face,...extra});
-  add("clinic",`${TOWN} Clinic`,"clinic",17,-13.5,10,9,"+z");
+  add("clinic",`${TOWN} Hospital`,"clinic",17,-13.5,10,9,"+z");
   add("pharmacy","Rx Pharmacy","pharmacy",39.5,-13,9,8,"+z");
   add("hardware","Ellis Hardware","hardware",51,-13.5,11,9,"+z");
   add("grocery","Food Mart","grocery",65,-14,14,10,"+z");
@@ -115,6 +115,7 @@ const ITEMS={
   lighter:{n:"Lighter",sn:"Lighter",w:.05,v:8,sz:[1,1],ic:"lighter",cat:"tool"},
   flashlight:{n:"Flashlight",sn:"Light",w:.3,v:10,sz:[2,1],ic:"flashlight",cat:"tool",d:"Lights the way at night. The dead see it too."},
   cigarettes:{n:"Pack of cigarettes",sn:"Smokes",w:.05,v:9,mood:6,sz:[1,1],st:2,ic:"cigs",cat:"misc"},
+  cards:{n:"Deck of cards",sn:"Cards",w:.1,v:3,sz:[1,1],ic:"cards",cat:"misc",d:"Soft at the corners from years of use. Good for getting through a long night with someone."},
   photo:{n:"Family photo",sn:"Photo",w:0,v:0,sz:[1,1],ic:"photo",cat:"misc",d:"Everyone in it is smiling."},
   radio:{n:"Hand-crank radio",sn:"Radio",w:.6,v:18,sz:[2,2],ic:"radio",cat:"tool"},
   book_firstaid:{n:"First aid manual",sn:"1st Aid",w:.4,v:12,read:"medic",sz:[2,2],ic:"book",cat:"misc",col:"#a83a32"},
@@ -132,11 +133,13 @@ const ITEMS={
   hatchet:{n:"Makeshift hatchet",sn:"Hatchet",w:1.2,v:7,slot:"weapon",side:true,dmg:6,dur:35,tool:"axe",fix:{rope:1},sz:[3,1],ic:"hatchet",cat:"weapon"},
   machete:{n:"Machete",sn:"Machete",w:1,v:16,slot:"weapon",side:true,dmg:8,dur:100,tool:"knife",fix:{duct_tape:1},sz:[4,1],ic:"machete",cat:"weapon"},
   hammer:{n:"Claw hammer",sn:"Hammer",w:.8,v:8,slot:"weapon",side:true,dmg:4,dur:120,tool:"hammer",fix:{duct_tape:1},sz:[2,1],ic:"hammer",cat:"weapon"},
+  iv_pole:{n:"IV stand",sn:"IV",w:2.2,v:1,slot:"weapon",dmg:3,dur:30,reach:2.2,sz:[5,1],ic:"ivpole",cat:"weapon",d:"Wheels, a hook and a long steel pole. Clumsy, but it keeps them at arm's length."},
   pipe:{n:"Lead pipe",sn:"Pipe",w:1.6,v:5,slot:"weapon",dmg:5,dur:150,fix:{duct_tape:1},sz:[4,1],ic:"pipe",cat:"weapon"},
   spear:{n:"Kitchen-knife spear",sn:"Spear",w:1.2,v:8,slot:"weapon",dmg:6,dur:30,reach:2.4,fix:{duct_tape:1},sz:[5,1],ic:"spear",cat:"weapon"},
   club:{n:"Wooden club",sn:"Club",w:1,v:2,slot:"weapon",dmg:3,dur:25,fix:{wood:1},sz:[3,1],ic:"club",cat:"weapon"},
   pistol:{n:"Service pistol",sn:"Pistol",w:1,v:40,slot:"weapon",side:true,dmg:20,dur:300,gun:true,fix:{scrap:1},sz:[2,1],ic:"pistol",cat:"weapon",d:"Loud. Every shot rings the dinner bell for a block."},
   // clothes
+  gown:{n:"Hospital gown",sn:"Gown",w:.2,v:0,slot:"body",warm:0,dur:40,fix:{cloth:1},sz:[2,2],ic:"shirt",cat:"cloth",col:"#9ab8c8",d:"Thin cotton that ties at the back. It was all you had on when you woke up."},
   tshirt:{n:"T-shirt",sn:"Tee",w:.2,v:1,slot:"body",warm:1,dur:80,fix:{cloth:1},sz:[2,2],ic:"shirt",cat:"cloth",col:"#b8b4a8"},
   hoodie:{n:"Hoodie",sn:"Hoodie",w:.6,v:4,slot:"body",warm:3,dur:100,fix:{cloth:1},sz:[2,2],ic:"hoodie",cat:"cloth",col:"#6a6e74",grid:[2,1]},
   flannel:{n:"Flannel shirt",sn:"Flannel",w:.4,v:3,slot:"body",warm:2,dur:100,fix:{cloth:1},sz:[2,2],ic:"shirt",cat:"cloth",col:"#8a3a32",grid:[1,1]},
@@ -152,6 +155,7 @@ const ITEMS={
   helmet:{n:"Motorcycle helmet",sn:"Helmet",w:1.2,v:14,slot:"head",warm:1,armor:3,dur:200,fix:{duct_tape:1},sz:[2,2],ic:"helmet",cat:"cloth",col:"#2a2a2e"},
   gloves:{n:"Work gloves",sn:"Gloves",w:.2,v:4,slot:"hands",warm:1,armor:1,dur:100,fix:{cloth:1},sz:[1,1],ic:"gloves",cat:"cloth",col:"#a8844a"},
   // bags and rigs
+  belongings:{n:"Patient belongings bag",sn:"Bag",w:.1,v:1,slot:"back",dur:40,fix:{cloth:1},sz:[2,2],ic:"pbag",cat:"bag",col:"#e4e4dc",grid:[3,3],d:"A white plastic bag with a drawstring. Someone wrote your name on it in marker."},
   backpack:{n:"School backpack",sn:"Pack",w:.6,v:10,slot:"back",dur:200,fix:{cloth:1},sz:[3,3],ic:"backpack",cat:"bag",col:"#3a5a8a",grid:[4,4]},
   hiking_pack:{n:"Hiking pack",sn:"Hiker",w:1.2,v:22,slot:"back",dur:300,fix:{cloth:1},sz:[4,4],ic:"backpack",cat:"bag",col:"#5a6a3a",grid:[5,6]},
   duffel:{n:"Duffel bag",sn:"Duffel",w:1,v:16,slot:"back",dur:200,fix:{cloth:1},sz:[4,3],ic:"duffel",cat:"bag",col:"#2a2a2a",grid:[6,4]},
@@ -209,14 +213,14 @@ const CONT={
 };
 const BOOKS=["book_firstaid","book_wild","book_build","book_mech"];
 const LOOT={
-  nightstand:[["flashlight",.15],["painkillers",.15],["lighter",.1],["cigarettes",.12],["photo",.12],["whiskey",.04],["pistol",.02],["ammo",.05,2,6],["bandage",.08]],
+  nightstand:[["cards",.08],["flashlight",.15],["painkillers",.15],["lighter",.1],["cigarettes",.12],["photo",.12],["whiskey",.04],["pistol",.02],["ammo",.05,2,6],["bandage",.08]],
   dresser:[["tshirt",.35],["hoodie",.2],["flannel",.2],["jeans",.2],["work_pants",.06],["beanie",.15],["gloves",.12],["cloth",.35,1,3],["photo",.05]],
   closet:[["winter_coat",.15],["hoodie",.15],["leather_jacket",.05],["sneakers",.2],["boots",.1],["backpack",.14],["duffel",.05],["bat",.07],["golf_club",.06],["flashlight",.08]],
   bookshelf:[["book_firstaid",.07],["book_wild",.07],["book_build",.06],["book_mech",.05],["photo",.1],["radio",.03]],
   cupboard:[["canned_food",.5,1,2],["canned_fruit",.25],["cereal",.3],["snacks",.3],["kitchen_knife",.25],["empty_bottle",.2],["lighter",.12],["duct_tape",.08],["cloth",.1]],
   fridge:[["water_bottle",.45,1,2],["canned_fruit",.15],["snacks",.1],["whiskey",.05],["raw_meat",.15]],
   medicine:[["bandage",.4,1,2],["painkillers",.35],["antibiotics",.05],["cloth",.15]],
-  desk:[["duct_tape",.12],["flashlight",.08],["snacks",.12],["lighter",.08],["radio",.03],["book_firstaid",.02],["book_mech",.02]],
+  desk:[["cards",.08],["duct_tape",.12],["flashlight",.08],["snacks",.12],["lighter",.08],["radio",.03],["book_firstaid",.02],["book_mech",.02]],
   workbench:[["hammer",.25],["nails",.35,1,2],["duct_tape",.25],["scrap",.3,1,2],["rope",.15],["crowbar",.08],["gloves",.12],["flashlight",.1],["tool_belt",.06],["axe",.04]],
   toolshelf:[["nails",.3],["duct_tape",.25],["rope",.2],["scrap",.3],["wood",.2,1,2],["hammer",.1],["hatchet",.03],["work_pants",.05],["gloves",.1],["fishing_vest",.03]],
   sh_grocery:[["canned_food",.7,1,3],["canned_fruit",.5,1,2],["snacks",.6,1,2],["cereal",.45],["water_bottle",.55,1,3],["jerky",.2]],
@@ -229,7 +233,7 @@ const LOOT={
   medcab:[["bandage",.6,1,3],["painkillers",.45],["antibiotics",.2],["cloth",.3]],
   dinercounter:[["snacks",.3],["kitchen_knife",.3],["lighter",.25],["cigarettes",.15],["water_bottle",.2]],
   dinerkitchen:[["canned_food",.55,1,3],["kitchen_knife",.4],["water_bottle",.3],["cereal",.2],["raw_meat",.1],["lighter",.2],["empty_bottle",.2]],
-  barshelf:[["whiskey",.65,1,2],["cigarettes",.4],["snacks",.3],["lighter",.3]],
+  barshelf:[["cards",.3],["whiskey",.65,1,2],["cigarettes",.4],["snacks",.3],["lighter",.3]],
   copdesk:[["ammo",.2,2,8],["flashlight",.25],["bandage",.15],["snacks",.15],["duct_tape",.1]],
   locker:[["flashlight",.3],["boots",.15],["gloves",.15],["helmet",.08],["snacks",.2],["bandage",.15],["hoodie",.12],["ammo",.1,2,6]],
   armory:[["pistol",.5],["ammo",.75,6,14],["riot_vest",.3],["helmet",.3],["flashlight",.3]],
@@ -251,7 +255,7 @@ const SUR=["Abara","Bellweather","Castell","Dunmore","Eskew","Faraday","Greaves"
 const HOMETOWN=[`right here in ${TOWN}`,"Cedar Fork","Ashby","Dunmore Falls","the city","Brookside","Pell's Crossing","a trailer park outside Ashby","up north","down south"];
 const FEARS=["the dark","getting bitten and not knowing it","being alone","fire","crowds","forgetting my kids' faces","losing my mind out here","that we'll turn on each other before the dead get us","dying somewhere nobody finds me","the sound they make"];
 const HOPES=["a working radio","finding my sister","a hot shower","a real orchard one day","the army coming back","a cure","my kid growing up safe","a quiet place by the water","seeing my mom again","a winter where nobody dies"];
-const SECRETS=["I left someone behind to save myself","I've been hoarding painkillers","I was on parole when it started","I don't believe we'll last the winter","I've killed a living person since this started","I still talk to my dead wife at night","I can't swim","I used to drink. Bad. I'm scared I'll start again","I stole from the clinic before it all went down","I'm not who I said I was"];
+const SECRETS=["I left someone behind to save myself","I've been hoarding painkillers","I was on parole when it started","I don't believe we'll last the winter","I've killed a living person since this started","I still talk to my dead wife at night","I can't swim","I used to drink. Bad. I'm scared I'll start again","I stole from the hospital before it all went down","I'm not who I said I was"];
 const LIKES=["black coffee","old country songs","card games","fishing","drawing","fixing engines","reading anything I can find","bad jokes","the stars out here","baseball"];
 const STYLES={plain:"plain-spoken",crude:"crude and swears",formal:"formal and careful",nervous:"nervous, trails off",warm:"warm, calls people hon",dry:"dry and short",preachy:"quotes scripture and sayings",joker:"jokes to cope"};
 // how each speaking style should sound, for the conversation writer
@@ -291,13 +295,14 @@ const ROLES={
 const IPH={water_bottle:["a bottle of water","bottles of water"],canned_food:["a can of beans","cans of beans"],canned_fruit:["a can of peaches","cans of peaches"],duct_tape:["a roll of duct tape","rolls of duct tape"],cigarettes:["a pack of cigarettes","packs of cigarettes"],bat:["a baseball bat","baseball bats"],antibiotics:["some antibiotics","courses of antibiotics"],ammo:["some pistol rounds","pistol rounds"],snacks:["some chips and candy","bags of chips"],berries:["some berries","handfuls of berries"],herbs:["some yarrow and plantain","bunches of herbs"],nails:["a box of nails","boxes of nails"],cloth:["some cloth","pieces of cloth"],wood:["some wood","pieces of wood"],stone:["a stone","stones"],scrap:["some scrap metal","pieces of scrap"],painkillers:["some painkillers","bottles of painkillers"]};
 function itemPhrase(k,n=1){const o=IPH[k];const nm=(ITEMS[k]?.n||k).toLowerCase();const NUM=["","one","two","three","four","five","six"];
   if(n>1)return `${NUM[n]||n} ${o?o[1]:/s$/.test(nm)?nm:nm+"s"}`;return o?o[0]:(/^[aeiou]/.test(nm)?"an ":"a ")+nm}
-const SAYBIO={walt:"This land's been in my family four generations. I've worked it forty years.",grace:"I've been the pastor at St. Brigid's for eleven years. A church should be a lifeboat. That's what I believe.",ray:"I'm the only deputy this town has left. The sheriff drove to the city and never came back.",cole:"I ran the crew up at the quarry. Half this town owes me money.",nadia:"I'm the town doctor. I treated the first patient at the clinic. I saw what it does."};
+const SAYBIO={marisol:"I'm a nurse. I was on nights at the hospital, until there wasn't a hospital anymore.",walt:"This land's been in my family four generations. I've worked it forty years.",grace:"I've been the pastor at St. Brigid's for eleven years. A church should be a lifeboat. That's what I believe.",ray:"I'm the only deputy this town has left. The sheriff drove to the city and never came back.",cole:"I ran the crew up at the quarry. Half this town owes me money.",nadia:"I'm the town doctor. I treated the first patient at the hospital. I saw what it does."};
 // hand-written people at the heart of the story
 const SEEDP={
   walt:{quirk:"uses farming and weather sayings, and calls younger people 'kid'",values:"family, the land, doing things right",flaw:"stubborn; would rather die on the farm than leave it",hook:"His son Danny lives in the city and hasn't answered the phone since last night.",secret:"He keeps one shotgun shell in his shirt pocket, for himself, if it comes to that."},
   june:{quirk:"calls everyone 'hon' and feeds people before they can say no",values:"family and kindness",flaw:"hides how scared she is until it spills over",hook:"She was putting up peach preserves this morning when the sirens started.",secret:"She has stopped taking her heart pills to save them for Eli's sake."},
   grace:{quirk:"answers fear with a verse and anger with patience",values:"faith, and an open door for anyone",flaw:"trusts too easily, even people who will use her",hook:"She was writing Sunday's sermon about strangers at the gate.",secret:"Since the first night she has been praying and hearing nothing back. She hasn't told a soul."},
-  ray:{quirk:"talks like he's writing a report and calls people 'folks'",values:"order, the law, keeping people together",flaw:"needs to be in control and hates being questioned",hook:"The sheriff drove to the city on the first morning and never came back, so it's all on him now.",secret:"When the clinic went bad he ran, and a nurse he could have pulled out didn't make it."},
+  ray:{quirk:"talks like he's writing a report and calls people 'folks'",values:"order, the law, keeping people together",flaw:"needs to be in control and hates being questioned",hook:"The sheriff drove to the city on the first morning and never came back, so it's all on him now.",secret:"When the hospital went bad he ran, and a nurse he could have pulled out didn't make it."},
   cole:{quirk:"talks about everything as a debt that has to be paid",values:"strength, and loyalty to his crew",flaw:"a violent temper and a long memory",hook:"He ran the quarry crew for twelve years and half the town owes him money.",secret:"He owes forty thousand dollars to men in the city, and part of him is glad they're probably dead."},
-  nadia:{quirk:"describes horrors in calm clinical terms, then goes quiet",values:"knowledge, and doing no harm",flaw:"cold and distant when people need warmth",hook:"She treated the first patient at the clinic and watched him die and get up again.",secret:"She signed that first patient's chart 'cardiac arrest' because she didn't know what else to write, and she still has the chart."},
+  marisol:{quirk:"talks to people the way she talked to patients, steady and plain, and hums when she's nervous",values:"looking after people, even strangers, even now",flaw:"can't forgive herself for anyone she left behind",hook:"She was the night nurse on the ward where a patient lay in a coma for weeks. She talked to them every shift in case they could hear.",secret:"When the ward fell she locked that patient's door from outside and ran. She has told herself every night since that it was to protect them."},
+  nadia:{quirk:"describes horrors in calm clinical terms, then goes quiet",values:"knowledge, and doing no harm",flaw:"cold and distant when people need warmth",hook:"She treated the first patient at the hospital and watched him die and get up again.",secret:"She signed that first patient's chart 'cardiac arrest' because she didn't know what else to write, and she still has the chart."},
 };

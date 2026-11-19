@@ -9,4 +9,5 @@ s=open('dist/index.html').read()
 i=s.index('<div id="app"></div>');j=s.index('<script>',i);k=s.rindex('</script>')
 open('/tmp/twd_check.js','w').write(s[j+8:k])
 PY
+node tests/names.js >/dev/null || { node tests/names.js; exit 1; }
 node --check /tmp/twd_check.js && echo "BUILD_OK $(wc -c < dist/index.html) bytes"

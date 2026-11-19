@@ -44,7 +44,7 @@ function makePerson(o={}){
     style:o.style||(age<13?"kid":pick(Object.keys(STYLES))),home:o.home||null,hh:o.hh||null,
     facts:{from:o.from||pick(HOMETOWN),fear:pick(FEARS),hope:pick(HOPES),secret:pick(SECRETS),likes:pick(LIKES),bio:o.bio||""},told:{},
     look:o.look||(pick(["tall","short","heavyset","wiry","broad-shouldered","slight","stooped","athletic"])+", "+pick(["gray hair","black hair","red hair","blond hair","a shaved head","brown curls","a ponytail","a beard","glasses","a sunburn"])),
-    x:0,z:0,tx:0,tz:0,loc:"town",act:"at home",hunger:85,health:100,mood:60,rel:{},fam:{},trust:0,aff:0,met:false,
+    x:0,z:0,tx:0,tz:0,loc:"town",act:"at home",hunger:85,thirst:85,rest:80,fear:0,soc:60,plan:null,health:100,mood:60,rel:{},fam:{},trust:0,aff:0,met:false,
     group:null,role:null,partner:null,kids:[],parents:[],preg:null,alive:true,status:"",bitten:null,mem:[],chat:[],pack:{},want:null,follow:false,seed:o.seed||null};
   return p}
 function famLink(a,b,ra,rb,v){a.fam[b.id]=ra;b.fam[a.id]=rb;relSet(a,b,v)}
@@ -62,6 +62,13 @@ function bedFor(p,b){if(!b.beds.length)return null;const mates=S.people.filter(q
 function sitePos(site,night){const bs=BUILDINGS.filter(b=>b.site===site);if(bs.length&&(night||rf()<.35)){const b=pick(bs);if(night&&b.beds.length&&rf()<.5){const bd=pick(b.beds);return{x:bd.x+(rf()-.5)*.4,z:bd.z+(rf()-.5)*.4,bed:true,rot:bd.rot}}return insidePos(b)}return randIn(site,3)}
 function placeTo(p,pos,instant){p.tx=pos.x;p.tz=pos.z;p.path=null;p.lie=!!pos.bed;p.lieRot=pos.rot??null;p.loc=regionAt(pos.x,pos.z);if(instant||(S&&dist(p.x,p.z,S.player.x,S.player.z)>90&&dist(pos.x,pos.z,S.player.x,S.player.z)>90)){p.x=pos.x;p.z=pos.z}}
 
+// what someone already owned the morning it started
+function armFor(p){if(p.age<16||!p.pack)return;const j=p.job,r=rf();let w=null;
+  if(j==="deputy"){w="pistol";p.pack.ammo=rnd(8,15)}else if(j==="soldier"){if(r<.5){w="pistol";p.pack.ammo=rnd(6,12)}else w="hunting_knife"}
+  else if(j==="hunter")w=r<.7?"hunting_knife":"machete";else if(j==="farmer"||j==="farmhand")w=r<.35?"axe":r<.6?"hunting_knife":null;
+  else if(j==="quarry"||j==="foreman")w=r<.45?"crowbar":r<.7?"pipe":null;else if(["mechanic","hardware","electrician"].includes(j))w=r<.4?"hammer":r<.55?"crowbar":null;
+  else if(r<.12)w=pick(["bat","golf_club","kitchen_knife"]);
+  if(w)p.pack[w]=1}
 function newWorld(c){
   NEXT=1;
   S={v:3,t:7*60,people:[],groups:{},zeds:[],cont:{},piles:[],doors:{},sites:{},news:[],journal:[],pending:[],flags:{},wx:{},nextG:1,nextU:1,stats:{kills:0},player:null};
@@ -125,7 +132,7 @@ function newWorld(c){
     reindex();const qp=insidePos(hb);q.x=qp.x;q.z=qp.z;q.tx=q.x;q.tz=q.z}
   // neighbors know you a little
   for(const p of ppl)if(p.home&&BMAP[p.home]&&dist(BMAP[p.home].x,BMAP[p.home].z,hb.x,hb.z)<20&&p.id!==pl.home){p.met=true;p.trust+=rnd(0,15);p.aff+=rnd(-5,15);mem(p,`${c.name} lives a few houses down.`,0)}
-  for(const p of ppl){if(p.hh==="you"){p.pack=packFor(p);continue}const pos=homePos(p);p.x=pos.x;p.z=pos.z;p.tx=p.x;p.tz=p.z;p.loc=regionAt(p.x,p.z);p.pack=packFor(p)}
+  for(const p of ppl){if(p.hh==="you"){p.pack=packFor(p);armFor(p);continue}const pos=homePos(p);p.x=pos.x;p.z=pos.z;p.tx=p.x;p.tz=p.z;p.loc=regionAt(p.x,p.z);p.pack=packFor(p);armFor(p)}
   rollWeather();
   news("Morning in Limon. The radio says there's 'an unusual flu' going around in the city. Nobody's worried yet.","");
   journal(`Day 1. You wake up in your house in Limon. It's an ordinary Tuesday, as far as anyone knows.`,"big");
@@ -146,13 +153,14 @@ function temp(t=S.t){const d=dayOf(t);if(!S.wx[d])rollWeather();const w=S.wx[d];
 function wxName(){const w=S.wx[dayOf(S.t)];return w?w.kind:"clear"}
 
 // ================= time =================
-function advance(mins,opt={}){let left=mins;
-  while(left>0.0001){const toH=60-(S.t%60);const step=Math.min(left,toH);decay(step,opt);S.t+=step;left-=step;
+function advance(mins,opt={}){let left=mins;const jump=mins>=5&&!S.jump;if(jump)S.jump=true;
+  try{while(left>0.0001){const toH=60-(S.t%60);const step=Math.min(left,toH);decay(step,opt);S.t+=step;left-=step;
     if(Math.abs(S.t%60)<1e-6||S.t%60>59.9999){S.t=Math.round(S.t);simHour()}
     if(S.player.hp<=0)return die();
-    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":"pain";break}}
+    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":"pain";break}}}
+  finally{if(jump)S.jump=false}
   checkPending()}
-function decay(m,opt){const pl=S.player,h=m/60;const sl=opt.sleep;
+function decay(m,opt){const pl=S.player,h=m/60;const sl=opt.sleep;if(pl.coma)return;
   pl.food=clamp(pl.food-h*(sl?1.5:2.6)*(pl.preg?1.3:1)*(pl.sick?1.3:1),0,100);
   pl.water=clamp(pl.water-h*(sl?2:3.8)*(pl.sick?1.5:1),0,100);
   pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9):-(opt.work?5:3.2)),0,100);
@@ -182,7 +190,9 @@ function grief(p,how){for(const q of living()){const r=relGet(q,p);const fam=q.f
 function hurt(p,n,how){p.health-=n;if(p.health<=0)kill(p,how.replace(/^was /,"was killed, "));else if(n>20&&rf()<.6)news(`${fullName(p)} ${how}. They'll live.`,"bad",[p.id])}
 
 function outbreakHour(){const d=dayOf(S.t),h=hourOf(S.t),t=S.t;const F=S.flags;
-  if(!F.clinic&&t>=9*60){F.clinic=true;const c=BMAP.clinic;for(let i=0;i<4;i++){const q=insidePos(c);spawnZed(q.x,q.z)}{const o=doorOut(c);spawnZed(o.x+1,o.z+1)}news("Screaming at the Limon Clinic. A patient attacked a nurse, and then the nurse got up again.","bad");}
+  if(!F.clinic&&t>=9*60){F.clinic=true;const c=BMAP.clinic;const ex=c.rooms.findIndex(r=>r.t==="exam");
+    for(let i=0;i<2;i++){let q=null,qs=-1;for(let k=0;k<8;k++){const o=insidePos(c,ex<0?null:ex);const s=Math.min(9,...S.people.filter(p=>p.alive).map(p=>dist(p.x,p.z,o.x,o.z)));if(s>qs){qs=s;q=o}}spawnZed(q.x,q.z)}
+    {const o=doorOut(c);spawnZed(o.x+rnd(-4,4),o.z+rnd(4,7))}for(const p of S.people)if(p.alive&&bldAt(p.x,p.z)===c)p.fear=Math.max(p.fear||0,80);news("Screaming at Limon Hospital. A patient attacked a nurse, and then the nurse got up again.","bad");}
   if(!F.alarm&&t>=12*60){F.alarm=true;news("Emergency broadcast: residents of Limon are advised to stay indoors. 'Do not approach anyone who appears sick or confused.'","big")}
   // generic dead filling the town during the fall
   const phase=d===1?(h>=10?1:0):d<=3?2:d===4?1:0;const cap=d<=4?100:110;
@@ -190,48 +200,31 @@ function outbreakHour(){const d=dayOf(S.t),h=hourOf(S.t),t=S.t;const F=S.flags;
   if(d>4&&S.zeds.length<85&&h%3===0){const p=randIn(pick(["town","town","road","woods","fields","hills"]));spawnZed(p.x,p.z)}
   if(d===1&&h===20){S.flags.blackout=true}if(d===1&&h===20)news("The power flickers out across town. Gunshots on Main Street.","bad");
   if(d===2&&h===9)news("A Guard helicopter passes over town without slowing down.","");
-  if(d===3&&h===12){news("Radio: an evacuation center is open at Ashby, forty miles north. Some families pack their cars.","big");for(const p of living().filter(p=>!p.group&&!p.follow&&!p.seed&&rf()<.25&&p.hh!=="you"))leave(p,"left for the Ashby evacuation center")}
+  if(!F.waterOff&&(d>2||d===2&&h>=15)){F.waterOff=true;news("The taps cough and run dry all over town. With the power out, nothing is pumping water up to the tower.","bad");if(!S.player.coma&&S.player.alive!==false)journal("You hear the pipes knock in the walls, then nothing. The water's off.","bad")}
+  if(d===3&&h===12){news("Radio: an evacuation center is open at Ashby, forty miles north. Some families pack their cars.","big");const hhs={};for(const p of living())if(!p.group&&!isFollower(p)&&p.hh&&p.hh!=="you"&&!p.fam.you)(hhs[p.hh]=hhs[p.hh]||[]).push(p);
+    for(const ps of Object.values(hhs))if(!ps.some(p=>p.seed)&&rf()<.18)for(const p of ps)leave(p,"left for the Ashby evacuation center")}
   if(d===5&&h===8)news("The radio's gone to static. Ashby isn't answering anymore.","bad");
 }
 function leave(p,how){p.alive=false;p.status="left";p.loc="gone";news(`${fullName(p)} ${how}.`,"",[p.id]);if(p.group&&G(p.group)?.leader===p.id)newLeader(p.group)}
 
-function simHour(){const h=hourOf(S.t),d=dayOf(S.t);const tmp=temp();const night=h<6||h>=22,work=h>=8&&h<17;
+function simHour(){const h=hourOf(S.t),d=dayOf(S.t);const tmp=temp();
   outbreakHour();
-  const townZ=zedsIn("town");
+  const c=mindCtx(h,d,tmp);
   for(const p of S.people){if(!p.alive)continue;
     if(p.preg&&S.t>=p.preg.due)birth(p);
-    p.hunger=clamp(p.hunger-2.4,0,100);if(p.hunger<=0)p.health-=1.5;
-    if(!p.group&&!p.follow&&(h===8||h===18)&&p.hunger<75){const f=Object.keys(p.pack||{}).find(k=>ITEMS[k]?.eat&&!ITEMS[k].eat.sick);if(f){p.pack[f]--;if(!p.pack[f])delete p.pack[f];p.hunger=clamp(p.hunger+38,0,100)}else{if(p.pantry==null)p.pantry=rnd(5,14);if(p.pantry>0){p.pantry--;p.hunger=clamp(p.hunger+40,0,100)}}}
     if(p.bitten&&S.t>=p.bitten){turnPerson(p);continue}
+    needsHour(p,c);
     if(UI.talkTo===p.id&&S.t-(p.lastTalk||-99)<20&&dist(p.x,p.z,S.player.x,S.player.z)<6)continue; // mid-conversation
-    // where are they going this hour
-    if(p.follow&&!p.group||p.follow&&S.player.group===p.group){p.act="with you";p.loc=here();continue}
-    let dest=null,act="";
-    if(!p.group){ // civilian life during the fall
-      const home=homePos(p);
-      if(!S.flags.alarm&&work&&p.age>=6&&JOBS[p.job].work!=="home"){const w=JOBS[p.job].work;const b=BMAP[w];dest=b?insidePos(b):randIn(w==="farm"?"farm":w==="woods"?"woods":w==="church"?"church":w==="quarry"?"quarry":"road");act="at work"}
-      else if(S.flags.alarm&&!S.flags.hidden?.[p.id]&&(p.job==="nurse"||p.job==="doctor"||p.job==="deputy")&&d===1&&h<18&&rf()<.5){const c=BMAP[p.job==="deputy"?"sheriff":"clinic"];const o=doorOut(c);dest=rf()<.5?insidePos(c):{x:o.x+rnd(-3,3),z:o.z+rnd(-1,2)};act="trying to help"}
-      else{dest=night?homePos(p,true):home;act=night?"asleep":S.flags.alarm?"holed up at home":"at home"}
-      if(p.flee){dest=randIn(p.flee,3);act="heading for "+PLACES[p.flee].n}
-    } else {const g=G(p.group);const home=g.home;
-      const hurtNow=p.health<45;
-      if(night){dest=home?sitePos(home,true):null;act="asleep"}
-      else if(work&&!hurtNow&&p.role&&p.age>=12){const R=ROLES[p.role];const L=R.loc==="home"?home:R.loc;dest=L?randIn(L,3):null;act=R.act;groupWork(p,g,tmp)}
-      else{dest=home?randIn(home,3):null;act=hurtNow?"resting, injured":h>=17?"by the fire":"eating"}
-      if(!home){const lead=g.leader==="you"?S.player:P(g.leader);if(lead){dest={x:lead.x+(rf()-.5)*6,z:lead.z+(rf()-.5)*6}}}
-    }
-    if(dest&&(rf()<.6||p.act!==act))placeTo(p,dest);p.act=act;
-    // exposure to the dead
-    const reg=regionAt(p.tx,p.tz);const dens=reg==="town"?townZ/120:reg==="road"||reg==="school"?zedsIn(reg)/40:zedsIn(reg)/80;
-    const expo=(act==="asleep"?.06:act.startsWith("holed")||act==="at home"?.07:1)*(p.group?.22:1);
-    if(dens>0&&rf()<dens*.03*expo*(1.2-p.sk.fight*.1)){if(rf()<.55){p.bitten=S.t+rnd(5,30)*60;mem(p,"I got bit. I haven't told anyone.",-10,p.id);if(rf()<.3)news(`Rumor: ${fullName(p)} was seen with a bloody bandage on their arm.`,"",[p.id])}else hurt(p,rnd(10,35),"was attacked by the dead")}
-  }
+    if(isFollower(p)){p.act="with you";p.loc=here();p.plan=null;continue}
+    if(p.bond&&p.bond.until>S.t)continue; // spending time with you
+    mindHour(p,c);
+    // away from you, the hour's walking is already done
+    if(!c.near.has(p.id)){p.x=p.tx;p.z=p.tz;p.path=null;if(p.alive)riskHour(p,c)}}
+  riseTick();
   worldHour(h);
-  if(!S.flags.alarm)return; // before the alarm, nobody moves to groups
-  groupsHour(h,tmp);
-  householdDecisions(h,d);
+  if(c.alarm){groupsHour(h,tmp);householdDecisions(h,d);recruitHour(c)}
   if(h>=18&&h<22)socialHour();
-  for(const p of S.people)if(p.alive&&p.health<=0)kill(p,p.hunger<=0?"starved":"died of their wounds");
+  for(const p of S.people)if(p.alive&&p.health<=0)kill(p,p.thirst<=0?"died of thirst":p.hunger<=0?"starved":"died of their wounds");
   if(h===0)dailyTick();
   // zeds far from the player drift
   for(const z of S.zeds)if(dist(z.x,z.z,S.player.x,S.player.z)>80&&rf()<.3){z.x=clamp(z.x+rnd(-6,6),WB.x0,WB.x1);z.z=clamp(z.z+rnd(-6,6),WB.z0,WB.z1);z.r=regionAt(z.x,z.z);const sp=siteBlocked(z.x,z.z);if(sp){z.x-=6;z.r=regionAt(z.x,z.z)}}
@@ -259,10 +252,20 @@ function assignRoles(g){const ms=members(g.id);const W=[];const mine=g.leader===
   const order=[...new Set([...(building?["builder"]:[]),...(g.stock.food<n*3?["hunter","scavenger"]:[]),...(g.stock.water<n*2?["fisher"]:[]),...ROLE_ORDER])];
   for(const r of order)while((filled[r]||0)<(q[r]||0)&&free.size){let bp=[...free].find(p=>p.role===r);if(!bp){let bv=-1e9;for(const p of free){const v=roleFit(p,r)+rf()*.5;if(v>bv){bv=v;bp=p}}}bp.role=r;filled[r]=(filled[r]||0)+1;free.delete(bp)}
   for(const p of free)p.role="scavenger"}
-function groupWork(p,g,tmp){const st=g.stock;const f=.6+(({scavenger:p.sk.scavenge,hunter:p.sk.survive,forager:p.sk.survive,fisher:p.sk.survive,farmer:p.sk.survive,woodcutter:p.sk.build,builder:p.sk.build,crafter:p.sk.craft,medic:p.sk.medic})[p.role]||1)*.1;
+// a scavenger's haul goes into the camp stores
+function campStash(p,g){const st=g.stock;for(const k of Object.keys(p.pack||{})){const n=p.pack[k];const m=MEALS(k);
+  if(m){st.food+=m*n*.5;delete p.pack[k]}else if(DRINKS[k]){st.water+=DRINKS[k]*n*.4;delete p.pack[k]}
+  else if(["bandage","painkillers","antibiotics"].includes(k)){st.meds+=n;delete p.pack[k]}
+  else if(k==="nails"||k==="wood"||k==="cloth"||k==="scrap"){st[k]+=n;delete p.pack[k]}else if(k==="duct_tape"||k==="rope"){st.scrap+=n;delete p.pack[k]}
+  else if(k==="ammo"&&!npcGun(p)){st.ammo+=n;delete p.pack[k]}}}
+function campXZ(g){const r=PLACES[g.home]?.r?.[0];return r?{x:(r[0]+r[2])/2,z:(r[1]+r[3])/2}:{x:0,z:0}}
+function groupWork(p,g,tmp,c){const st=g.stock;const f=.6+(({scavenger:p.sk.scavenge,hunter:p.sk.survive,forager:p.sk.survive,fisher:p.sk.survive,farmer:p.sk.survive,woodcutter:p.sk.build,builder:p.sk.build,crafter:p.sk.craft,medic:p.sk.medic})[p.role]||1)*.1;
   const foc=g.pol.focus==="food"?(["hunter","forager","fisher","farmer","scavenger"].includes(p.role)?1.3:.85):g.pol.focus==="build"?(["builder","woodcutter"].includes(p.role)?1.35:.85):1;const k=f*foc;const winter=tmp<0?.4:tmp<5?.75:1;
   switch(p.role){
-    case"scavenger":{const left=Math.max(.15,1-dayOf(S.t)/60);st.food+=.7*k*left;st.water+=.6*k*left;if(rf()<.25)st.meds+=.4*left;if(rf()<.3)st.nails+=.6;st.cloth+=.3;st.scrap+=.3;if(rf()<.05)st.ammo+=rnd(1,4);break}
+    case"scavenger":{const b=c&&g.home&&rf()<.7?lootTarget(p,c,"scavenge",campXZ(g)):null;let out=null;
+      if(b){lootSome(p,b,3);campStash(p,g);out={dest:insidePos(b),act:`searching ${b.n} for ${g.name}`}}
+      else{st.food+=.12*k;st.scrap+=.3;st.cloth+=.2}
+      if(rf()<.04)st.ammo+=rnd(1,3);return out}
     case"hunter":if(rf()<.3){st.food+=1.6*k*winter}if(rf()<.002)hurt(p,rnd(10,30),"was hurt in a hunting accident");break;
     case"forager":st.food+=.3*k*winter;if(rf()<.1)st.meds+=.1;break;
     case"fisher":st.food+=.35*k*(tmp<0?.5:1);st.water+=.2;break;
@@ -271,7 +274,7 @@ function groupWork(p,g,tmp){const st=g.stock;const f=.6+(({scavenger:p.sk.scaven
     case"builder":buildWork(g,k);break;
     case"crafter":g.tools=Math.min(100,g.tools+.1*k);break;
     case"guard":case"medic":case"cook":break;}
-  st.water+=siteCount(g.home,"well")*.25+siteCount(g.home,"catcher")*.12+(g.home==="farm"||g.home==="church"?.3:0)}
+  st.water+=siteCount(g.home,"well")*.25+siteCount(g.home,"catcher")*.12+(g.home==="farm"||g.home==="church"?.3:0);return null}
 function groupsHour(h,tmp){
   for(const g of Object.values(S.groups)){const ms=members(g.id);const n=ms.length+(S.player.group===g.id?1:0);if(!n){if(!g.dead){g.dead=true;news(`${g.name} is no more. Its people are dead, scattered, or gone.`,"bad")}continue}
     const st=g.stock;
@@ -284,7 +287,7 @@ function groupsHour(h,tmp){
     // meals
     if(h===8||h===18){const cooks=ms.filter(p=>p.role==="cook").length;const half=g.pol.ration==="half";const need=ms.reduce((a,p)=>a+(p.age<12?.25:.5),0)*(1-Math.min(.25,cooks*.06))*(half?.6:1);const wneed=n*.4*(half?.7:1);
       if(st.food>=need){st.food-=need;for(const p of ms)p.hunger=clamp(p.hunger+(half?30:50),0,100)}else{const ratio=st.food/Math.max(need,.01);st.food=0;for(const p of ms){if(rf()<ratio)p.hunger=clamp(p.hunger+40,0,100);else p.mood-=4}if(!g.hungry||S.t-g.hungry>DAY){g.hungry=S.t;news(`${g.name} ran out of food at ${h===8?"breakfast":"supper"}.`,"bad")}}
-      if(st.water>=wneed)st.water-=wneed;else{st.water=0;for(const p of ms){p.health-=3;p.mood-=3}}
+      if(st.water>=wneed){st.water-=wneed;for(const p of ms)p.thirst=clamp((p.thirst??85)+45,0,100)}else{const r=st.water/Math.max(wneed,.01);st.water=0;for(const p of ms){if(rf()<r)p.thirst=clamp((p.thirst??85)+40,0,100);else p.mood-=3}}
       if(S.player.group===g.id&&S.player.alive!==false&&atHome()){const pl=S.player;if(st.food>=.5){st.food-=.5;pl.food=clamp(pl.food+(half?25:40),0,100);if(st.water>=.4){st.water-=.4;pl.water=clamp(pl.water+30,0,100)}journal(h===8?"Breakfast with the others. It isn't much, but it's warm.":"Supper around the fire. People talk about anything but the dead.","")}else journal("There's nothing in the pot tonight.","bad")}}
     st.water=Math.min(st.water,60+n*8);st.food=Math.min(st.food,120+n*14);
     // builds
@@ -337,23 +340,14 @@ function householdDecisions(h,d){const F=S.flags;const t=S.t;
   if(!F.r_school&&t>=21*60){F.r_school=true;rally("ray","school","Limon Watch")}
   if(!F.r_farm&&t>=DAY+10*60){F.r_farm=true;rally("walt","farm","Holloway Farm")}
   if(!F.r_quarry&&t>=DAY+15*60){F.r_quarry=true;rally("cole","quarry","Quarry Crew")}
-  const late=d>6;
-  const hhs={};for(const p of S.people)if(p.alive&&!p.group&&p.hh&&p.hh!=="you"&&!p.follow)(hhs[p.hh]=hhs[p.hh]||[]).push(p);
-  const groups=Object.values(S.groups).filter(g=>g.home&&!g.dead&&g.leader!=="you"||g.leader==="you"&&g.home);
-  const RF={walt:"r_farm",grace:"r_church",ray:"r_school",cole:"r_quarry"};if(!S.hold)S.hold={};
-  for(const [hid,ps] of Object.entries(hhs)){if(rf()>.12)continue;if(ps.some(p=>p.seed&&RF[p.seed]&&!F[RF[p.seed]]))continue;
-    const hungry=ps.some(p=>p.hunger<35);const head=ps.filter(p=>p.age>=16).sort((a,b)=>b.tr.ambit-a.tr.ambit)[0];if(!head)continue;
-    if(S.hold[hid]==null)S.hold[hid]=clamp(Math.round(rf()*4+(1-head.tr.social)*4+head.tr.brave*2-(ps.some(p=>p.age<12)?1:0)),1,12);
-    if(d<S.hold[hid]&&!hungry)continue;if(late&&!hungry&&rf()>.15)continue;
-    let best=null,bs=(d<=2?14:4)+head.tr.brave*4-(zedsIn("town")/20);
-    for(const g of groups){let s=10+rf()*8;const L=g.leader==="you"?null:P(g.leader);for(const p of ps){for(const m of members(g.id))s+=Math.max(-5,relGet(p,m))/25;if(L)s+=relGet(p,L)/12}
-      if(g.home==="church")s+=head.tr.faith*10+head.tr.kind*4;if(g.home==="quarry")s+=head.tr.brave*6+head.tr.ambit*4-head.tr.kind*6-(ps.some(p=>p.age<12)?6:0);if(g.home==="farm")s+=(head.job.startsWith("farm")?8:0)+3;if(g.home==="school")s+=(ps.some(p=>p.age<18)?4:0)+head.tr.honest*3;
-      if(g.leader==="you"){for(const p of ps)s+=feel(p)/8}
-      const gs=groupSize(g.id);s-=gs/4+Math.max(0,gs-12)*.9;if(s>bs){bs=s;best=g}}
-    const fleeScore=(1-head.tr.brave)*10+rf()*6;
-    if(!best&&d>=2&&fleeScore>bs+3&&!ps.some(p=>p.seed)){for(const p of ps)leave(p,"packed the car and drove north");continue}
-    if(best){for(const p of ps){joinGroup(p,best.id,true);placeTo(p,randIn(best.home,3))}if(best.leader==="you"||ps.length>2||rf()<.4)news(`The ${head.sur||head.name} household${ps.length>1?` (${ps.length} people)`:""} made it to ${PLACES[best.home].n} and joined ${best.name}.`,"",ps.map(p=>p.id));if(best.leader==="you")journal(`${head.name} ${head.sur} and their family have come to join you.`,"good")}}
-}
+  // kids nobody came for, and the teachers who stayed with them, end up with whoever holds the school
+  const sg=ownerOf("school");if(!sg||sg.leader==="you"||rf()>.5)return;
+  for(const p of S.people){if(!p.alive||p.group||isFollower(p))continue;const b=bldAt(p.tx,p.tz);if(!b||b.id!=="schoolbldg")continue;
+    const kid=p.age<13,teach=p.job==="teacher"&&p.plan&&p.plan.k==="duty";if(!kid&&!teach)continue;
+    if(kid&&p.parents.some(id=>{const q=P(id);return q&&q.alive&&q.plan&&q.plan.k==="gofam"&&q.plan.q===p.id}))continue;
+    joinGroup(p,sg.id,true);placeTo(p,randIn("school",3));p.plan=null;
+    mem(p,kid?"Nobody came for me at school. The Watch let me stay.":"I stayed with the kids at the school until the Watch came. Now we're all theirs.",kid?-2:2);
+    if(kid&&rf()<.5)news(`${fullName(p)}, ${p.age}, was taken in at the school by ${sg.name}. Nobody came for them.`,"",[p.id])}}
 
 // ================= social sim =================
 function compat(a,b){const ks=["kind","temper","social","curious","honest","faith"];let d=0;for(const k of ks)d+=Math.abs(a.tr[k]-b.tr[k]);return 1-d/ks.length}
@@ -401,7 +395,7 @@ function dailyTick(){const d=dayOf(S.t);rollWeather();
   if(pl.preg&&S.t>=pl.preg.due)playerBirth();
   if(d%12===0)for(const p of S.people)if(p.alive)p.age++;
   for(const p of living())if(p.role==="kid"&&p.age>=12&&p.group){p.role=roleFor(p,p.group);news(`${p.name} is old enough to work now.`,"",[p.id])}
-  for(const p of living())if(rf()<.5)p.pack=packFor(p);
+  for(const p of living())if(p.group&&!isFollower(p)&&rf()<.5){const k=packFor(p);for(const i in k)if(ITEMS[i].slot!=="weapon"&&packHas(p,i)<3)packAdd(p,i,Math.min(k[i],3-packHas(p,i)))}
   for(const p of living())if(!p.want&&p.met&&rf()<.08)makeWant(p);
   // containers restock a little
   storyBeats(d);
@@ -424,7 +418,7 @@ function leaderAI(g){const L=P(g.leader);if(!L)return;const st=g.stock;const n=g
 function intergroup(d){const gs=Object.values(S.groups).filter(g=>!g.dead&&groupSize(g.id)>0);
   for(let i=0;i<gs.length;i++)for(let j=i+1;j<gs.length;j++){const a=gs[i],b=gs[j];const r=a.rel[b.id]||0;
     const scA=members(a.id).filter(p=>p.role==="scavenger").length,scB=members(b.id).filter(p=>p.role==="scavenger").length;
-    if(r>-10&&rf()<.15&&(a.pol.stance!=="hostile"||b.pol.stance!=="hostile")){a.rel[b.id]=b.rel[a.id]=r+rnd(2,5);const give=(x,y)=>{if(x.stock.food>groupSize(x.id)*3&&y.stock.meds>2){x.stock.food-=10;y.stock.food+=10;y.stock.meds-=1;x.stock.meds+=1}};give(a,b);give(b,a);if(rf()<.35)news(`${a.name} and ${b.name} traded supplies at the bridge.`,"good")}
+    if(r>-10&&rf()<.15&&(a.pol.stance!=="hostile"||b.pol.stance!=="hostile")){a.rel[b.id]=b.rel[a.id]=r+rnd(2,5);const give=(x,y)=>{if(x.stock.food>Math.max(14,groupSize(x.id)*3)&&y.stock.meds>2){x.stock.food-=10;y.stock.food+=10;y.stock.meds-=1;x.stock.meds+=1}};give(a,b);give(b,a);if(rf()<.35)news(`${a.name} and ${b.name} traded supplies at the bridge.`,"good")}
     const sf=(a.pol.stance==="hostile"||b.pol.stance==="hostile"?1.6:1)*(a.pol.stance==="friendly"&&b.pol.stance==="friendly"?.25:1);
     if(scA&&scB&&rf()<.06*sf*(r<20?1:.3)){a.rel[b.id]=b.rel[a.id]=r-rnd(5,12);const v=pick([...members(a.id),...members(b.id)].filter(p=>p.role==="scavenger"));if(v){if(rf()<.15)kill(v,`was shot in a standoff in town between ${a.name} and ${b.name}`);else{hurt(v,rnd(10,25),`was hurt in a fight ${pick(["over the last shelf at the pharmacy","over a gas can on Main Street","over a car full of canned food","over who saw a house first"])} between ${a.name} and ${b.name}`)}}}
     if(a.allied?.[b.id])continue;

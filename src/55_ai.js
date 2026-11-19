@@ -13,14 +13,14 @@ function persona(p){if(p._pz)return p._pz;const R=srng(hashStr(p.id+"/voice"));c
   Object.defineProperty(p,"_pz",{value:o,enumerable:false,writable:true});return o}
 const ACTWORDS={follow:"agrees to come along with {pn} and starts following them",stay:"stops following {pn} and stays where they are",trade:"is willing to trade; a trade opens right after this line",
   attack:"loses their temper and swings at {pn}",romance_yes:"says yes: they want to be together with {pn}",child_yes:"agrees to try for a child with {pn}",break_up:"ends their relationship with {pn}",
-  join_their:"welcomes {pn} into their group",join_mine:"agrees to join {pn}'s group, with their family",leave_mine:"hears that {pn} is leaving the group",take_lead:"hands leadership of their group to {pn}",end:"is done talking and turns back to what they were doing"};
+  join_their:"welcomes {pn} into their group",join_mine:"agrees to join {pn}'s group, with their family",leave_mine:"hears that {pn} is leaving the group",take_lead:"hands leadership of their group to {pn}","bond:hang":"is glad {pn} will sit with them for a while",end:"is done talking and turns back to what they were doing"};
 function sentence(t){t=String(t||"").trim();return!t?"":/[.!?]$/.test(t)?t:t+"."}
 function feelWords(t,pn){return{hostile:`hates ${pn}`,cold:`is cold toward ${pn}`,neutral:`doesn't know ${pn} well yet`,friendly:`likes ${pn}`,close:`is close to ${pn}`}[t]||`doesn't know ${pn} well yet`}
 function heShe(p){return p.age<13?"they":p.sex==="F"?"she":"he"}
 function famWords(p){const L=[];for(const [id,rel] of Object.entries(p.fam||{})){if(id==="you")continue;const q=P(id);if(!q)continue;const where=!q.alive?(q.status==="turned"?"turned into one of the dead":q.status==="left"?"left town":"dead"):dist(q.x,q.z,p.x,p.z)<15?"here nearby":q.group&&q.group===p.group?"in the same group":"alive, somewhere else"+(p.told&&false?"":"");L.push(`${rel} ${q.name} (${where})`)}return L.slice(0,8).join("; ")||"none living close by"}
 function worldWords(){const F=S.flags;const d=dayOf(S.t);const L=[];
   if(!F.clinic)L.push("It still seems like an ordinary day in town, though the radio talks about a flu in the city.");
-  else if(!F.alarm)L.push("Something terrible happened at the clinic: sick people attacked others, and the bitten got up again. Rumors are spreading.");
+  else if(!F.alarm)L.push("Something terrible happened at the hospital: sick people attacked others, and the bitten got up again. Rumors are spreading.");
   else L.push("The dead are walking. The town has fallen apart; people are hiding, fleeing, or banding together.");
   if(F.blackout)L.push("The power is out.");if(d>=3)L.push(`It's been ${d-1} days since it started.`);
   const gs=Object.values(S.groups).filter(g=>!g.dead&&groupSize(g.id)>0).slice(0,5).map(g=>`${g.name}${g.home?" at "+PLACES[g.home].n:""}`);if(gs.length)L.push("Groups that have formed: "+gs.join(", ")+".");

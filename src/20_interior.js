@@ -3,10 +3,10 @@
 // Every building is laid out in a local frame: u runs across the front, v runs from the back (-D/2) to the front (+D/2).
 const WALL_H={house:2.7,farmhouse:2.8,trailer:2.3,cabin:2.4,barn:4.4,church:5,school:3.4,qsheds:3.2,mill:1.6,hall:3.2,gas:3,diner:3,bar:3,pharmacy:3.1,hardware:3.3,grocery:3.5,library:3.4,clinic:3.1,sheriff:3.1,qoffice:2.7};
 const ROOMNAME={living:"Living room",kitchen:"Kitchen",bed:"Bedroom",kid:"Kid's room",bath:"Bathroom",office:"Study",util:"Laundry room",livkit:"Living room",bedbath:"Bedroom",cabin:"Cabin",
-  shop:"Store",back:"Back room",cafe:"Dining room",dkitchen:"Kitchen",bar:"Bar",lobby:"Front desk",exam:"Exam room",store:"Storage",cell:"Holding cell",armory:"Armory",lockers:"Locker room",
+  shop:"Store",back:"Back room",cafe:"Dining room",dkitchen:"Kitchen",bar:"Bar",lobby:"Front desk",exam:"Exam room",patient:"Patient room",store:"Storage",cell:"Holding cell",armory:"Armory",lockers:"Locker room",
   hallway:"Hallway",class:"Classroom",cafeteria:"Cafeteria",gym:"Gym",nave:"Church",vestry:"Vestry",hallroom:"Hall",barn:"Barn",shed:"Equipment shed",ruin:"Old mill",reading:"Reading room",waiting:"Waiting room",rx:"Pharmacy counter",qoff:"Office",rest:"Restroom"};
 const FLOORS={living:"wood",kitchen:"tile",bed:"carpet",kid:"carpet",bath:"tile",office:"carpet",util:"concrete",livkit:"wood",bedbath:"carpet",cabin:"wood",
-  shop:"tile",back:"concrete",cafe:"tile",dkitchen:"tile",bar:"wood",lobby:"tile",exam:"tile",store:"concrete",cell:"concrete",armory:"concrete",lockers:"concrete",
+  shop:"tile",back:"concrete",cafe:"tile",dkitchen:"tile",bar:"wood",lobby:"tile",exam:"tile",patient:"tile",store:"concrete",cell:"concrete",armory:"concrete",lockers:"concrete",
   hallway:"tile",class:"tile",cafeteria:"tile",gym:"wood",nave:"wood",vestry:"wood",hallroom:"wood",barn:"dirt",shed:"concrete",ruin:"dirt",reading:"carpet",waiting:"tile",rx:"tile",qoff:"carpet",rest:"tile"};
 // furniture: w along the wall, d out from it, h tall. c = container type. at: "c" center of room, "m" mounted on a wall. nb = doesn't block walking
 const FURN={
@@ -28,7 +28,7 @@ const ROOMF={living:["couch","tv","bookshelf","armchair","ctable","rug","lamp"],
   kid:["bed1","dresser","closet","nightstand","bookshelf"],bath:["tub","toilet","sink","medicine"],office:["desk","bookshelf","chair","closet"],util:["workbench","toolshelf","washer"],
   livkit:["couch","counter","fridge","stove","tv","ktable"],bedbath:["bed","closet","nightstand","toilet","sink","medicine"],cabin:["bed1","cabinshelf","cabinshelf","woodstove","ktable","crate"],
   back:["wallshelf","wallshelf","crate"],store:["wallshelf","wallshelf","crate","crate"],dkitchen:["dkshelf","fridge","stove","stove","counter"],
-  exam:["bed1","medcab","sink","chair"],lockers:["locker","locker","locker","bench"],armory:["armory","armory"],cell:["bars","bed1"],qoff:["desk","filing","filing","locker","chair"],
+  exam:["bed1","medcab","sink","chair"],patient:["bed1","nightstand","sink","chair"],lockers:["locker","locker","locker","bench"],armory:["armory","armory"],cell:["bars","bed1"],qoff:["desk","filing","filing","locker","chair"],
   vestry:["vestry","closet","desk"],rx:["rxcab","rxcab","desk"],rest:["toilet","sink","medicine"]};
 
 function bFrame(b){const r=b.face==="+z"?0:b.face==="+x"?Math.PI/2:b.face==="-z"?Math.PI:-Math.PI/2;const ns=b.face==="+z"||b.face==="-z";
@@ -74,7 +74,7 @@ function layStore(b,R){const {W,D}=b.fr;const ty=b.type;const rooms=[],dws=[];
   else if(ty==="diner"){two("cafe","dkitchen",2.6)}
   else if(ty==="bar"){two("bar","store",2.4)}
   else if(ty==="gas"){const vs=-D/2+2.2;rooms.push(mkRoom("shop",-W/2,vs,W/2,D/2),mkRoom("store",-W/2,-D/2,2,vs),mkRoom("rest",2,-D/2,W/2,vs));dws.push(mkDw("v",D/2,-1,1.5,{ext:1,door:1}),mkDw("v",vs,-1.5,.95),mkDw("v",vs,3.2,.85))}
-  else if(ty==="clinic"){const vs=0;rooms.push(mkRoom("waiting",-W/2,vs,W/2,D/2));const cols=rowSplit(-W/2,W/2,[["exam",3.4],["exam",3.3],["store",3.3]]);for(const [t,u0,u1] of cols){rooms.push(mkRoom(t,u0,-D/2,u1,vs));dws.push(mkDw("v",vs,snap((u0+u1)/2),.95))}dws.push(mkDw("v",D/2,0,1.5,{ext:1,door:1}))}
+  else if(ty==="clinic"){const vs=0;rooms.push(mkRoom("waiting",-W/2,vs,W/2,D/2));const cols=rowSplit(-W/2,W/2,[["patient",3.4],["exam",3.3],["store",3.3]]);for(const [t,u0,u1] of cols){rooms.push(mkRoom(t,u0,-D/2,u1,vs));dws.push(mkDw("v",vs,snap((u0+u1)/2),.95,{door:1}))}dws.push(mkDw("v",D/2,0,1.5,{ext:1,door:1}))}
   else if(ty==="sheriff"){const vs=.5;rooms.push(mkRoom("lobby",-W/2,vs,W/2,D/2));const cols=rowSplit(-W/2,W/2,[["qoff",3],["lockers",2.5],["armory",1.9],["cell",2.6]]);
     for(const [t,u0,u1] of cols){rooms.push(mkRoom(t,u0,-D/2,u1,vs));dws.push(mkDw("v",vs,snap((u0+u1)/2),.9,t==="armory"?{door:1,lock:"pry"}:t==="cell"?{door:1}:{}))}dws.push(mkDw("v",D/2,0,1.4,{ext:1,door:1}))}
   else if(ty==="school"){const vs=D/2-2.6;rooms.push(mkRoom("hallway",-W/2,vs,W/2,D/2));const cols=rowSplit(-W/2,W/2,[["class",6.5],["class",6.5],["cafeteria",6.5],["gym",6.5]]);
@@ -157,7 +157,7 @@ function dwSides(b,d){// points just either side of a doorway, in world coords; 
 function roomIdxAtLocal(b,u,v){for(let i=0;i<b.rooms.length;i++){const r=b.rooms[i];if(u>=r.u0-.001&&u<=r.u1+.001&&v>=r.v0-.001&&v<=r.v1+.001)return i}return-1}
 function buildInteriors(){const R=srng(4242);let dn=0;
   for(const b of BUILDINGS){b.fr=bFrame(b);b.H=WALL_H[b.type]||3;const L=["house","farmhouse","trailer","cabin"].includes(b.type)?layHome(b,R):layStore(b,R);b.rooms=L.rooms;b.dws=L.dws;
-    furnish(b,R);b.walls=wallsOf(b);b.doors=[];b.cs=[];b.beds=[];b.spots=[];
+    furnish(b,R);b.walls=wallsOf(b);b.doors=[];b.cs=[];b.beds=[];b.spots=[];b.taps=[];
     // doorways: which rooms they join, the points either side, door leaves
     for(const d of b.dws){const [lo,hi]=dwSides(b,d);d.p=[lo,hi];const ll=toLocal(b,lo.x,lo.z),hl=toLocal(b,hi.x,hi.z);d.r=[roomIdxAtLocal(b,ll.u,ll.v),roomIdxAtLocal(b,hl.u,hl.v)];
       if(d.ext){d.outSide=d.r[0]<0?0:1;d.inSide=1-d.outSide}
@@ -169,7 +169,8 @@ function buildInteriors(){const R=srng(4242);let dn=0;
       const cu=(f.u0+f.u1)/2,cv=(f.v0+f.v1)/2;const fu=Math.sin(f.rot),fv=Math.cos(f.rot);const dep=(Math.abs(fu)>.5?(f.u1-f.u0):(f.v1-f.v0))/2;
       if(f.c){const id=b.id+":"+(ci++);const use=toWorld(b,cu+fu*(dep+.45),cv+fv*(dep+.45));const ctr=toWorld(b,cu,cv);f.id=id;
         CONTS[id]={id,k:f.c,b:b.id,f,x:ctr.x,z:ctr.z,ux:use.x,uz:use.z,room:ri,n:CONT[f.c]?.n||"Shelf"};b.cs.push(CONTS[id])}
-      if(f.bed){const c=toWorld(b,cu,cv);b.beds.push({x:c.x,z:c.z,rot:f.wrot,room:ri})}}});
+      if(f.bed){const c=toWorld(b,cu,cv);b.beds.push({x:c.x,z:c.z,rot:f.wrot,room:ri})}
+      if(f.k==="sink"){const c=toWorld(b,cu,cv);b.taps.push({id:b.id+":tap"+b.taps.length,b:b.id,x:c.x,z:c.z,room:ri,f})}}});
     // spots where people can stand around
     for(let i=0;i<80&&b.spots.length<14;i++){const ri=Math.floor(R()*b.rooms.length);const r=b.rooms[ri];const I=roomInner(r);const u=I.u0+.3+R()*Math.max(0,I.u1-I.u0-.6),v=I.v0+.3+R()*Math.max(0,I.v1-I.v0-.6);
       if(r.f.some(f=>!f.nb&&u>f.u0-.35&&u<f.u1+.35&&v>f.v0-.35&&v<f.v1+.35))continue;const p=toWorld(b,u,v);b.spots.push({x:p.x,z:p.z,room:ri})}

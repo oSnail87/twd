@@ -77,19 +77,23 @@ function walkTo(x,z,keep){if(!keep){W3.talkOnArrive=null;W3.attackT=null;W3.useO
   W3.ptarget={x,z};W3.path=navPath(pl.x,pl.z,x,z);W3.pst={pi:0};W3.repath=.6}
 
 // ---------- townsfolk ----------
-function moveNPCs(dt){const pl=S.player;const sp=1.45*Math.min(4,UI.speed);let idx=0;const now=performance.now();
+function moveNPCs(dt){const pl=S.player;const sp=1.45*Math.min(4,UI.speed);let idx=0;const now=performance.now();const near=[];const dead=S.flags.clinic;
   for(const p of S.people){if(!p.alive)continue;
     if(p.age<2){const m=P(p.parents[0])||P(p.parents[1]);if(m&&m.alive!==false&&m.x!=null){p.x=m.x;p.z=m.z;p.tx=m.x;p.tz=m.z}continue}
     if(W3.fset.has(p.id)){followerMove(p,idx++,dt);continue}
-    if(UI.talkTo===p.id&&dist(p.x,p.z,pl.x,pl.z)<4)continue;
+    const close=Math.abs(p.x-pl.x)<55&&Math.abs(p.z-pl.z)<55;if(close)near.push(p);
+    const talking=UI.talkTo===p.id&&dist(p.x,p.z,pl.x,pl.z)<4;
+    let mult=1;if(close&&dead&&!talking){const r=npcReact(p,dt);if(r<0)continue;if(r>0)mult=r}
+    if(talking)continue;
     const d=dist(p.x,p.z,p.tx,p.tz);if(d<.1){p.path=null;continue}
-    const far=Math.abs(p.x-pl.x)>75||Math.abs(p.z-pl.z)>75;const s=sp*dt*(p.health<45?.6:1)*(far?3:1);
+    const far=Math.abs(p.x-pl.x)>75||Math.abs(p.z-pl.z)>75;const s=sp*dt*(p.health<45?.6:1)*(far?3:1)*mult;
     if(far){p.path=null;const k=Math.min(d,s);p.x+=(p.tx-p.x)/d*k;p.z+=(p.tz-p.z)/d*k;continue}
     if(!p.path||p.ptx!==p.tx||p.ptz!==p.tz){p.path=navPath(p.x,p.z,p.tx,p.tz);p.pi=0;p.ptx=p.tx;p.ptz=p.tz}
     const r=walkAlong(p,p.path,p,s,"npc",.27);
     if(r===2){p.path=null;if(d>.3){p.x=p.tx;p.z=p.tz}}
     else if(r===0){p._st=(p._st||0)+dt;if(p._st>2.2){p._st=0;const w=p.path[p.pi];if(w&&free(w.x,w.z,.27,"npc")){p.x=w.x;p.z=w.z;p.pi++}else{p.x=p.tx;p.z=p.tz;p.path=null}}}
-    else{p._st=0;const D=doorAt(p.x,p.z,.32);if(D&&!D.open)D.npcT=now+900}}}
+    else{p._st=0;const D=doorAt(p.x,p.z,.32);if(D&&!D.open)D.npcT=now+900}}
+  W3.npcNear=near}
 function followerMove(p,idx,dt){const pl=S.player;const side=idx%2?1:-1,row=Math.floor(idx/2);const a=W3.ang+Math.PI+side*(.6+row*.25);const rr=1.35+row*.8;const plk=roomKey(pl.x,pl.z);
   let want={x:pl.x+Math.sin(a)*rr,z:pl.z+Math.cos(a)*rr},fight=null;
   if(p.age>=14&&p.tr.brave>.25&&p.health>30){let bd=6;for(const z of S.zeds){if(Math.abs(z.x-pl.x)>7||Math.abs(z.z-pl.z)>7)continue;const d=dist(z.x,z.z,pl.x,pl.z);if(d<bd&&dist(z.x,z.z,p.x,p.z)<10&&losClear(p.x,p.z,z.x,z.z)){bd=d;fight=z}}if(fight)want={x:fight.x,z:fight.z}}
@@ -139,8 +143,8 @@ function zst(z){let s=W3.zst.get(z.id);if(!s)W3.zst.set(z.id,s={tgt:null,lt:0,pa
 function hasLight(){return invHas("flashlight")}
 function lightOn(){return W3.night&&W3.flOn&&hasLight()}
 function moveZeds(dt){const pl=S.player;const wx=wxName();const sight=(W3.night?(lightOn()?7.5:5):11)*(wx==="fog"?.7:wx==="rain"?.85:1);
-  const act=[];for(const z of S.zeds)if(Math.abs(z.x-pl.x)<55&&Math.abs(z.z-pl.z)<55)act.push(z);
-  const tg=[pl,...W3.followers];const now=performance.now();
+  const act=[];for(const z of S.zeds)if(Math.abs(z.x-pl.x)<55&&Math.abs(z.z-pl.z)<55)act.push(z);W3.zAct=act;
+  const tg=[pl,...W3.followers,...(W3.npcNear||[])];const now=performance.now();
   for(const z of act){const Z=zst(z);if(z.stun>0){z.stun-=dt;continue}
     // look around a few times a second
     Z.lt-=dt;if(Z.lt<=0){Z.lt=.22+rf()*.18;let best=null,bd=1e9;const sr=z.st==="chase"?sight*1.6:sight;
@@ -161,11 +165,11 @@ function moveZeds(dt){const pl=S.player;const wx=wxName();const sight=(W3.night?
     else{Z.pt-=dt;if(!Z.path||Z.pt<=0){Z.path=navPath(z.x,z.z,z.tx,z.tz);Z.pi=0;Z.pt=z.st==="chase"?.9:2.5}r=walkAlong(z,Z.path,Z,s,"zed",.3);if(r===2)Z.path=null}
     if(r===0){// a closed door in the way gets pounded on
       const ax=z.x+(Z.path&&Z.path[Z.pi]?Math.sign(Z.path[Z.pi].x-z.x)*.5:dx/l*.5),az=z.z+(Z.path&&Z.path[Z.pi]?Math.sign(Z.path[Z.pi].z-z.z)*.5:dz/l*.5);const D=doorAt(ax,az,.35);
-      if(D&&!doorOpen(D)&&z.st!=="idle"){Z.bang-=dt;if(Z.bang<=0){Z.bang=1.1+rf()*.5;D.hp-=rnd(3,7);D.thump=now;noise(D.x,D.z,6);
+      if(D&&!doorOpen(D)&&z.st!=="idle"){Z.bang-=dt;Z.pd=(Z.pd||0)+dt;if(z.st==="hunt"&&Z.pd>14+rf()*10){Z.pd=0;z.st="idle";Z.path=null;z.wt=4+rf()*6}else if(Z.bang<=0){Z.bang=1.1+rf()*.5;D.hp-=rnd(3,7);D.thump=now;noise(D.x,D.z,6);
         if(dist(D.x,D.z,pl.x,pl.z)<16&&now-(W3.bangMsg||0)>9000){W3.bangMsg=now;toast(D.hp<40?"The door is splintering. It won't hold much longer.":"Something is pounding on a door nearby.")}
         if(D.hp<=0){D.broken=true;D.open=true;D.bar=0;D.lock=null;doorSave(D);if(dist(D.x,D.z,pl.x,pl.z)<25){toast("A door gives way.");journal(`The dead broke down a door at ${doorBld(D)?.n||"a building"}.`,"bad")}}}}
       else if(z.st==="idle")z.wt=0;else{Z.stk=(Z.stk||0)+dt;if(Z.stk>3){Z.stk=0;Z.path=null;if(z.st==="hunt")z.st="idle"}}}
-    else Z.stk=0;
+    else{Z.stk=0;Z.pd=0}
     z.r=regionAt(z.x,z.z)}
   // the dead don't stack up on each other, or on you
   for(let i=0;i<act.length;i++)for(let j=i+1;j<act.length;j++){const a=act[i],b=act[j];const dx=b.x-a.x,dz=b.z-a.z;if(Math.abs(dx)>.6||Math.abs(dz)>.6)continue;const d=Math.hypot(dx,dz);if(d<.6&&d>.001){const q=(.6-d)/2/d;step(a,-dx*q,-dz*q,.3,"zed");step(b,dx*q,dz*q,.3,"zed")}}
@@ -176,9 +180,12 @@ function zedHitsPlayer(z){const pl=S.player;const ar=armor();if(rf()>.72-pl.sk.f
   if(!pl.bitten&&rf()<.13*(1-ar/12)){pl.bitten=S.t;journal("Teeth, through your sleeve and into your arm. You've been bitten. You know what that means. You have a day, maybe two.","bad");toast("You've been bitten.")}
   else if(!pl.bleeding&&rf()<.22){pl.bleeding=1;toast("You're bleeding.")}
   if(pl.hp<=0)die("the dead")}
-function zedHitsNPC(z,p){if(rf()>.55)return;p.health-=rnd(4,10);bubble(p,pick(["Get off me!","Help!","*screams*","No, no, no!"]),1.6);
-  if(!p.bitten&&rf()<.12){p.bitten=S.t+rnd(6,30)*60;mem(p,"I got bit. I haven't told anyone.",-10,p.id);if(rf()<.5)toast(`${p.name} cries out. Did they get bitten?`)}
-  if(p.health<=0){kill(p,"was killed by the dead");journal(`${p.name} died beside you.`,"bad");markUI()}}
+function zedHitsNPC(z,p){if(!p.alive||rf()>.45)return;const pl=S.player;p.health-=rnd(4,10);p.fear=Math.min(100,(p.fear||0)+20);p.seen=S.t;
+  bubble(p,p.age<13?pick(["*screams*","MOM!","Help me!"]):pick(["Get off me!","Help!","*screams*","No, no, no!","Somebody!"]),1.6);noise(p.x,p.z,8);
+  const fol=isFollower(p);const saw=fol||dist(p.x,p.z,pl.x,pl.z)<16&&losClear(p.x,p.z,pl.x,pl.z);const who=p.met||fol?p.name:"someone";
+  if(!p.bitten&&rf()<(p.seed?.035:.08)){p.bitten=S.t+rnd(6,30)*60;tally(fol?"bit near you (with you)":"bit near you");mem(p,"I got bit. I haven't told anyone.",-10,p.id);if(saw)toast(`${who[0].toUpperCase()+who.slice(1)} cries out. Were they bitten?`)}
+  if(p.health<=0){const at=bldAt(p.x,p.z);tally("killed near you");kill(p,`was killed by the dead${at?" at "+at.n:""}`);if(fol)journal(`${p.name} died beside you.`,"bad");else if(saw)journal(`You watched the dead pull ${who} down${at?" in "+at.n:""}.`,"bad");
+    if(rf()<.7)riseLater(p,rnd(3,12));markUI()}}
 function reach(){const w=weapon();return w?(ITEMS[w.id].gun?13:(ITEMS[w.id].reach||1.7)):1.3}
 function attackNearest(){const pl=S.player;if(W3.task)return;let best=null,bs=1e9;const R=reach()+.4;
   for(const z of S.zeds){if(Math.abs(z.x-pl.x)>R||Math.abs(z.z-pl.z)>R)continue;const d=dist(z.x,z.z,pl.x,pl.z);if(d>R)continue;let da=Math.atan2(z.x-pl.x,z.z-pl.z)-W3.ang;while(da>Math.PI)da-=Math.PI*2;while(da<-Math.PI)da+=Math.PI*2;
@@ -211,7 +218,8 @@ function promptTargets(){const pl=S.player;const out=[];const myK=roomKey(pl.x,p
   for(const p of nearPeople(2.2)){if(p.age<4)continue;const d=dist(p.x,p.z,pl.x,pl.z);if(!losClear(p.x,p.z,pl.x,pl.z))continue;out.push({k:"talk",p,x:p.x,z:p.z,y:1.95,sc:d-.3+facing(p.x,p.z),label:`Talk to ${p.met?p.name:"the stranger"}`})}
   const b=bldAt(pl.x,pl.z);const near=[];if(b)near.push(b);for(const o of W3.bm.values()){const B=o.b;if(B!==b&&Math.abs(B.x-pl.x)<B.w/2+2&&Math.abs(B.z-pl.z)<B.d/2+2)near.push(B)}
   for(const B of near){for(const c of B.cs||[]){const d=contReach(c,pl.x,pl.z);if(d>.9)continue;if(myK!==B.id+"/"+c.room)continue;out.push({k:"cont",c,x:c.x,z:c.z,y:FURN[c.f.k].h+(c.f.y||0)+.35,sc:d+facing(c.x,c.z),label:contVerb(c)})}
-    for(const D of B.doors){const d=dist(D.x,D.z,pl.x,pl.z);if(d>1.5)continue;out.push({k:"door",D,x:D.x,z:D.z,y:2.35,sc:d+.25+facing(D.x,D.z),label:doorVerb(D)})}}
+    for(const D of B.doors){const d=dist(D.x,D.z,pl.x,pl.z);if(d>1.5)continue;out.push({k:"door",D,x:D.x,z:D.z,y:2.35,sc:d+.25+facing(D.x,D.z),label:doorVerb(D)})}
+    for(const t of B.taps||[]){if(myK!==B.id+"/"+t.room)continue;const w=t.f.w;const d=Math.hypot(Math.max(0,w.x0-pl.x,pl.x-w.x1),Math.max(0,w.z0-pl.z,pl.z-w.z1));if(d>.9)continue;out.push({k:"tap",t,x:t.x,z:t.z,y:1.25,sc:d+.15+facing(t.x,t.z),label:tapVerb()})}}
   for(const c of CARS){if(Math.abs(c.x-pl.x)>3.5||Math.abs(c.z-pl.z)>3.5)continue;const C=CONTS[c.id];const d=contReach(C,pl.x,pl.z);if(d<.9)out.push({k:"cont",c:C,x:c.x,z:c.z,y:1.7,sc:d+facing(c.x,c.z),label:`Search the ${c.n.toLowerCase()}`})}
   for(const p of S.piles){if(!p.c.items.length)continue;const d=dist(p.x,p.z,pl.x,pl.z);if(d<1.4&&roomKey(p.x,p.z)===myK)out.push({k:"pile",id:p.id,x:p.x,z:p.z,y:.7,sc:d+.1+facing(p.x,p.z),label:`Look through what's on the ground`})}
   return out.sort((a,c)=>a.sc-c.sc)}
@@ -225,7 +233,13 @@ function updPrompt(){const pl=S.player;let t=null;if(pl.alive!==false&&!W3.task&
   if(key!==W3.promptKey){W3.promptKey=key;if(t){el.hidden=false;el.innerHTML=`<b>E</b> ${esc(t.label)}${t.sub?` <span class="mute">· ${esc(t.sub)}</span>`:""}`}else el.hidden=true}
   if(t)place(el,t.x,t.y,t.z)}
 function interact(){const t=W3.promptT;if(!t||UI.modal||S.player.alive===false)return;cancelWalk();
-  if(t.k==="talk")openTalk(t.p.id);else if(t.k==="cont")tryOpenCont(t.c.id);else if(t.k==="door")useDoor(t.D);else if(t.k==="pile")openCont(t.id)}
+  if(t.k==="talk")openTalk(t.p.id);else if(t.k==="cont")tryOpenCont(t.c.id);else if(t.k==="door")useDoor(t.D);else if(t.k==="pile")openCont(t.id);else if(t.k==="tap")useTap()}
+// the taps work until the town's water stops
+function tapVerb(){const pl=S.player;if(S.flags.waterOff)return"The tap is dry";if(pl.water<92||!invHas("empty_bottle"))return"Drink from the tap";return"Fill a bottle at the tap"}
+function useTap(){const pl=S.player;if(S.flags.waterOff){toast(pick(["Nothing. The pipes just knock.","Dry. The water's been off since the power went.","A cough of air, then nothing."]));return}
+  if(pl.water<92){pl.water=clamp(pl.water+30,0,100);toast(pl.water>=92?"You drink until you can't anymore.":"You drink from the tap.");act(2);markUI();return}
+  if(invHas("empty_bottle")){invTake("empty_bottle");invAdd("water_bottle",1,true);toast("You fill a bottle at the tap.");markUI();return}
+  toast("You've had all you can drink.")}
 // opening furniture: locks, people watching, the dead too close
 function tryOpenCont(cid){const pl=S.player;const c=CONTS[cid];if(!c)return;
   if(zedNear(3.2)){toast("Not with the dead this close.");return}
@@ -375,15 +389,22 @@ function afterJump(m){const pl=S.player;if(m>=10){for(const z of S.zeds){if(Math
 function act(mins,opt){advance(mins,opt||{});if(S.player.alive!==false)afterJump(mins)}
 function worldHour(h){if(S.player.alive===false)return;
   for(const z of [...S.zeds]){if(PLACES[z.r]?.site&&ownerOf(z.r)&&dist(z.x,z.z,S.player.x,S.player.z)>22&&rf()<.6)S.zeds.splice(S.zeds.indexOf(z),1)}
-  if(h===8||h===18)feedFollowers();
+  if(h===8||h===13||h===18)feedFollowers();
   if(S.player.fire&&S.player.fire.until<=S.t)S.player.fire=null;
   for(const p of S.piles)if(S.t-p.t>DAY*4&&dist(p.x,p.z,S.player.x,S.player.z)>30)p.c.items=[];cleanPiles();
   markUI()}
-function feedFollowers(){const pl=S.player;for(const p of S.people){if(!isFollower(p)||p.group||p.age<2||p.hunger>65)continue;
-  let f=Object.keys(p.pack||{}).find(k=>ITEMS[k]?.eat&&!ITEMS[k].eat.sick);if(f){p.pack[f]--;if(!p.pack[f])delete p.pack[f];p.hunger=clamp(p.hunger+ITEMS[f].eat.food*1.6,0,100);continue}
-  const hb=BMAP[pl.home];if(hb&&dist(pl.x,pl.z,hb.x,hb.z)<16){if(pl.pantry==null)pl.pantry=rnd(6,12);if(pl.pantry>0){pl.pantry--;p.hunger=clamp(p.hunger+40,0,100);continue}}
-  const inv=invMap();f=Object.keys(inv).filter(k=>ITEMS[k].eat&&!ITEMS[k].eat.sick).sort((a,b)=>ITEMS[a].eat.food-ITEMS[b].eat.food)[0];
-  if(f){invTake(f);p.hunger=clamp(p.hunger+ITEMS[f].eat.food*1.6,0,100);journal(`${p.name} eats some of your ${ITEMS[f].n.toLowerCase()}.`,"")}else{p.mood-=4;if(rf()<.5)journal(`${p.name} hasn't eaten. They don't complain, which is worse.`,"bad")}}}
+function feedFollowers(){const pl=S.player;const h=hourOf(S.t);const hb=BMAP[pl.home];const home=hb&&dist(pl.x,pl.z,hb.x,hb.z)<16;
+  for(const p of S.people){if(!isFollower(p)||p.group||p.age<2)continue;
+    if(p.thirst==null)p.thirst=85;
+    if(p.thirst<60){const tap=!S.flags.waterOff&&(home||bldAt(pl.x,pl.z)&&bldAt(pl.x,pl.z).taps?.length);let k=Object.keys(DRINKS).find(q=>packHas(p,q));
+      if(tap)p.thirst=100;else if(k){packTake(p,k);packAdd(p,"empty_bottle");p.thirst=clamp(p.thirst+40,0,100)}
+      else{const inv=invMap();k=["water_bottle","boiled_water"].find(q=>inv[q]);if(k){invTake(k);invAdd("empty_bottle",1,true);p.thirst=clamp(p.thirst+40,0,100);journal(`${p.name} drinks some of your water.`,"")}
+        else{p.mood-=3;if(p.thirst<25&&rf()<.6)journal(`${p.name} is so thirsty their lips are cracking. You need water.`,"bad")}}}
+    if(h===13||p.hunger>65)continue;
+    let f=Object.keys(p.pack||{}).find(k=>ITEMS[k]?.eat&&!ITEMS[k].eat.sick);if(f){p.pack[f]--;if(!p.pack[f])delete p.pack[f];p.hunger=clamp(p.hunger+ITEMS[f].eat.food*1.6,0,100);continue}
+    if(home){if(pl.pantry==null)pl.pantry=rnd(6,12);if(pl.pantry>0){pl.pantry--;p.hunger=clamp(p.hunger+40,0,100);continue}}
+    const inv=invMap();f=Object.keys(inv).filter(k=>ITEMS[k].eat&&!ITEMS[k].eat.sick).sort((a,b)=>ITEMS[a].eat.food-ITEMS[b].eat.food)[0];
+    if(f){invTake(f);p.hunger=clamp(p.hunger+ITEMS[f].eat.food*1.6,0,100);journal(`${p.name} eats some of your ${ITEMS[f].n.toLowerCase()}.`,"")}else{p.mood-=4;if(rf()<.5)journal(`${p.name} hasn't eaten. They don't complain, which is worse.`,"bad")}}}
 function die(cause){const pl=S.player;if(pl.alive===false)return;pl.alive=false;pl.hp=0;cancelWalk();cancelTask();
   const how=cause||(pl.bitten&&(S.t-pl.bitten)/60>30?"the bite":pl.water<=0?"thirst":pl.food<=0?"hunger":pl.warmth<=0?"the cold":pl.bleeding?"blood loss":pl.sick?"fever":"your wounds");pl.cause=how;
   for(const p of living())if(p.met&&feel(p)>30){p.mood-=feel(p)>60?25:8;mem(p,`${pl.name} is gone.`,-8,"you")}
@@ -393,9 +414,12 @@ function die(cause){const pl=S.player;if(pl.alive===false)return;pl.alive=false;
 function nearCheck(){const pl=S.player;const r=here();const inB=bldAt(pl.x,pl.z);
   const label=inB?inB.n+(roomAt(pl.x,pl.z)?" · "+(ROOMNAME[inB.rooms[roomAt(pl.x,pl.z).ri].t]||""):""):PLACES[r].n;
   if(label!==W3.areaLbl){const first=W3.areaLbl==null;const wasIn=W3.lastB;W3.areaLbl=label;W3.lastB=inB;if(inB!==wasIn||first||r!==W3.region){W3.areaEl.textContent=inB?inB.n:PLACES[r].n;W3.areaT=first?2.5:2.2}
-    if(inB&&inB!==wasIn)intrusion(inB);markHud()}
+    if(inB&&inB!==wasIn){intrusion(inB);if(inB.id===pl.home)homeArrive()}markHud()}
   if(r!==W3.region){const first=W3.region===null;W3.region=r;const o=PLACES[r].site?ownerOf(r):null;if(o&&!first&&o.id!==pl.group)toast(`This is ${o.name} territory. ${o.pol.stance==="hostile"?"They don't look friendly.":"People look up when you walk in."}`)}
   W3.nearB=BUILDINGS.filter(b=>Math.abs(b.x-W3.camX)<26&&Math.abs(b.z-W3.camZ)<26&&b!==inB).slice(0,14)}
+
+function homeArrive(){const F=S.flags;if(!F.wake||S.player.coma)return;if(!F.homeSeen)F.homeSeen=S.t;const N=F.homeNote;
+  if(N&&!N.read&&!UI.modal){N.read=S.t;UI.modal={type:"result",title:N.title,text:N.text};journal(`You found a note at home from ${N.who}.`,"big");render()}}
 
 // ---------- the loop ----------
 function every(ts,k,ms,fn){if(ts-(W3.tk[k]||0)>=ms){W3.tk[k]=ts;fn()}}
@@ -405,7 +429,7 @@ function frame(ts){requestAnimationFrame(frame);if(!S||UI.create||!W3.ok)return;
   if(!paused){W3.acc+=dt*UI.speed;if(W3.acc>=1){const m=Math.floor(W3.acc);W3.acc-=m;const h0=Math.floor(S.t/60);advance(m);if(Math.floor(S.t/60)!==h0&&S.player.alive!==false)markUI()}
     if(S.player.alive!==false&&!UI.modal){playerMove(dt);moveNPCs(dt);moveZeds(dt);companions(dt);taskTick(dt);chatter(dt);if(typeof invTick==="function")invTick(dt)}
     if(W3.cd>0)W3.cd-=dt}
-  every(ts,"sync",300,syncFigs);every(ts,"site",1500,()=>{syncSites();syncPiles();dropDead()});every(ts,"light",1000,lighting);every(ts,"fade",200,()=>{fadeTrees();updateCutaway();autoDoors()});
+  every(ts,"sync",300,syncFigs);every(ts,"site",1500,()=>{syncSites();syncPiles();dropDead()});every(ts,"rise",1000,riseTick);every(ts,"ask",1500,()=>{if(!paused){askAlong();inviteCheck()}});every(ts,"light",1000,lighting);every(ts,"fade",200,()=>{fadeTrees();updateCutaway();autoDoors()});
   every(ts,"prompt",120,updPrompt);every(ts,"mini",400,()=>{if(W3.mini)drawMap(W3.mini)});every(ts,"hud",500,()=>{if(typeof hud==="function")hud()});every(ts,"near",500,nearCheck);every(ts,"save",20000,()=>{if(!paused)save()});
   if(typeof uiTick==="function")uiTick(ts,dt);
   animCutaway(dt);animDoors(dt);drawFigs(dt,ts);animFx(dt,ts);camera(dt);W3.ren.render(W3.scene,W3.cam);labels()}

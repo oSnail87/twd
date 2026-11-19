@@ -252,10 +252,11 @@ function setPol(k,v){const g=myGroup();if(!g||g.leader!=="you")return;const old=
 
 // ---------- talking: a box that opens beside the person you clicked ----------
 const QUICK=["How are you holding up?","Who are you?","What do you need?","Come with me.","Can I join your group?","Heard any news?"];
+function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close.","No. Not now.",...QUICK.slice(0,3)];if(q==="hang")return["Yes, I'll sit with you.","No, not now.",...QUICK.slice(0,3)];return p.follow?QUICK.filter(x=>x!=="Come with me.").concat(["Wait here."]):QUICK}
 function openTalk(pid){const p=P(pid);if(!p||!p.alive)return;if(UI.panel&&UI.panel!=="inv")UI.panel=null;UI.talkTo=pid;UI.talkFresh=true;p.lastTalk=S.t;cancelWalk();
   const pl=S.player;W3.ang=Math.atan2(p.x-pl.x,p.z-pl.z);render();const box=$("talkbox");if(box&&matchMedia("(pointer:fine)").matches)box.focus({preventScroll:true})}
 function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}
-function talkHead(p){const g=p.group?G(p.group):null;return `<div class="who"><b>${esc(p.met?fullName(p):"A stranger")}</b><span class="mono mute">${p.age} · ${esc(p.met?JOBS[p.job]?.n||"":p.look||"")}${g?" · "+esc(g.name):""}${p.met?" · "+tierWord(tier(p)):""}${isFollower(p)?" · with you":""}</span></div>`}
+function talkHead(p){const g=p.group?G(p.group):null;return `<div class="who"><b>${esc(p.met?fullName(p):"A stranger")}</b><span class="mono mute">${p.age} · ${esc(p.met?JOBS[p.job]?.n||"":p.look||"")}${g?" · "+esc(g.name):""}${p.met?" · "+esc(relLabel(p)):""}${isFollower(p)?" · with you":""}</span></div>`}
 function chatHtml(p){const L=p.chat.slice(-30);if(!L.length)return `<div class="msg sys">${p.met?`You know ${esc(p.name)}. Say something.`:"You haven't met. Say something."}</div>`;
   return L.map(m=>`<div class="msg ${m.w}${m.live?" live":""}">${esc(m.x)}${m.live&&!m.x?'<span class="dots"><i></i><i></i><i></i></span>':""}</div>`).join("")}
 function renderTalk(){const el=$("talk");if(!el)return;const p=UI.talkTo?P(UI.talkTo):null;if(!p||!p.alive||S.player.alive===false||UI.modal&&UI.modal.type!=="trade"){if(UI.talkTo&&(!p||!p.alive))UI.talkTo=null;el.hidden=true;el.innerHTML="";return}
@@ -266,7 +267,7 @@ function renderTalk(){const el=$("talk");if(!el)return;const p=UI.talkTo?P(UI.ta
   <div class="chat" id="chat">${chatHtml(p)}</div>
   ${far?`<p class="warn mono">${esc(p.met?p.name:"They")} can't hear you from here. Walk closer.</p>`:""}
   <form class="say" data-form="talk"><input id="talkbox" autocomplete="off" placeholder="${busy?"They're answering...":"Say anything..."}" value="${esc(UI.draft)}" maxlength="300" aria-label="What you say"${busy?" disabled":""}><button class="btn pri" type="submit"${busy?" disabled":""}>Say</button></form>
-  <div class="chips">${QUICK.map(q=>`<button class="chip" data-act="quick" data-v="${esc(q)}"${busy?" disabled":""}>${esc(q)}</button>`).join("")}</div>
+  ${bondRow(p)}<div class="chips">${talkChips(p).map(q=>`<button class="chip" data-act="quick" data-v="${esc(q)}"${busy?" disabled":""}>${esc(q)}</button>`).join("")}</div>
   <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}${typeof AI!=="undefined"&&AI.ns?`<button class="tag" id="aistate" data-act="aitoggle" title="${AI.on?"Switch to built-in lines (no Claude usage)":"Let Claude write what people say"}">${esc(aiStateText())}</button>`:""}</footer>`;
   const c=$("chat");if(c)c.scrollTop=c.scrollHeight;positionTalk(true);
   const nb=$("talkbox");if(nb&&(had||UI.talkFresh)&&!busy){nb.focus({preventScroll:true});if(sel)try{nb.setSelectionRange(sel[0],sel[1])}catch(e){}}UI.talkFresh=false}
@@ -346,6 +347,7 @@ function onAct(a,v,el,e){const pl=S&&S.player;
   if(typeof onCreateAct==="function"&&onCreateAct(a,v,el,e))return;
   if(!S)return;
   if(typeof onInvAct==="function"&&onInvAct(a,v,el,e))return;
+  if(typeof onBondAct==="function"&&onBondAct(a,v,el,e))return;
   switch(a){
     case"speed":if(v==="pause")UI.paused=!UI.paused;else{UI.speed=+v;UI.paused=false}hud();return;
     case"zoom":W3.zoom=clamp(W3.zoom*(v==="in"?1.2:1/1.2),.55,2.6);return;
