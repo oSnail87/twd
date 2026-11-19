@@ -1,1 +1,1 @@
-00_head.html 10_base.js 20_interior.js 30_inventory.js 35_body.js 40_sim.js 45_mind.js 48_coma.js 50_talk.js 52_bond.js 55_ai.js 60_world.js 65_figs.js 68_play.js 70_ui.js 75_health.js 80_inv_ui.js 90_boot.js
+00_head.html 10_base.js 20_interior.js 30_inventory.js 35_body.js 40_sim.js 45_mind.js 48_coma.js 50_talk.js 52_bond.js 55_ai.js 60_world.js 65_figs.js 68_play.js 69_fight.js 70_ui.js 75_health.js 80_inv_ui.js 90_boot.js

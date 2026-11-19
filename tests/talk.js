@@ -21,7 +21,7 @@ const modes={};for(const r of res)modes[r.mode]=(modes[r.mode]||0)+1;ok(modes.fr
 for(const a of [6,15,22,40,58,72]){const r=res.find(x=>Math.abs(x.a-a)<=3&&x.m==="How are you holding up?");if(r)console.log(`    ${r.n}, ${r.a} (${r.st}): "${r.t}"`)}
 const pr=X(`(()=>{const p=living().find(p=>p.age>=13&&p.age<18);const r=respond(p,"hey what's up");return aiPrompt(p,"hey what's up",r)})()`);
 ok(/a teenager/.test(pr)&&/NOTHING IS DECIDED/.test(pr)&&/FEEL:/.test(pr),'the Claude prompt has the teen voice and leaves small talk open');
-const pr2=X(`(()=>{const p=living().find(p=>p.age>=25&&!p.group);const r=respond(p,"come with me");return [talkMode(r),aiPrompt(p,"come with me",r)]})()`);
+const pr2=X(`(()=>{const p=living().find(p=>p.age>=25&&!p.group)||living().find(p=>p.age>=25&&p.group!==S.player.group);const r=respond(p,"come with me");return [talkMode(r),aiPrompt(p,"come with me",r)]})()`);
 ok(pr2[0]==="decided"&&/the reply must match it/.test(pr2[1]),'asking someone to come along is still decided by the game');
 const P1=X('JSON.stringify(aiParse("SAY: Huh. A nurse? *leans in* Then you can look at my hand.\\nFEEL: 2\\nNOTE: Dana used to be a nurse.\\nEND: no"))');const pa=JSON.parse(P1);
 ok(pa.say.startsWith("Huh. A nurse?")&&pa.feel===2&&pa.note==="Dana used to be a nurse."&&!pa.end,'reads what Claude wrote: '+P1);

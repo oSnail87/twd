@@ -14,6 +14,7 @@ function layout(){if($("game"))return;$app.innerHTML=`<div id="game">
   <div id="bar" class="hud"></div>
   <aside id="panel" hidden></aside>
   <section id="talk" hidden aria-label="Conversation"></section>
+  <section id="fight" hidden aria-label="Fight"></section>
   <div id="modal"></div>
 </div><div id="create" hidden></div>`;
   const root=$("game");root.addEventListener("click",onClickUI);root.addEventListener("submit",e=>{e.preventDefault();onForm(e.target.dataset.form,e.target)});
@@ -21,7 +22,7 @@ function layout(){if($("game"))return;$app.innerHTML=`<div id="game">
   $("create").addEventListener("click",onClickUI);$("create").addEventListener("input",onInputUI);}
 function render(){if(UI.create||!S){if(typeof renderCreate==="function")renderCreate();return}
   $("create").hidden=true;$("game").classList.remove("creating");$("game").classList.toggle("dead",S.player.alive===false);
-  hud();renderBar();renderLog();if(!UI.drag)renderPanel();renderTalk();renderModal();UI.dirty=false}
+  hud();renderBar();renderLog();if(!UI.drag)renderPanel();renderTalk();renderFight();renderModal();UI.dirty=false}
 function hud(){if(!S||UI.create)return;const tl=$("hudtl"),v=$("vitals"),c=$("ctrls");if(tl)tl.innerHTML=clockHtml();if(v)v.innerHTML=vitalsHtml();if(c)c.innerHTML=ctrlsHtml();UI.hudDirty=false}
 
 // ---------- the corners: time, place, how you're doing ----------
@@ -29,7 +30,7 @@ function wxWord(){return{clear:"Clear",overcast:"Overcast",rain:"Rain",snow:"Sno
 function clockHtml(){const pl=S.player;const inB=bldAt(pl.x,pl.z);const r=roomAt(pl.x,pl.z);const zc=S.zeds.filter(z=>Math.abs(z.x-pl.x)<14&&Math.abs(z.z-pl.z)<14&&dist(z.x,z.z,pl.x,pl.z)<14).length;
   return `<div class="clk"><b>${esc(stamp(S.t))}</b> <span class="mute">${wxWord()}, ${temp()}°C</span></div>
   <div class="where">${esc(inB?inB.n:PLACES[here()].n)}${r?`<span class="mute"> · ${esc(ROOMNAME[inB.rooms[r.ri].t]||"")}</span>`:""}</div>
-  ${zc?`<div class="warn mono">${zc===1?"One of the dead is":zc+" of the dead are"} close.</div>`:""}${UI.paused?'<div class="warn mono">Paused</div>':W3.pausedNow&&UI.talkTo?'<div class="mute mono">Time stops while you talk</div>':""}`}
+  ${zc?`<div class="warn mono">${zc===1?"One of the dead is":zc+" of the dead are"} close.</div>`:""}${UI.paused?'<div class="warn mono">Paused</div>':W3.pausedNow&&UI.talkTo?'<div class="mute mono">Time stops while you talk</div>':UI.fight?'<div class="warn mono">Fighting</div>':""}`}
 function vitalsHtml(){const pl=S.player;const v=(n,val,k)=>`<div class="vital ${val<25?"low":val<50?"mid":""}" title="${n} ${Math.round(val)}"><span class="lbl">${n}</span><div class="bar"><i style="width:${Math.round(clamp(val,0,100))}%"></i></div></div>`;
   const w=weight(),m=maxW();
   return `<button class="vbtn" data-act="panel" data-v="health" title="Your body (H)" aria-label="Your body: health ${Math.round(pl.hp)}">${v("Health",pl.hp)}</button>`+v("Food",pl.food)+v("Water",pl.water)+v("Warmth",pl.warmth)+v("Energy",pl.energy)+
@@ -151,7 +152,7 @@ function craftHtml(){const fire=nearFire();return `<p class="mute">Making things
   return `<div class="card"><div class="row">${typeof itemIcon==="function"?itemIcon(r.id,32):""}<b>${esc(r.verb||it.n)}</b></div><div class="mono mute">${Object.entries(r.need).map(([k,v])=>`${esc(ITEMS[k].n)} ×${v}`).join(", ")}${r.tool?` · a ${r.tool}`:""}${r.at?" · a fire":""} · ${r.h<1?Math.round(r.h*60)+" min":r.h+" h"}</div>${gearStats(r.id)?`<div class="mono mute">${gearStats(r.id)}</div>`:""}<button class="btn${ok===true?" pri":""}" data-act="craft" data-v="${r.key||r.id}"${ok===true?"":" disabled"}>Make it<small>${ok===true?"Ready":esc(ok)}</small></button></div>`}).join("")}</div>`}
 
 // journal and the map
-function journalHtml(){const F=S.flags;const tip=(F.wake?S.t-F.wake<300:dayOf(S.t)===1&&hourOf(S.t)<12)?`<div class="card"><b>Getting started</b><div class="mute">Walk with WASD or by clicking the ground. Click a person to talk. Press E to open doors and search furniture, Space to fight. Tab opens your inventory. One real second is one minute here, and time stops while you talk.</div></div>`:"";
+function journalHtml(){const F=S.flags;const tip=(F.wake?S.t-F.wake<300:dayOf(S.t)===1&&hourOf(S.t)<12)?`<div class="card"><b>Getting started</b><div class="mute">Walk with WASD or by clicking the ground. Click a person to talk. Press E to open doors and search furniture, Space to fight. Fights go in turns, and you can see every roll. Tab opens your inventory. One real second is one minute here, and time stops while you talk.</div></div>`:"";
   return `${tip}<div class="lbl">What's happened to you</div><div class="journal">${S.journal.map(j=>`<div class="entry ${j.k}"><div class="mono">${stamp(j.t)}</div>${esc(j.x)}</div>`).join("")}</div>
   <div class="lbl" style="margin-top:14px">Around Limon</div><div class="journal">${(()=>{const L=S.news.filter(n=>!F.wake||n.t>=F.wake).slice(0,60);return L.length?L.map(n=>`<div class="entry ${n.k}"><div class="mono">${stamp(n.t)}</div>${esc(n.x)}</div>`).join(""):`<div class="entry mute">You slept through the first week. Whatever happened in Limon, you'll have to hear it from someone.</div>`})()}</div>`}
 function mapHtml(){const gs=Object.values(S.groups).filter(o=>!o.dead&&groupSize(o.id)>0);
@@ -278,7 +279,7 @@ function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close
   return out.slice(0,8)}
 function openTalk(pid){const p=P(pid);if(!p||!p.alive)return;if(UI.panel&&UI.panel!=="inv")UI.panel=null;UI.talkTo=pid;UI.talkFresh=true;p.lastTalk=S.t;cancelWalk();
   const pl=S.player;W3.ang=Math.atan2(p.x-pl.x,p.z-pl.z);render();const box=$("talkbox");if(box&&matchMedia("(pointer:fine)").matches)box.focus({preventScroll:true})}
-function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}
+function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.atkArm=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}
 function talkHead(p){const g=p.group?G(p.group):null;return `<div class="who"><b>${esc(p.met?fullName(p):"A stranger")}</b><span class="mono mute">${p.age} · ${esc(p.met?JOBS[p.job]?.n||"":p.look||"")}${g?" · "+esc(g.name):""}${p.met?" · "+esc(relLabel(p)):""}${isFollower(p)?" · with you":""}</span></div>`}
 function chatHtml(p){const L=p.chat.slice(-30);if(!L.length)return `<div class="msg sys">${p.met?`You know ${esc(p.name)}. Say something.`:"You haven't met. Say something."}</div>`;
   return L.map(m=>`<div class="msg ${m.w}${m.live?" live":""}">${esc(m.x)}${m.live&&!m.x?'<span class="dots"><i></i><i></i><i></i></span>':""}</div>`).join("")}
@@ -291,7 +292,7 @@ function renderTalk(){const el=$("talk");if(!el)return;const p=UI.talkTo?P(UI.ta
   ${far?`<p class="warn mono">${esc(p.met?p.name:"They")} can't hear you from here. Walk closer.</p>`:""}
   <form class="say" data-form="talk"><input id="talkbox" autocomplete="off" placeholder="${busy?"They're answering...":"Say anything..."}" value="${esc(UI.draft)}" maxlength="300" aria-label="What you say"${busy?" disabled":""}><button class="btn pri" type="submit"${busy?" disabled":""}>Say</button></form>
   ${bondRow(p)}<div class="chips">${talkChips(p).map(q=>`<button class="chip" data-act="quick" data-v="${esc(q)}"${busy?" disabled":""}>${esc(q)}</button>`).join("")}</div>
-  <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}${typeof AI!=="undefined"&&AI.ns?`<button class="tag" id="aistate" data-act="aitoggle" title="${AI.on?"Switch to built-in lines (no Claude usage)":"Let Claude write what people say"}">${esc(aiStateText())}</button>`:""}</footer>`;
+  <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}${p.age>=18?`<button class="tag danger" data-act="fattackp" data-v="${p.id}" title="Start a fight with ${esc(p.met?p.name:"them")}">${UI.atkArm===p.id?"Really attack?":"Attack"}</button>`:""}${typeof AI!=="undefined"&&AI.ns?`<button class="tag" id="aistate" data-act="aitoggle" title="${AI.on?"Switch to built-in lines (no Claude usage)":"Let Claude write what people say"}">${esc(aiStateText())}</button>`:""}</footer>`;
   const c=$("chat");if(c)c.scrollTop=c.scrollHeight;positionTalk(true);
   const nb=$("talkbox");if(nb&&(had||UI.talkFresh)&&!busy){nb.focus({preventScroll:true});if(sel)try{nb.setSelectionRange(sel[0],sel[1])}catch(e){}}UI.talkFresh=false}
 function renderTalkLog(){const p=UI.talkTo?P(UI.talkTo):null;const c=$("chat");if(!p||!c)return;const stick=c.scrollTop+c.clientHeight>=c.scrollHeight-30;c.innerHTML=chatHtml(p);if(stick)c.scrollTop=c.scrollHeight}
@@ -347,7 +348,7 @@ function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small 
 <tr><td>Doors</td><td>E opens and closes doors. Locked ones can be knocked on, pried with a crowbar or kicked in. B boards a door up if you have a hammer, wood and nails. The dead can't open doors, but they can break them down.</td></tr>
 <tr><td>Search</td><td>Click furniture, or stand next to it and press E. Things turn up as you look. Drag them into your pockets, bag or rig. R turns an item while you drag it.</td></tr>
 <tr><td>Inventory</td><td>Tab. Your clothes have pockets and your bag holds the most. Double-click to eat, drink, use or wear. Right-click for more.</td></tr>
-<tr><td>Fight</td><td>Space, or click one of the dead. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
+<tr><td>Fight</td><td>Space, or click one of the dead. A fight goes in turns and time holds still: pick a move, both sides roll a d20, and the higher total wins. Ties go to whoever is defending. Each button shows your odds. To fight a person, use Attack in the talk window. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
 <tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, and where. Wash a wound (water, alcohol or whiskey) so it doesn't turn, and wrap it (a bandage or a strip of cloth) to stop the bleeding. Wrap a broken bone tight to hold it still. If one turns, antibiotics cure it. Eat, drink and sleep: being fed and rested is what heals you.</td></tr>
 <tr><td>Light</td><td>F switches your flashlight on and off at night. The dead see it too.</td></tr>
 <tr><td>Panels</td><td>H your body, C make things, G your group, N people you know, J journal, M map, P pause, Esc closes things.</td></tr>
@@ -371,9 +372,12 @@ function onChangeUI(e){const el=e.target;if(el.dataset.sel==="role"){setRole(el.
 function onAct(a,v,el,e){const pl=S&&S.player;
   if(typeof onCreateAct==="function"&&onCreateAct(a,v,el,e))return;
   if(!S)return;
+  // mid-fight, the only things you can do are the fight's own moves
+  if(UI.fight&&!["fact","ftarget","fdecide","fclose","zoom","help","closemodal"].includes(a))return;
   if(typeof onInvAct==="function"&&onInvAct(a,v,el,e))return;
   if(typeof onBondAct==="function"&&onBondAct(a,v,el,e))return;
   if(typeof onHealthAct==="function"&&onHealthAct(a,v,el,e))return;
+  if(typeof onFightAct==="function"&&onFightAct(a,v,el,e))return;
   switch(a){
     case"speed":if(v==="pause")UI.paused=!UI.paused;else{UI.speed=+v;UI.paused=false}hud();return;
     case"zoom":W3.zoom=clamp(W3.zoom*(v==="in"?1.2:1/1.2),.55,2.6);return;

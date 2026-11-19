@@ -329,7 +329,8 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
   if(a.startsWith("bond:"))setTimeout(()=>{if(UI.talkTo===p.id)doBond(p,a.slice(5))},40);
   if(a==="stay"){p.follow=false;note(`${p.name} stops following you.`)}
   if(a==="trade")setTimeout(()=>openTrade(p.id),30);
-  if(a==="attack"){const me=pl.sk.fight*8+(weapon()?ITEMS[weapon().id].dmg*3:0)+rnd(0,50),them=p.sk.fight*10+rnd(0,50);if(me>=them){p.health-=rnd(8,20);note(`${p.name} swings at you. You put them on the ground.`)}else{const armed=Object.keys(p.pack||{}).some(k=>ITEMS[k]&&ITEMS[k].tool==="knife");const w=hurtPlayer(rnd(6,16),armed?"knife":"fight");note(`${p.name} ${armed?"comes at you with a blade":"swings at you"} and lands it.${w?" "+hitLine(w):""}`)}for(const q of living())if(dist(q.x,q.z,pl.x,pl.z)<10&&q!==p)q.trust-=2}
+  // they start it; the fight itself plays out on its own screen a moment later
+  if(a==="attack"){note(`${p.name} comes at you.`);const line=r.text;setTimeout(()=>{if(p.alive&&S.player.alive!==false&&!UI.fight)startFight({person:p,them:true,line})},700);for(const q of living())if(dist(q.x,q.z,pl.x,pl.z)<10&&q!==p)q.trust-=2}
   if(a==="romance_yes"){p.partner="you";pl.partner=p.id;note(`You and ${p.name} are together now.`);news(`${pl.name} and ${fullName(p)} are together.`,"good",[p.id])}
   if(a==="child_yes"){if((pl.sex==="F"&&p.sex==="M")||(pl.sex==="M"&&p.sex==="F")){pl.trying=true;note(`You and ${p.name} are trying for a child.`)}else note(`You talk about raising a child together. If a child ever loses their parents, you could take them in.`)}
   if(a==="break_up"){pl.partner=null;p.partner=null;pl.trying=false;note(`You and ${p.name} are no longer together.`);news(`${pl.name} and ${p.name} split up.`,"",[p.id])}

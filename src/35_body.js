@@ -79,8 +79,9 @@ function hitPart(){let r=rf()*BODY_KEYS.reduce((a,k)=>a+BODY[k].hit,0);for(const
 function partArmor(p){let a=0;for(const s of BODY[p].armor){const g=gearEq(s);if(g)a+=ITEMS[g.id].armor||0}return a}
 function partGear(p){for(const s of BODY[p].armor){const g=gearEq(s);if(g)return{s,g}}return null}
 // one of the dead gets a hand or its teeth on you
-function zedWound(z){const pl=S.player;const p=hitPart();const ar=partArmor(p);
-  if(!pl.bitten&&!(z&&z.weak)&&rf()<.13*(1-Math.min(ar,8)/9)*(p==="neck"?1.6:1)){const w=addWound("bite",p,{why:"the dead"});pl.bitten=S.t;return{w,bite:true,ar}}
+// bc is the chance of teeth instead of hands, before clothes; a fight passes it in from the dice
+function zedWound(z,bc=.13){const pl=S.player;const p=hitPart();const ar=partArmor(p);
+  if(!pl.bitten&&!(z&&z.weak)&&rf()<bc*(1-Math.min(ar,8)/9)*(p==="neck"?1.6:1)){const w=addWound("bite",p,{why:"the dead"});pl.bitten=S.t;return{w,bite:true,ar}}
   const r=rf();let k;
   if(ar>=3)k=r<.72?"bruise":r<.95?"scratch":"cut";
   else if(ar>=1)k=r<.45?"bruise":r<.8?"scratch":r<.97?"cut":"deep";
@@ -92,9 +93,10 @@ function hurtPlayer(n,how="fight"){const pl=S.player;pl.hp=Math.max(0,pl.hp-n);c
   let p=hitPart(),k;const r=rf();
   if(how==="fall"){p=pick(["lleg","rleg","lfoot","rfoot","larm","rarm","lhand","rhand","chest"]);k=r<.25?"fracture":r<.72?"bruise":"cut"}
   else if(how==="knife")k=r<.25?"bruise":r<.75?"cut":"deep";
+  else if(how==="shot")k=r<.65?"deep":"cut";
   else k=n>14&&r<.12?"fracture":r<.58?"bruise":r<.85?"cut":"deep";
   return addWound(k,p,{why:how})}
-function hitLine(w){const at=w.at;switch(w.k){
+function hitLine(w){const at=w.at;if(w.why==="shot")return pick([`The bullet tears through your ${at}.`,`You're shot in the ${at}. It burns, then it doesn't, which is worse.`]);switch(w.k){
   case"scratch":return pick([`Nails rake your ${at}.`,`Scratched across the ${at}.`,`It claws your ${at}. Just a scratch. Probably.`]);
   case"cut":return pick([`The skin on your ${at} tears open. You're bleeding.`,`A cut across your ${at}. It's bleeding.`]);
   case"deep":return `A deep gash in your ${at}. It's bleeding badly.`;

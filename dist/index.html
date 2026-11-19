@@ -247,6 +247,45 @@ button.cond{cursor:pointer;line-height:1.5} button.cond:hover{background:rgba(90
 #talk .bondrow{display:flex;flex-wrap:wrap;gap:4px;padding:6px 0 2px;border-top:1px dashed var(--line2)}
 #talk .bondrow .bond{font-size:11px;padding:2px 8px;border-color:rgba(201,139,176,.45)} #talk .bondrow .bond:hover{border-color:#c98bb0}
 #talk footer #aistate{margin-left:auto;font-family:var(--f-mono);font-size:10px}
+#talk footer .tag.danger{border-color:rgba(212,87,74,.5);color:#f0c4bd} #talk footer .tag.danger:hover{border-color:var(--blood)}
+/* a fight: the world holds still and the rounds play out here, dice and all */
+#fight{position:absolute;z-index:26;right:14px;top:12px;width:min(440px,calc(100vw - 28px));max-height:calc(100vh - 84px);display:flex;flex-direction:column;gap:9px;padding:11px 13px 12px;background:var(--panel);border:1px solid var(--line2);border-top:3px solid var(--blood);border-radius:10px;box-shadow:var(--shadow);backdrop-filter:blur(6px);animation:panelIn .18s ease-out}
+#fight[hidden]{display:none}
+#fight>header{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+#fight>header b{font-family:var(--f-display);font-weight:400;font-size:22px;letter-spacing:.06em;color:var(--blood);margin-right:6px}
+#game.fighting #log{display:none}
+#game.fighting #bar,#game.fighting #vitals{opacity:.4}
+#game.fighting #bar *,#game.fighting #vitals *{pointer-events:none}
+.foes{display:flex;flex-direction:column;gap:5px;flex:0 0 auto}
+.foe{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:center;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:13.5px}
+.foe:hover:not(:disabled){border-color:var(--line2)} .foe:disabled{cursor:default}
+.foe.sel{border-color:var(--ember);box-shadow:inset 3px 0 0 var(--ember)}
+.foe.out{opacity:.55} .foe.out .fn{text-decoration:line-through;text-decoration-color:var(--dim)}
+.fbar{display:block;height:4px;background:var(--panel3);border-radius:2px;overflow:hidden}
+.fbar i{display:block;height:100%;background:var(--blood)}
+.foe .fbar{grid-column:1/-1}
+.fwho{font-size:11px}
+.flog{display:flex;flex-direction:column;gap:5px;overflow:auto;min-height:96px;max-height:min(300px,34vh);padding:7px 9px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:6px;font-size:13.5px;line-height:1.45}
+.fl{border-left:2px solid var(--line2);padding-left:8px}
+.fl.you{border-color:var(--sky)} .fl.them{border-color:var(--ember)} .fl.bad{border-color:var(--blood);color:#f3cdc6} .fl.good{border-color:var(--lichen)} .fl.ally{border-color:#c98bb0} .fl.sys{border-color:transparent;color:var(--mute)}
+.flr{font-family:var(--f-mono);font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);margin-top:3px}
+.flr:first-child{margin-top:0}
+.dice{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:11px;color:var(--mute);margin-left:3px;white-space:nowrap;vertical-align:1px}
+.dice i{font-style:normal}
+.dice .who{color:var(--dim);text-transform:uppercase;font-size:9.5px;letter-spacing:.08em;margin-left:3px}
+.die{display:inline-grid;place-items:center;min-width:21px;height:19px;padding:0 3px;border:1px solid var(--line2);border-radius:4px;background:var(--panel3);color:var(--fg);font-weight:600}
+.die.n20{border-color:#e0b84a;color:#e0b84a} .die.n1{border-color:var(--blood);color:var(--blood)}
+.fyou{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;font-family:var(--f-mono);font-size:11.5px;color:var(--fg)}
+.fyou .fbar{height:6px} .fyou .fbar i{background:var(--lichen)}
+.fsum{font-size:14px;line-height:1.5;margin:0}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.facts.one{grid-template-columns:1fr}
+.facts .btn{width:100%;padding:7px 10px}
+.facts .btn>span{font-size:13.5px}
+.facts .btn small{line-height:1.35}
+.facts .btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.danger{border-color:rgba(212,87,74,.55)} .btn.danger:hover:not(:disabled){border-color:var(--blood)}
+.fk{display:inline-grid;place-items:center;min-width:16px;height:16px;margin-right:4px;border:1px solid currentColor;border-radius:3px;font-family:var(--f-mono);font-size:10px;font-weight:400;opacity:.7;vertical-align:1px}
 
 /* ---------- modals ---------- */
 #modal[hidden]{display:none}
@@ -1115,8 +1154,9 @@ function hitPart(){let r=rf()*BODY_KEYS.reduce((a,k)=>a+BODY[k].hit,0);for(const
 function partArmor(p){let a=0;for(const s of BODY[p].armor){const g=gearEq(s);if(g)a+=ITEMS[g.id].armor||0}return a}
 function partGear(p){for(const s of BODY[p].armor){const g=gearEq(s);if(g)return{s,g}}return null}
 // one of the dead gets a hand or its teeth on you
-function zedWound(z){const pl=S.player;const p=hitPart();const ar=partArmor(p);
-  if(!pl.bitten&&!(z&&z.weak)&&rf()<.13*(1-Math.min(ar,8)/9)*(p==="neck"?1.6:1)){const w=addWound("bite",p,{why:"the dead"});pl.bitten=S.t;return{w,bite:true,ar}}
+// bc is the chance of teeth instead of hands, before clothes; a fight passes it in from the dice
+function zedWound(z,bc=.13){const pl=S.player;const p=hitPart();const ar=partArmor(p);
+  if(!pl.bitten&&!(z&&z.weak)&&rf()<bc*(1-Math.min(ar,8)/9)*(p==="neck"?1.6:1)){const w=addWound("bite",p,{why:"the dead"});pl.bitten=S.t;return{w,bite:true,ar}}
   const r=rf();let k;
   if(ar>=3)k=r<.72?"bruise":r<.95?"scratch":"cut";
   else if(ar>=1)k=r<.45?"bruise":r<.8?"scratch":r<.97?"cut":"deep";
@@ -1128,9 +1168,10 @@ function hurtPlayer(n,how="fight"){const pl=S.player;pl.hp=Math.max(0,pl.hp-n);c
   let p=hitPart(),k;const r=rf();
   if(how==="fall"){p=pick(["lleg","rleg","lfoot","rfoot","larm","rarm","lhand","rhand","chest"]);k=r<.25?"fracture":r<.72?"bruise":"cut"}
   else if(how==="knife")k=r<.25?"bruise":r<.75?"cut":"deep";
+  else if(how==="shot")k=r<.65?"deep":"cut";
   else k=n>14&&r<.12?"fracture":r<.58?"bruise":r<.85?"cut":"deep";
   return addWound(k,p,{why:how})}
-function hitLine(w){const at=w.at;switch(w.k){
+function hitLine(w){const at=w.at;if(w.why==="shot")return pick([`The bullet tears through your ${at}.`,`You're shot in the ${at}. It burns, then it doesn't, which is worse.`]);switch(w.k){
   case"scratch":return pick([`Nails rake your ${at}.`,`Scratched across the ${at}.`,`It claws your ${at}. Just a scratch. Probably.`]);
   case"cut":return pick([`The skin on your ${at} tears open. You're bleeding.`,`A cut across your ${at}. It's bleeding.`]);
   case"deep":return `A deep gash in your ${at}. It's bleeding badly.`;
@@ -2599,7 +2640,8 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
   if(a.startsWith("bond:"))setTimeout(()=>{if(UI.talkTo===p.id)doBond(p,a.slice(5))},40);
   if(a==="stay"){p.follow=false;note(`${p.name} stops following you.`)}
   if(a==="trade")setTimeout(()=>openTrade(p.id),30);
-  if(a==="attack"){const me=pl.sk.fight*8+(weapon()?ITEMS[weapon().id].dmg*3:0)+rnd(0,50),them=p.sk.fight*10+rnd(0,50);if(me>=them){p.health-=rnd(8,20);note(`${p.name} swings at you. You put them on the ground.`)}else{const armed=Object.keys(p.pack||{}).some(k=>ITEMS[k]&&ITEMS[k].tool==="knife");const w=hurtPlayer(rnd(6,16),armed?"knife":"fight");note(`${p.name} ${armed?"comes at you with a blade":"swings at you"} and lands it.${w?" "+hitLine(w):""}`)}for(const q of living())if(dist(q.x,q.z,pl.x,pl.z)<10&&q!==p)q.trust-=2}
+  // they start it; the fight itself plays out on its own screen a moment later
+  if(a==="attack"){note(`${p.name} comes at you.`);const line=r.text;setTimeout(()=>{if(p.alive&&S.player.alive!==false&&!UI.fight)startFight({person:p,them:true,line})},700);for(const q of living())if(dist(q.x,q.z,pl.x,pl.z)<10&&q!==p)q.trust-=2}
   if(a==="romance_yes"){p.partner="you";pl.partner=p.id;note(`You and ${p.name} are together now.`);news(`${pl.name} and ${fullName(p)} are together.`,"good",[p.id])}
   if(a==="child_yes"){if((pl.sex==="F"&&p.sex==="M")||(pl.sex==="M"&&p.sex==="F")){pl.trying=true;note(`You and ${p.name} are trying for a child.`)}else note(`You talk about raising a child together. If a child ever loses their parents, you could take them in.`)}
   if(a==="break_up"){pl.partner=null;p.partner=null;pl.trying=false;note(`You and ${p.name} are no longer together.`);news(`${pl.name} and ${p.name} split up.`,"",[p.id])}
@@ -3498,7 +3540,7 @@ function playerMove(dt){const pl=S.player;const k=W3.keys;let mx=0,mz=0;
   if(k.w||k.arrowup){mx-=1;mz-=1}if(k.s||k.arrowdown){mx+=1;mz+=1}if(k.a||k.arrowleft){mx-=1;mz+=1}if(k.d||k.arrowright){mx+=1;mz-=1}
   if(mx||mz){cancelWalk();const l=Math.hypot(mx,mz);mx/=l;mz/=l}
   else{
-    if(W3.attackT){const z=W3.zmap.get(W3.attackT);if(!z||!S.zeds.includes(z))W3.attackT=null;else{const d=dist(z.x,z.z,pl.x,pl.z);if(d<=reach()&&losClear(pl.x,pl.z,z.x,z.z)){W3.path=null;W3.ptarget=null;W3.ang=Math.atan2(z.x-pl.x,z.z-pl.z);swingAt(z)}else if((W3.repath-=dt)<=0){walkTo(z.x,z.z,true);W3.repath=.5}}}
+    if(W3.attackT){const z=W3.zmap.get(W3.attackT);if(!z||!S.zeds.includes(z))W3.attackT=null;else{const d=dist(z.x,z.z,pl.x,pl.z);if(d<=reach()&&losClear(pl.x,pl.z,z.x,z.z)){W3.path=null;W3.ptarget=null;W3.ang=Math.atan2(z.x-pl.x,z.z-pl.z);W3.attackT=null;startFight({zed:z})}else if((W3.repath-=dt)<=0){walkTo(z.x,z.z,true);W3.repath=.5}}}
     if(W3.talkOnArrive){const p=P(W3.talkOnArrive);if(!p||!p.alive)W3.talkOnArrive=null;else if(dist(p.x,p.z,pl.x,pl.z)<1.9&&losClear(p.x,p.z,pl.x,pl.z)){W3.talkOnArrive=null;W3.path=null;W3.ptarget=null;openTalk(p.id)}else if((W3.repath-=dt)<=0){walkTo(p.x,p.z,true);W3.repath=.6}}
     if(W3.useOnArrive&&useReached(W3.useOnArrive)){const u=W3.useOnArrive;W3.useOnArrive=null;W3.path=null;W3.ptarget=null;doUse(u)}
     if(W3.path){const st=W3.pst;while(st.pi<W3.path.length){const w=W3.path[st.pi];const dx=w.x-pl.x,dz=w.z-pl.z,l=Math.hypot(dx,dz);const last=st.pi===W3.path.length-1;if(l<(last?.12:.25)){st.pi++;continue}mx=dx/l;mz=dz/l;break}
@@ -3542,7 +3584,7 @@ function moveZeds(dt){const pl=S.player;const wx=wxName();const sight=(W3.night?
       if(b&&rf()<.6){const r=roomAt(z.x,z.z);const sp=b.spots.filter(s=>s.room===r.ri);const s=sp.length?pick(sp):null;if(s){z.tx=s.x;z.tz=s.z}}
       else if(rf()<.55){z.tx=z.x+(rf()-.5)*10;z.tz=z.z+(rf()-.5)*10}else{z.tx=z.x;z.tz=z.z}}}
     // close enough to bite
-    if(T){const d=dist(z.x,z.z,T.x,T.z);if(d<1.05){Z.cd-=dt;if(Z.cd<=0&&losClear(z.x,z.z,T.x,T.z)){Z.cd=1.35+rf()*.45;if(T===pl)zedHitsPlayer(z);else zedHitsNPC(z,T)}continue}}
+    if(T){const d=dist(z.x,z.z,T.x,T.z);if(d<1.05){Z.cd-=dt;if(Z.cd<=0&&losClear(z.x,z.z,T.x,T.z)){Z.cd=1.35+rf()*.45;if(T===pl){if(!fightCooling())startFight({zed:z,them:true})}else zedHitsNPC(z,T)}continue}}
     const dx=z.tx-z.x,dz=z.tz-z.z,l=Math.hypot(dx,dz);if(l<.15)continue;const s=Math.min(l,spd*dt);
     let r;const direct=!Z.path&&(roomKey(z.x,z.z)===roomKey(z.tx,z.tz)&&(z.st==="idle"||losClear(z.x,z.z,z.tx,z.tz)));
     if(direct){r=step(z,dx/l*s,dz/l*s,.3,"zed")?1:0;if(!r&&z.st!=="idle"){Z.path=navPath(z.x,z.z,z.tx,z.tz);Z.pi=0;Z.pt=1.2}}
@@ -3558,14 +3600,6 @@ function moveZeds(dt){const pl=S.player;const wx=wxName();const sight=(W3.night?
   // the dead don't stack up on each other, or on you
   for(let i=0;i<act.length;i++)for(let j=i+1;j<act.length;j++){const a=act[i],b=act[j];const dx=b.x-a.x,dz=b.z-a.z;if(Math.abs(dx)>.6||Math.abs(dz)>.6)continue;const d=Math.hypot(dx,dz);if(d<.6&&d>.001){const q=(.6-d)/2/d;step(a,-dx*q,-dz*q,.3,"zed");step(b,dx*q,dz*q,.3,"zed")}}
   for(const z of act){const d=dist(z.x,z.z,pl.x,pl.z);if(d<.72&&d>.001){const q=(.72-d)/d;step(z,(z.x-pl.x)*q,(z.z-pl.z)*q,.3,"zed")}}}
-// one of the dead lands a blow: it hits one part of you, and what you wear there decides how bad
-function zedHitsPlayer(z){const pl=S.player;const ar=armor();if(rf()>.72-pl.sk.fight*.02-ar*.015)return;
-  const R=zedWound(z);const w=R.w;const dmg=Math.max(1,rnd(3,8)-R.ar*.45);pl.hp=Math.max(0,pl.hp-dmg);const B=body();B.ache=Math.min(60,(B.ache||0)+dmg*1.5);W3.hurt=.35;if(W3.task)cancelTask("You're hit. You drop what you were doing.");
-  const gs=partGear(w.p);if(gs){gs.g.dur-=3;if(gs.g.dur<=0){breakSlot(gs.s);journal(`Your ${ITEMS[gs.g.id].n.toLowerCase()} is torn to rags.`,"bad")}}
-  pl.bleeding=+bleedTotal().toFixed(2);
-  if(R.bite){journal(`Teeth, through ${gs?"your "+ITEMS[gs.g.id].n.toLowerCase():"bare skin"} and into your ${w.at}. You've been bitten. You know what that means. You have a day, maybe two.`,"bad");toast(`Bitten on the ${w.at}.`)}
-  else{toast(hitLine(w));if(w.k==="deep"||w.k==="cut"&&!W3.cutMsg){W3.cutMsg=1;journal(hitLine(w)+" Press H to see to it.","bad")}}
-  if(pl.hp<=0)die("the dead")}
 function zedHitsNPC(z,p){if(!p.alive||rf()>.45)return;const pl=S.player;p.health-=rnd(4,10);p.fear=Math.min(100,(p.fear||0)+20);p.seen=S.t;
   bubble(p,p.age<13?pick(["*screams*","MOM!","Help me!"]):pick(["Get off me!","Help!","*screams*","No, no, no!","Somebody!"]),1.6);noise(p.x,p.z,8);
   const fol=isFollower(p);const saw=fol||dist(p.x,p.z,pl.x,pl.z)<16&&losClear(p.x,p.z,pl.x,pl.z);const who=p.met||fol?p.name:"someone";
@@ -3576,14 +3610,7 @@ function reach(){const w=weapon();return w?(ITEMS[w.id].gun?13:(ITEMS[w.id].reac
 function attackNearest(){const pl=S.player;if(W3.task)return;let best=null,bs=1e9;const R=reach()+.4;
   for(const z of S.zeds){if(Math.abs(z.x-pl.x)>R||Math.abs(z.z-pl.z)>R)continue;const d=dist(z.x,z.z,pl.x,pl.z);if(d>R)continue;let da=Math.atan2(z.x-pl.x,z.z-pl.z)-W3.ang;while(da>Math.PI)da-=Math.PI*2;while(da<-Math.PI)da+=Math.PI*2;
     const sc=d+Math.abs(da)*.8;if(sc<bs&&losClear(pl.x,pl.z,z.x,z.z)){bs=sc;best=z}}
-  if(best){W3.ang=Math.atan2(best.x-pl.x,best.z-pl.z);swingAt(best)}else if(W3.cd<=0){W3.swing=.2;W3.cd=.5}}
-function swingAt(z){const pl=S.player;if(W3.cd>0)return;const w=weapon();const it=w?ITEMS[w.id]:null;
-  if(it&&it.gun){if(!invHas("ammo")){toast("Out of ammo. Switch weapons or run.");W3.cd=.6;return}invTake("ammo");noise(pl.x,pl.z,45);W3.cd=.9;W3.flash=.07}else W3.cd=.75+(it?it.w*.12:0);
-  W3.swing=.2;pl.energy=Math.max(0,pl.energy-.35);
-  const hitCh=(it&&it.gun?.68+pl.sk.fight*.03:.84+pl.sk.fight*.015)-aimPenalty();
-  if(rf()<hitCh){const dmg=((it?it.dmg:2)+pl.sk.fight*.6)*armPower();z.hp-=dmg*(.8+rf()*.4);const kx=z.x-pl.x,kz=z.z-pl.z,l=Math.hypot(kx,kz)||1;step(z,kx/l*.6,kz/l*.6,.3,"zed");z.stun=.5;z.st="chase";zst(z).tgt=pl;
-    const br=wearWeapon(1);if(br)toast(br.trim());if(z.hp<=0)killZed(z,true)}
-  if(!(it&&it.gun))noise(pl.x,pl.z,7)}
+  if(best){W3.ang=Math.atan2(best.x-pl.x,best.z-pl.z);startFight({zed:best})}else if(W3.cd<=0){W3.swing=.2;W3.cd=.5}}
 function companions(dt){for(const p of W3.followers){if(p.age<14)continue;p._cd=(p._cd||0)-dt;if(p._cd>0)continue;let best=null,bd=1.6;
   for(const z of S.zeds){if(Math.abs(z.x-p.x)>bd||Math.abs(z.z-p.z)>bd)continue;const d=dist(z.x,z.z,p.x,p.z);if(d<bd&&losClear(p.x,p.z,z.x,z.z)){bd=d;best=z}}
   if(best){p._cd=1.3;if(rf()<.6+p.sk.fight*.05){best.hp-=3+p.sk.fight*.8;best.stun=.4;if(best.hp<=0){killZed(best,false);if(rf()<.3)mem(p,`${S.player.name} and I fought off the dead together.`,3)}}}}}
@@ -3613,7 +3640,7 @@ function contVerb(c){const C=CONT[c.k];const s=S.cont[c.id];const n=(C?C.n:c.n||
   const verb=["fridge","cupboard","closet","locker","schoollocker","medicine","pharmacab","medcab","armory","vestry","filing"].includes(c.k)?"Open":"Search";return `${verb} the ${n}${s&&s.rolled&&s.seen?" again":""}`}
 function doorVerb(D){const lk=doorLocked(D);if(D.broken)return"A broken door";if(doorOpen(D))return"Close the door";if(!lk)return"Open the door";
   if(lk==="bar")return playerSide(D)==="in"?"Take the boards down":hasTool("pry")?"Pry the boards off":"Kick the door";if(lk==="home")return D.refused&&S.t-D.refused<120?"Kick the door in":"Knock";return hasTool("pry")?"Pry the lock":"Kick the door"}
-function updPrompt(){const pl=S.player;let t=null;if(pl.alive!==false&&!W3.task&&!UI.modal&&!UI.talkTo)t=promptTargets()[0]||null;
+function updPrompt(){const pl=S.player;let t=null;if(pl.alive!==false&&!W3.task&&!UI.modal&&!UI.talkTo&&!UI.fight)t=promptTargets()[0]||null;
   if(t&&t.k==="door"&&!doorOpen(t.D)&&!t.D.bar&&canBoard()&&t.D.ext)t.sub="B · board it up";
   W3.promptT=t;const el=W3.promptEl;if(!el)return;const key=t?t.k+(t.p?.id||t.c?.id||t.D?.id||t.id||"")+t.label+(t.sub||""):"";
   if(key!==W3.promptKey){W3.promptKey=key;if(t){el.hidden=false;el.innerHTML=`<b>E</b> ${esc(t.label)}${t.sub?` <span class="mute">· ${esc(t.sub)}</span>`:""}`}else el.hidden=true}
@@ -3670,7 +3697,8 @@ function onHover(ev){if(!W3.ok||!S||UI.create||ev.pointerType==="touch")return;i
   const h=pickAt(ev);const info=hoverInfo(h);W3.ren.domElement.style.cursor=h&&!h.ground?"pointer":"crosshair";setHighlight(h);
   const key=h?(h.fig?"f"+h.fig.id:h.cont?"c"+h.cont.id:h.door?"d"+h.door.id:h.pile?"p"+h.pile.id:h.bld?"b"+h.bld.id:""):"";
   if(key!==W3.hoverKey){W3.hoverKey=key;W3.hover=info?{h,info}:null;if(info){W3.hoverEl.innerHTML=info.html;W3.hoverEl.hidden=false}else W3.hoverEl.hidden=true}else if(W3.hover&&info)W3.hover.info=info}
-function onClick(ev){if(!W3.ok||!S||UI.create||UI.modal||S.player.alive===false)return;const h=pickAt(ev);if(!h)return;const pl=S.player;cancelWalk();if(W3.task)cancelTask();
+function onClick(ev){if(!W3.ok||!S||UI.create||UI.modal||S.player.alive===false)return;const h=pickAt(ev);if(!h)return;
+  if(UI.fight){const f=h.fig&&UI.fight.foes.find(g=>g.id===h.fig.id&&!g.out);if(f&&!UI.fight.over&&!UI.fight.ask){UI.fight.sel=f.id;render()}return}const pl=S.player;cancelWalk();if(W3.task)cancelTask();
   if(UI.talkTo&&!h.fig)closeTalk();
   if(h.fig){const f=h.fig;if(f.kind==="zed"){W3.attackT=f.id;W3.repath=0;return}const p=P(f.id);if(!p)return;const d=dist(p.x,p.z,pl.x,pl.z);
     if((d<2.3||(isFollower(p)&&d<6))&&losClear(p.x,p.z,pl.x,pl.z)){openTalk(p.id);return}W3.talkOnArrive=p.id;walkTo(p.x,p.z,true);return}
@@ -3809,7 +3837,7 @@ function homeArrive(){const F=S.flags;if(!F.wake||S.player.coma)return;if(!F.hom
 
 // ---------- the loop ----------
 function every(ts,k,ms,fn){if(ts-(W3.tk[k]||0)>=ms){W3.tk[k]=ts;fn()}}
-function worldPaused(){const pl=S.player;return pl.alive===false||!!UI.modal||UI.paused||document.hidden||!!UI.talkTo||(UI.panel&&UI.panel!=="inv"&&UI.panel!=="craft")}
+function worldPaused(){const pl=S.player;return pl.alive===false||!!UI.modal||!!UI.fight||UI.paused||document.hidden||!!UI.talkTo||(UI.panel&&UI.panel!=="inv"&&UI.panel!=="craft")}
 function frame(ts){requestAnimationFrame(frame);if(!S||UI.create||!W3.ok)return;
   const dt=Math.min(.1,(ts-(W3.last||ts))/1000);W3.last=ts;const pl=S.player;const paused=worldPaused();W3.pausedNow=paused;
   if(!paused){W3.acc+=dt*UI.speed;if(W3.acc>=1){const m=Math.floor(W3.acc);W3.acc-=m;const h0=Math.floor(S.t/60);advance(m);if(Math.floor(S.t/60)!==h0&&S.player.alive!==false)markUI()}
@@ -3853,7 +3881,7 @@ function initWorldView(host){if(W3.wrap)return true;W3.wrap=document.createEleme
   cv.addEventListener("wheel",e=>{e.preventDefault();W3.zoom=clamp(W3.zoom*(e.deltaY>0?.9:1.1),.55,2.6)},{passive:false});
   W3.ok=true;return true}
 // everything that depends on one particular world (a new game, or a loaded save)
-function w3reset(){if(!W3.ok)return;doorsIn();FIGMAP.clear();FIG.corpses=[];W3.zst=new Map();W3.fst=new Map();W3.autoDoors=new Set();W3.bq=[];
+function w3reset(){UI.fight=null;if(!W3.ok)return;doorsIn();FIGMAP.clear();FIG.corpses=[];W3.zst=new Map();W3.fst=new Map();W3.autoDoors=new Set();W3.bq=[];
   for(const B of W3.bubbles.values())B.el.remove();W3.bubbles=new Map();
   for(const k in W3.siteObj)W3.scene.remove(W3.siteObj[k]);W3.siteObj={};W3.siteKeys={};W3.siteFlames={};if(W3.campfire){W3.scene.remove(W3.campfire.g);W3.campfire=null}
   for(const o of W3.pileObjs.values())W3.scene.remove(o);W3.pileObjs.clear();
@@ -3865,6 +3893,7 @@ Object.assign(W3,{zst:new Map(),fst:new Map(),autoDoors:new Set(),bq:[],bubbles:
 // ---------- keys ----------
 addEventListener("keydown",e=>{if(!S||UI.create)return;if(typeof typing==="function"&&typing())return;const k=e.key.toLowerCase();
   if(UI.modal){if(k==="escape"&&typeof closeModal==="function")closeModal();return}
+  if(UI.fight){fightKey(k,e);return}
   if(["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k)){if(UI.talkTo)closeTalk();W3.keys[k]=true;if(k.startsWith("arrow"))e.preventDefault();return}
   if(k==="shift"){W3.run=true;return}
   if(k===" "){if(e.target.tagName==="BUTTON")return;e.preventDefault();if(S.player.alive!==false&&!UI.talkTo)attackNearest();return}
@@ -3876,6 +3905,329 @@ addEventListener("keydown",e=>{if(!S||UI.create)return;if(typeof typing==="funct
   if(typeof onUiKey==="function")onUiKey(k,e)});
 addEventListener("keyup",e=>{const k=e.key.toLowerCase();W3.keys[k]=false;if(k==="shift")W3.run=false});
 addEventListener("blur",()=>{W3.keys={};W3.run=false});
+
+// ================= fights: turn by turn, with the dice on the table =================
+// When the dead get their hands on you, or you go after someone, the world holds still and the fight plays out in rounds.
+// Every blow is two rolls, one for each side. The higher total wins, and a tie goes to whoever is defending.
+// A natural 20 always lands, and lands hard. A natural 1 always misses.
+const d20=()=>1+Math.floor(Math.random()*20);
+function fRoll(m){const d=d20();m=Math.round(m);return{d,m,t:d+m}}
+function fBeats(a,b){return a.d===20||a.d!==1&&a.t>b.t}
+// the exact chance that one roll beats every roll against it, under the same rules
+function fOddsAll(am,dms){if(!dms.length)return 1;let s=0;for(let a=2;a<=20;a++){if(a===20){s+=1;continue}let p=1;for(const dm of dms){let w=0;for(let b=1;b<=20;b++)if(a+am>b+dm)w++;p*=w/20}s+=p}return s/20}
+function fOdds(am,dm){return fOddsAll(am,[dm])}
+const fPct=x=>Math.round(clamp(x,0,1)*100)+"%";
+
+// ---------- who you're up against ----------
+const ZWEAR={all:["in work boots","in a torn flannel shirt","with one shoe","in a hunting jacket","in pajamas","in coveralls","in a feed store cap","in a bathrobe","in a bloody parka","in a letter jacket","with half a jaw","in a mechanic's shirt","in a reflective vest","in running shoes","in a football jersey"],
+  f:["in a church dress","in a waitress apron","in scrubs","in a sundress"],m:["in a quarry vest","in a tie","with a gray beard"]};
+function zedSrc(z){return z.pid&&z.pid!=="you"?P(z.pid):null}
+function zedWho(z,taken){const q=zedSrc(z);if(q&&q.met)return q.name;
+  const sex=q?q.sex:hashStr(z.id)%2?"F":"M",age=q?q.age:20+hashStr(z.id)%55;
+  const noun=age<13?(sex==="F"?"little girl":"little boy"):age<18?(sex==="F"?"girl":"boy"):sex==="F"?"woman":"man";
+  if(z.weak)return`the ${noun} in a hospital gown`;
+  const L=[...ZWEAR.all,...ZWEAR[sex==="F"?"f":"m"]],i=hashStr(z.id+"w");
+  for(let k=0;k<L.length;k++){const s=`the ${noun} ${L[(i+k)%L.length]}`;if(!taken||!taken.has(s))return s}return`another ${noun}`}
+function proOf(p){return p.sex==="F"?["she","her","her"]:["he","him","his"]}
+function gapFor(d){return d<1.7?0:Math.min(3,Math.ceil((d-1.7)/1.5))}
+function zedFoe(z,F){const q=zedSrc(z);const known=!!(q&&q.met);const [he,him,his]=known?proOf(q):["it","it","its"];
+  return{k:"zed",id:z.id,name:zedWho(z,new Set(F.foes.map(f=>f.name))),he,him,his,known,max:Math.max(z.hp,z.weak?8:14),gap:gapFor(dist(z.x,z.z,S.player.x,S.player.z)),stun:0,out:null}}
+function personFoe(p,F){const [he,him,his]=proOf(p);let name=p.met?p.name:`the ${p.age<30?"young ":p.age>=60?"old ":""}${p.sex==="F"?"woman":"man"}`;
+  if(F.foes.some(f=>f.name===name))name=p.met?fullName(p):`the other ${p.sex==="F"?"woman":"man"}`;
+  return{k:"p",id:p.id,name,he,him,his,max:100,gap:0,stun:0,out:null,intent:"attack"}}
+function fObj(f){return f.k==="zed"?(W3.zmap&&W3.zmap.get(f.id))||S.zeds.find(z=>z.id===f.id)||null:P(f.id)}
+function fHp(f){const o=fObj(f);return o?(f.k==="zed"?o.hp:o.health):0}
+function fActive(F){return F.foes.filter(f=>!f.out)}
+const WHERE_AT={town:" in town",road:" on Highway 9",river:" down by the river",hills:" up in the Shale Hills",woods:" in Cedar Woods",fields:" out in the fields",wilds:" out in the backcountry"};
+function whereAt(o){const b=bldAt(o.x,o.z);if(b)return` at ${b.n}`;const k=regionAt(o.x,o.z);return WHERE_AT[k]??(PLACES[k]?` at ${PLACES[k].n}`:"")}
+function fWitnesses(p){const pl=S.player;return living().filter(q=>q!==p&&q.age>=5&&Math.abs(q.x-pl.x)<16&&Math.abs(q.z-pl.z)<16&&dist(q.x,q.z,pl.x,pl.z)<16&&(dist(q.x,q.z,pl.x,pl.z)<3||losClear(q.x,q.z,pl.x,pl.z)))}
+function fNearZeds(z0){const pl=S.player;const out=[];for(const z of S.zeds){if(z===z0||Math.abs(z.x-pl.x)>6||Math.abs(z.z-pl.z)>6)continue;const d=dist(z.x,z.z,pl.x,pl.z);if(d>6)continue;
+  if(!(z.st==="chase"&&zst(z).tgt===pl||d<2.6)||!losClear(z.x,z.z,pl.x,pl.z))continue;out.push([d,z])}return out.sort((a,b)=>a[0]-b[0]).map(x=>x[1])}
+
+// ---------- what you're holding, and what it's worth in a fight ----------
+const WNOUN={kitchen_knife:"knife",hunting_knife:"knife",bat:"bat",nail_bat:"bat",golf_club:"golf club",crowbar:"crowbar",axe:"axe",hatchet:"hatchet",machete:"machete",hammer:"hammer",iv_pole:"IV pole",pipe:"pipe",spear:"spear",club:"club",pistol:"pistol"};
+function wNoun(){const w=weapon();return w?WNOUN[w.id]||ITEMS[w.id].n.toLowerCase():"fists"}
+function wKind(){const w=weapon();const it=w?ITEMS[w.id]:null;if(!it)return"fist";if(it.gun)return invHas("ammo")?"gun":"butt";if(w.id==="machete"||it.tool==="axe")return"chop";if(it.tool==="knife")return"stab";if(it.reach)return"poke";return"blunt"}
+function wDmg(){const w=weapon();return wKind()==="butt"?3:w?ITEMS[w.id].dmg:2}
+function youAtk(f){const pl=S.player;let m=Math.floor(pl.sk.fight*1.5);if(wKind()==="gun")m+=3-(f?f.gap:0);else m+=Math.min(3,Math.round(wDmg()/3));
+  if(pl.energy<10)m-=3;if(aimPenalty())m-=2;if(pl.hp<25)m-=1;return m}
+function youDef(def){const pl=S.player;let m=Math.floor(pl.sk.fight)+Math.floor(armor()/2)+(def?6:0);if(pl.energy<10)m-=3;if(!canRun())m-=1;return m}
+function youDmg(f,crit,k=wKind()){const pl=S.player;const base=k==="butt"?3:k==="fist"?2:wDmg();let d=(base*1.2+2+pl.sk.fight*.6)*armPower()*(.8+rf()*.4);if(crit)d*=1.6;if(f.k==="p")d*=3;return d}
+function foeAtk(f){const o=fObj(f);if(f.k==="zed")return o&&o.weak?-1:1;return Math.floor(o.sk.fight*1.5)+(npcGun(o)?3:Math.min(3,Math.round(npcArm(o)/3)))-(o.health<30?2:0)}
+function foeDef(f){const o=fObj(f);const off=f.stun>0?-3:0;if(f.k==="zed")return(o&&o.weak?-3:0)+off;return Math.floor(o.sk.fight)+(f.intent==="defend"?6:0)+off}
+function fReach(f){if(f.out)return false;if(wKind()==="gun"||f.gap===0)return true;return f.gap===1&&(ITEMS[weapon()?.id]?.reach||0)>=2.2}
+function fTarget(){const F=UI.fight;if(!F)return null;const L=fActive(F).filter(fReach);return L.find(f=>f.id===F.sel)||L[0]||null}
+function fShoveMod(){const pl=S.player;return Math.floor(pl.sk.fight)+(armor()>=3?1:0)-(pl.energy<10?3:0)-(armPower()<1?2:0)}
+function fShoveDef(f){const o=fObj(f);return f.k==="zed"?(o&&o.weak?-3:0):Math.floor(o.sk.fight)}
+function fRunners(){return fActive(UI.fight).filter(f=>f.gap===0&&!(f.stun>0)&&!(f.k==="p"&&f.intent==="flee"))}
+function fRunMod(){const pl=S.player;return Math.floor(pl.sk.survive||0)+(canRun()?2:-5)-(pl.energy<10?4:0)-(weight()>maxW()?3:0)-(UI.fight&&fActive(UI.fight).some(f=>f.grab)?4:0)}
+function fRunDef(f){const o=fObj(f);return f.k==="zed"?(o&&o.weak?-3:0):Math.floor(o.sk.fight)+(o.tr.brave>.6?1:0)}
+function fTalkMod(p){return S.player.sk.speak*2+(feel(p)>0?3:0)-(UI.fight&&UI.fight.you?3:0)}
+function fTalkDef(p){return 4+Math.round(p.tr.temper*6)-(p.health<50?2:0)+(p.tr.brave>.7?1:0)}
+
+// ---------- how it reads ----------
+function fx(s,f,a){return s.replace(/\{(T|he|him|his|w|A)\}/g,(m,k)=>esc(k==="T"?f?.name:k==="A"?a?.name:k==="w"?wNoun():f?.[k]))
+  .replace(/(^|[.!?]["”]? +)([a-z])/g,(m,x,y)=>x+y.toUpperCase())}
+function fDie(r){return`<b class="die${r.d===20?" n20":r.d===1?" n1":""}">${r.d}</b>${r.m?`<i>${r.m>0?"+":"−"}${Math.abs(r.m)} = ${r.t}</i>`:""}`}
+function fWho(f){return f.k==="zed"?(f.known?f.name:"it"):f.name.startsWith("the ")?"them":f.name}
+function fVs(a,b,la,lb){const B=Array.isArray(b)?b:[b];return` <span class="dice" title="Both sides roll a d20 and add their edge. The higher total wins, and a tie goes to whoever is defending."><i class="who">${esc(la)}</i> ${fDie(a)} <i>vs</i> <i class="who">${esc(lb)}</i> ${B.map(fDie).join(" ")}</span>`}
+function flog(h,w="sys"){const F=UI.fight;F.log.push({h,w});if(F.log.length>80)F.log.splice(0,F.log.length-80)}
+const FSWING={fist:["You throw a punch at {T}.","You swing at {T} with your bare hands."],stab:["You drive your {w} at {T}.","You go for {T} with the {w}."],
+  chop:["You bring the {w} down at {T}.","You swing the {w} at {T}."],blunt:["You swing your {w} at {T}.","You put your weight behind the {w} and swing at {T}."],
+  poke:["You jab the {w} at {T}.","You thrust the {w} at {T} and keep your distance."],gun:["You fire at {T}.","You aim at {T} and squeeze the trigger."],butt:["Out of bullets, you swing the pistol at {T} like a hammer."]};
+const FMISS={zed:["You miss.","{T} lurches at the wrong moment and you miss.","It glances off {his} shoulder.","You swing wide."],p:["{T} slips it.","{T} blocks it.","You miss.","{T} twists away."],gun:["The shot goes wide.","You miss. The shot echoes off everything."]};
+const ZHIT=["{he} staggers but keeps coming.","It lands. {he} rocks back and comes on again.","You feel it connect. {he} barely notices.","{he} reels, then turns back to you."];
+const ZHIT_BIG=["{he} goes down, then starts dragging {him}self back up.","That one nearly finishes {him}. {he} gets back up anyway."];
+const ZKILL={fist:["You get {him} on the ground and keep at it until {he} stops moving.","It takes too long, but {he} stops moving."],stab:["The blade goes in under the jaw. {T} drops.","You find the soft spot behind the ear. {T} goes still."],
+  chop:["The {w} splits {his} skull. {T} drops.","One clean blow. {T} falls and stays down."],blunt:["{his} skull gives. {T} drops.","A wet crack, and {T} folds to the ground."],
+  poke:["The point goes in through the eye. {T} slides off the end of it.","You pin {him} and push. {T} stops moving."],gun:["The shot takes {him} in the head. {T} drops.","{T} jerks and falls and doesn't move."],butt:["You bring the pistol down again and again. {T} stops moving."]};
+const ZKILL_A=["{A} puts {T} down.","{A} drives {T} into the ground. {he} stays down.","{A} finishes {T}."],ZHIT_A=["{A} hits {T}. {he} staggers.","{A} lands a blow on {T}."];
+const PHIT={fist:["You catch {T} on the jaw.","Your fist lands in {T}'s ribs.","You clip {T} across the face."],stab:["The {w} opens a cut along {T}'s arm.","You cut {T}. {he} grabs at the wound."],
+  chop:["The {w} bites into {T}'s shoulder.","You hit {T} hard with the {w}."],blunt:["The {w} cracks into {T}'s ribs.","You catch {T} across the arm with the {w}."],
+  poke:["The {w} catches {T} in the side.","You jab {T} hard with the {w}."],gun:["The shot hits {T} in the side. {he} screams.","The bullet takes {T} in the leg."],butt:["You crack the pistol across {T}'s face."]};
+const PHIT_A=["{A} hits {T} hard.","{A} lands one on {T}."],PKILL=["{T} goes down and doesn't get up.","{T} crumples. {he}'s not breathing.","{T} falls, and it's over."],PKILL_A=["{T} goes down under {A}'s blows and doesn't get up."];
+
+// ---------- starting one ----------
+function fightCooling(){return performance.now()<(W3.fightCd||0)}
+function startFight(o={}){const pl=S&&S.player;if(!pl||pl.alive===false||UI.modal||UI.create)return false;
+  const F0=UI.fight;if(F0&&!F0.over){if(o.zed&&!F0.foes.some(f=>f.id===o.zed.id)){const f=zedFoe(o.zed,F0);F0.foes.push(f);flog(fx("{T} joins in.",f),"them");render()}return true}
+  if(UI.drag&&typeof cancelDrag==="function")cancelDrag();cancelWalk();if(W3.task)cancelTask(o.them?"Something grabs at you. You drop what you were doing.":null);if(UI.talkTo)closeTalk(true);UI.panel=null;UI.open=null;W3.keys={};W3.run=false;UI.atkArm=null;
+  const F={foes:[],allies:[],log:[],round:1,sel:null,you:!o.them,hits:0,kills:0,ask:null,over:null,def:false,bit:false,hp0:pl.hp,cause:"the dead"};UI.fight=F;const pn=pl.name;
+  if(o.person){const p=o.person;const f=personFoe(p,F);F.foes.push(f);F.cause=`a fight with ${fullName(p)}`;fCloseIn(p,1.1);
+    const seen=fWitnesses(p);
+    if(o.them)flog(o.line?`${fx("{T}",f)}: “${esc(o.line)}”`:fx(pick(["{T} squares up to you.","{T} comes at you."]),f),"them");
+    else{p.trust=clamp(p.trust-30,-100,100);p.aff=clamp(p.aff-25,-100,100);p.fear=Math.min(100,(p.fear||0)+30);p.follow=false;mem(p,`${pn} attacked me. No warning.`,-12);
+      bubble(p,styleSay(p,pick(["What the hell?!","Whoa! What are you doing?","Get off me!","Are you out of your mind?"])),1.8);
+      flog(fx(pick(["You go for {T}.","You round on {T} without a word.","You lunge at {T}."]),f),"you");
+      for(const q of seen){q.trust=clamp(q.trust-12,-100,100);if(q.met)q.aff=clamp(q.aff-8,-100,100);q.fear=Math.min(100,(q.fear||0)+15);mem(q,`${pn} attacked ${q.fam[p.id]?"my "+q.fam[p.id]:fullName(p)} out of nowhere.`,-6)}
+      if(seen.length)news(`${pn} attacked ${fullName(p)}${whereAt(p)}.`,"bad",[p.id]);
+      // their own people don't just stand there and watch
+      for(const q of seen){if(F.foes.length>=3)break;const close=q.fam[p.id]||q.partner===p.id||q.group&&q.group===p.group;
+        if(close&&q.age>=16&&q.health>40&&q.tr.brave>.45&&!isFollower(q)){const g=personFoe(q,F);F.foes.push(g);fCloseIn(q,1.4);q.trust=clamp(q.trust-15,-100,100);flog(fx(pick([`{T} steps in beside ${esc(f.name)}.`,"{T} isn't going to watch this. {he} comes at you too."]),g),"them")}}}
+    // who stands with you
+    for(const q of W3.followers){if(!q.alive||q.age<16||F.foes.some(f=>f.id===q.id)||dist(q.x,q.z,pl.x,pl.z)>8)continue;
+      const tied=F.foes.some(f=>{const r=P(f.id);return q.fam[f.id]||q.partner===f.id||q.group&&r.group===q.group});
+      if(o.them&&!tied&&feel(q)>0)F.allies.push(q.id);else flog(`${esc(q.name)} doesn't move to help you.`,"sys")}}
+  else{const z=o.zed;const f=zedFoe(z,F);if(o.them||wKind()!=="gun"||f.gap===0){f.gap=0;fPlace(f)}F.foes.push(f);for(const q of fNearZeds(z))if(F.foes.length<6)F.foes.push(zedFoe(q,F));
+    for(const q of W3.followers)if(q.alive&&q.age>=14&&dist(q.x,q.z,pl.x,pl.z)<8)F.allies.push(q.id);
+    if(f.known)flog(fx("It's {T}. What's left of {him}.",f),"sys");
+    if(o.them){flog(fx(pick(["{T} gets {his} hands on you.","{T} comes at you out of nowhere.","{T} lunges for you."]),f),"them");fZedTurn(f,true)}
+    else flog(fx(pick(["You square up to {T}.","You go for {T} first.","You step in on {T}."]),f),"you");
+    const n=F.foes.length-1;if(n)flog(n===1?"There's another one right behind it.":`${cap(numWord(n))} more are right behind it.`,"sys")}
+  if(S.player.hp<=0){fightLost();return true}
+  fPlan();render();return true}
+function fCloseIn(o,want){const pl=S.player;const d=dist(o.x,o.z,pl.x,pl.z);if(d<=want+.3)return;const s=d-want;step(o,(pl.x-o.x)/d*s,(pl.z-o.z)/d*s,.27,"npc");o.tx=o.x;o.tz=o.z;o.path=null}
+function fPlace(f){const z=fObj(f);const pl=S.player;if(!z)return;const d=dist(z.x,z.z,pl.x,pl.z)||.01;const s=d-(f.gap===0?.95:1+f.gap*1.4);if(Math.abs(s)>.05)step(z,(pl.x-z.x)/d*s,(pl.z-z.z)/d*s,.3,"zed")}
+function fNudge(z,m){const pl=S.player;const d=dist(z.x,z.z,pl.x,pl.z)||.01;step(z,(z.x-pl.x)/d*m,(z.z-pl.z)/d*m,.3,"zed")}
+function fFace(o){const pl=S.player;if(o)W3.ang=Math.atan2(o.x-pl.x,o.z-pl.z)}
+
+// ---------- a round: you, then the people with you, then them ----------
+function fightAct(a){const F=UI.fight;const pl=S.player;if(!F||F.over||F.ask||pl.alive===false)return;
+  const t=fTarget();F.def=a==="defend";F.countered=false;F.log.push({rd:F.round});
+  pl.energy=Math.max(0,pl.energy-({attack:.8,shove:.7,run:1.6,defend:.3,talk:.1}[a]??.3));
+  if(a==="attack"){if(t)youAttack(t);else{F.def=true;flog("Nothing is close enough to hit. You keep your guard up and wait.","sys")}}
+  else if(a==="defend")flog(pick(["You set your feet and keep your guard up.","You hold your ground and wait for it.","You brace yourself."]),"you");
+  else if(a==="shove"){if(t&&t.gap===0)youShove(t);else{F.def=true;flog("There's nothing in reach to shove. You keep your guard up.","sys")}}
+  else if(a==="run"){if(youRun()){skillUp("survive",.05);return endFight("ran")}}
+  else if(a==="talk"){if(youTalk()==="all"){skillUp("speak",.1);return endFight("talked")}}
+  if(fightOver())return;
+  fAllies();if(fightOver())return;
+  for(const f of fActive(F)){fFoeTurn(f);if(pl.hp<=0)return fightLost()}
+  fDrift();F.round++;fPlan();
+  if(fightOver())return;render()}
+function fightOver(){const F=UI.fight;if(!F)return true;if(S.player.hp<=0){fightLost();return true}if(!fActive(F).length){endFight("won");return true}return false}
+function youAttack(f){const F=UI.fight;const pl=S.player;const o=fObj(f);if(!o)return;const k=wKind();fFace(o);W3.swing=.2;
+  const a=fRoll(youAtk(f)),b=fRoll(foeDef(f));let s=fx(pick(FSWING[k]),f);
+  if(k==="gun"){noise(pl.x,pl.z,45);W3.flash=.07}else noise(pl.x,pl.z,6);
+  if(!fBeats(a,b))s+=" "+fx(pick(FMISS[k==="gun"?"gun":f.k==="zed"?"zed":"p"]),f);
+  else{const crit=a.d===20||a.t-b.t>=10;F.hits++;s+=" "+fHurt(f,youDmg(f,crit,k),crit,null,k);const br=wearWeapon(1);if(br)s+=" "+esc(br.trim())}
+  if(k==="gun")invTake("ammo");flog(s+fVs(a,b,"you",fWho(f)),"you")}
+// damage to one of them; returns how it reads
+function fHurt(f,d,crit,by,k=wKind()){const F=UI.fight;const o=fObj(f);const pl=S.player;if(!o)return"";
+  if(f.k==="zed"){o.hp-=d;o.st="chase";zst(o).tgt=pl;
+    if(o.hp<=0){f.out="dead";F.kills++;const s=fx(pick(by?ZKILL_A:ZKILL[k]),f,by);if(by)by.kills=(by.kills||0)+1;killZed(o,!by);return s}
+    return fx(pick(by?ZHIT_A:crit?ZHIT_BIG:ZHIT),f,by)}
+  // a person: bare hands can knock someone out, but they won't kill them
+  const fists=!by&&k==="fist";o.health=Math.max(fists?6:-50,o.health-d);o.fear=Math.min(100,(o.fear||0)+15);bubble(o,pick(["Agh!","*grunts*","Ugh!","Ow! God!"]),1.2);
+  if(o.health<=0){f.out="dead";const s=fx(pick(by?PKILL_A:PKILL),f,by);fPersonDies(f,o,by,false);return s}
+  if(fists&&o.health<=8){f.out="gave up";f.ko=true;return fx(pick(PHIT.fist),f)+" "+fx(pick(["{T} goes down hard and stays down, dazed.","{T} hits the ground and doesn't try to get up."]),f)}
+  return fx(pick(by?PHIT_A:PHIT[k]),f,by)}
+function youShove(f){const o=fObj(f);fFace(o);W3.swing=.15;const a=fRoll(fShoveMod()),b=fRoll(fShoveDef(f));
+  if(fBeats(a,b)){f.stun=1;let s;if(f.k==="zed"&&f.grab){f.grab=null;f.gap=Math.max(f.gap,1);fPlace(f);s=pick(["You break {his} grip and shove {him} back.","You tear loose and plant a foot in {his} chest."])}else if(f.k==="zed"){f.gap=Math.max(f.gap,1);fPlace(f);s=pick(["You plant a foot in {T}'s chest and shove. {he} stumbles back out of reach.","You shove {T} off you. {he} staggers back."])}
+    else s=pick(["You shove {T} hard. {he} stumbles back, off balance.","You drive your shoulder into {T}. {he} staggers."]);flog(fx(s,f)+fVs(a,b,"you",fWho(f)),"you")}
+  else flog(fx(f.k==="zed"?pick(["You shove, but {T} hangs on.","{T} doesn't budge."]):pick(["{T} plants {his} feet. You don't move {him}.","{T} shoves you right back."]),f)+fVs(a,b,"you",fWho(f)),"you")}
+function youRun(){const L=fRunners();if(!L.length){flog(pick(["Nothing has hold of you. You back off and get clear.","You back away before anything can close on you."]),"you");return true}
+  const a=fRoll(fRunMod()),bs=L.map(f=>fRoll(fRunDef(f)));const ok=bs.every(b=>fBeats(a,b));
+  if(ok){flog(pick(["You break away and run.","You tear free and get clear.","You duck out of reach and run for it."])+fVs(a,bs,"you","them"),"you");return true}
+  flog((canRun()?pick(["You try to break away, but you can't get clear.","You turn to run and get dragged back.","You can't find an opening."]):"Your leg won't let you run.")+fVs(a,bs,"you","them"),"you");return false}
+function youTalk(){const F=UI.fight;const L=fActive(F).filter(f=>f.k==="p");if(!L.length){flog("There's no one here to talk to.","sys");return null}
+  const f=L[0],p=fObj(f);const a=fRoll(fTalkMod(p)),b=fRoll(fTalkDef(p));
+  const said=pick(F.you?["Stop. Stop! I'm done. I'm sorry.","Okay! Enough. I was wrong. We're done."]:["Hey. Hey! This isn't worth it.","Look at us. The dead are out there and we're doing this?","Back off. Nobody needs to die today."]);
+  if(fBeats(a,b)){for(const g of L)g.out="backed off";const s=styleSay(p,pick(F.you?["...You're lucky I don't finish this.","Get away from me. Now."]:["...Fine. It's not worth it.","*breathing hard* Yeah. Okay. We're done.","...Yeah. Fine."]));
+    bubble(p,s,2.4);flog(`You: “${esc(said)}”<br>${fx("{T}",f)}: “${esc(s)}”`+fVs(a,b,"you",fWho(f)),"good");F.talked=f.id;return fActive(F).length?"some":"all"}
+  flog(`You: “${esc(said)}”<br>`+fx(pick(["{T} isn't listening.","{T} spits. “Too late for that.”","{T} shakes {his} head and keeps coming."]),f)+fVs(a,b,"you",fWho(f)),"you");return null}
+function fAllies(){const F=UI.fight;for(const id of [...F.allies]){const q=P(id);if(!q||!q.alive){F.allies=F.allies.filter(x=>x!==id);continue}
+  const L=fActive(F).filter(f=>f.gap===0);if(!L.length)continue;const f=L.find(g=>g.id===F.sel)||pick(L);const arm=npcArm(q);
+  const a=fRoll(Math.floor(q.sk.fight*1.5)+Math.min(3,Math.round(arm/3))),b=fRoll(foeDef(f));
+  if(!fBeats(a,b)){flog(fx(pick(["{A} swings at {T} and misses.","{A} goes for {T} but can't land it."]),f,q)+fVs(a,b,q.name,fWho(f)),"ally");continue}
+  const crit=a.d===20||a.t-b.t>=10;let d=(Math.max(arm,2)*1.2+2+q.sk.fight*.6)*(.8+rf()*.4)*(crit?1.6:1);if(f.k==="p")d*=3;flog(fHurt(f,d,crit,q)+fVs(a,b,q.name,fWho(f)),"ally")}}
+function fFoeTurn(f){const o=fObj(f);if(!o||f.k==="p"&&!o.alive){f.out="gone";return}
+  if(f.stun>0){f.stun--;flog(fx(pick(["{T} is still getting {his} feet under {him}.","{T} is off balance."]),f),"them");return}
+  if(f.k==="zed"){if(f.gap>0){f.gap--;fPlace(f);flog(fx(f.gap===0?pick(["{T} closes in.","{T} reaches you."]):pick(["{T} keeps coming.","{T} shambles closer."]),f),"them");return}fZedTurn(f,false);return}
+  if(f.intent==="defend"){flog(fx(pick(["{T} keeps {his} guard up.","{T} circles, waiting.","{T} hangs back and watches you."]),f),"them");return}
+  if(f.intent==="flee"){fFlee(f);return}
+  fPersonSwing(f)}
+// one of the dead goes for you, or now and then for someone beside you
+function fZedTurn(f,first){const F=UI.fight;const z=fObj(f);const pl=S.player;if(!z)return;
+  const al=F.allies.map(P).filter(q=>q&&q.alive);
+  if(!first&&al.length&&rf()<.3){const q=pick(al);const a=fRoll(foeAtk(f)),b=fRoll(Math.floor(q.sk.fight)+(npcArm(q)>=6?1:0));
+    if(!fBeats(a,b)){flog(fx(`{T} grabs at {A}, who shakes free.`,f,q)+fVs(a,b,fWho(f),q.name),"them");return}
+    q.health-=rnd(4,10);q.fear=Math.min(100,(q.fear||0)+20);q.seen=S.t;bubble(q,pick(["Get off me!","Help!","*screams*"]),1.4);let s=fx(`{T} gets hold of {A}.`,f,q);
+    if(!q.bitten&&!z.weak&&a.t-b.t>=10&&rf()<.3){q.bitten=S.t+rnd(6,30)*60;tally("bit near you (with you)");mem(q,"I got bit. I haven't told anyone.",-10,q.id);s+=` ${esc(q.name)} cries out.`}
+    if(q.health<=0){kill(q,`was killed by the dead${whereAt(q)}`);if(rf()<.7)riseLater(q,rnd(3,12));F.allies=F.allies.filter(id=>id!==q.id);journal(`${q.name} died beside you.`,"bad");s+=` ${esc(q.name)} goes down under it and doesn't get up.`}
+    flog(s+fVs(a,b,fWho(f),q.name),"bad");return}
+  fFace(z);
+  // it already has hold of you, so this time it goes for the bite; clothes on that spot can still save you
+  if(f.grab){const part=f.grab;f.grab=null;const a=fRoll(foeAtk(f)),b=fRoll(youDef(F.def));
+    if(!fBeats(a,b)){flog(fx(F.def?"You get your forearm under {his} jaw and shove {him} off.":pick(["You twist free before {he} can bite.","You wrench loose just as {his} teeth snap shut."]),f)+fVs(a,b,fWho(f),"you"),"them");if(F.def&&b.t-a.t>=6&&!F.countered){F.countered=true;fCounter(f)}return}
+    const ar=partArmor(part),gs=partGear(part),at=BODY[part].n;pl.hp=Math.max(0,pl.hp-rnd(2,5));W3.hurt=.35;
+    if(rf()<1-Math.min(ar,8)/9){addWound("bite",part,{why:"the dead"});if(!pl.bitten)pl.bitten=S.t;F.bit=true;pl.bleeding=+bleedTotal().toFixed(2);
+      flog(`<b>${fx("{T} bites down on your "+at+".",f)}</b> You've been bitten.`+fVs(a,b,fWho(f),"you"),"bad");
+      journal(`Teeth, through ${gs?"your "+ITEMS[gs.g.id].n.toLowerCase():"bare skin"} and into your ${at}. You've been bitten. You know what that means. You have a day, maybe two.`,"bad")}
+    else{const gn=gs?ITEMS[gs.g.id].n.toLowerCase():"sleeve";if(gs){gs.g.dur-=8;if(gs.g.dur<=0){breakSlot(gs.s);journal(`Your ${gn} is torn to rags.`,"bad")}}
+      flog(fx(`{T} bites down on your ${at}, and the teeth catch in your ${gn}. They don't get through.`,f)+fVs(a,b,fWho(f),"you"),"them")}
+    return}
+  const a=fRoll(foeAtk(f)),b=fRoll(youDef(F.def));
+  if(!fBeats(a,b)){flog(fx(F.def?pick(["You catch {him} on your forearm and shove {him} off.","You keep your arms up. {he} gets nothing."]):pick(["You twist out of {his} grip.","{his} hands close on air.","You keep {him} off you."]),f)+fVs(a,b,fWho(f),"you"),"them");
+    if(F.def&&b.t-a.t>=6&&!F.countered){F.countered=true;fCounter(f)}return}
+  // hands, nails, weight: a hit hurts, and a big one means it has hold of you for its next try
+  const crit=a.d===20;const R=zedWound(z,0);const w=R.w;const dmg=Math.max(1,rnd(3,8)-R.ar*.45)*(crit?1.4:1);
+  pl.hp=Math.max(0,pl.hp-dmg);const B=body();B.ache=Math.min(60,(B.ache||0)+dmg*1.5);W3.hurt=.35;
+  const gs=partGear(w.p);if(gs){gs.g.dur-=3;if(gs.g.dur<=0){breakSlot(gs.s);journal(`Your ${ITEMS[gs.g.id].n.toLowerCase()} is torn to rags.`,"bad")}}
+  pl.bleeding=+bleedTotal().toFixed(2);
+  if(a.t-b.t>=13&&!z.weak){f.grab=w.p;flog(esc(hitLine(w))+` <b>${fx("{T} has hold of your "+BODY[w.p].n+".",f)}</b>`+fVs(a,b,fWho(f),"you"),"bad")}
+  else flog(esc(hitLine(w))+fVs(a,b,fWho(f),"you"),"bad")}
+function fCounter(f){const F=UI.fight;const o=fObj(f);if(!o||f.out)return;F.hits++;const k=wKind()==="gun"?"butt":wKind();flog(fx(pick(["You turn it aside and hit back.","You see it coming, slip it, and hit back."]),f)+" "+fHurt(f,youDmg(f,false,k),false,null,k),"you")}
+function fPersonSwing(f){const F=UI.fight;const p=fObj(f);const pl=S.player;const gun=npcGun(p);const arm=gun?20:npcArm(p);fFace(p);
+  const blade=!gun&&Object.keys(p.pack||{}).some(k=>ITEMS[k]&&ITEMS[k].slot==="weapon"&&ITEMS[k].tool==="knife"&&ITEMS[k].dmg===arm);
+  if(gun){packTake(p,"ammo");noise(p.x,p.z,40)}
+  const a=fRoll(foeAtk(f)),b=fRoll(youDef(F.def));
+  let s=fx(gun?pick(["{T} fires at you.","{T} gets a shot off at you."]):blade?pick(["{T} comes at you with a knife.","{T} slashes at you."]):arm?pick(["{T} swings at you.","{T} comes at you swinging."]):pick(["{T} throws a punch.","{T} swings at you."]),f);
+  if(!fBeats(a,b)){s+=" "+(F.def?pick(["You block it.","You take it on your arms."]):gun?pick(["It goes wide.","The shot cracks past your ear."]):pick(["You duck it.","You slip it.","It goes wide."]));
+    flog(s+fVs(a,b,fWho(f),"you"),"them");if(F.def&&b.t-a.t>=6&&!F.countered){F.countered=true;fCounter(f)}return}
+  const crit=a.d===20||a.t-b.t>=10;const n=((arm||2)*1.2+2+p.sk.fight*.6)*1.2*(.8+rf()*.4)*(crit?1.5:1);
+  const w=hurtPlayer(n,gun?"shot":blade?"knife":"fight");W3.hurt=.35;pl.bleeding=+bleedTotal().toFixed(2);
+  flog(s+" "+(w?esc(hitLine(w)):pick(["It knocks the wind out of you.","It rocks you."]))+fVs(a,b,fWho(f),"you"),"bad")}
+function fFlee(f){const p=fObj(f);const pl=S.player;const a=fRoll(2+Math.floor(p.sk.survive||0)),b=fRoll(Math.floor(pl.sk.fight)-(canRun()?0:4));
+  if(fBeats(a,b)){f.out="fled";p.fear=100;p.follow=false;goHome(p);bubble(p,pick(["*runs*","Get away from me!"]),1.4);flog(fx(pick(["{T} breaks away and runs.","{T} bolts.","{T} turns and runs for it."]),f)+fVs(a,b,fWho(f),"you"),"them")}
+  else flog(fx(pick(["{T} tries to run. You cut {him} off.","{T} turns to run, and you're on {him} before {he} gets a step."]),f)+fVs(a,b,fWho(f),"you"),"them")}
+// the dead nearby hear it and come; a round is a few seconds
+function fDrift(){const F=UI.fight;const pl=S.player;const inF=new Set(F.foes.map(f=>f.id));
+  for(const z of S.zeds){if(inF.has(z.id)||z.stun>0||Math.abs(z.x-pl.x)>14||Math.abs(z.z-pl.z)>14)continue;const d=dist(z.x,z.z,pl.x,pl.z);if(d>14)continue;const Z=zst(z);
+    if(!(z.st==="chase"&&Z.tgt===pl||z.st==="hunt"&&dist(z.tx,z.tz,pl.x,pl.z)<12||d<3)||!losClear(z.x,z.z,pl.x,pl.z))continue;
+    const s=Math.min(2.2,d-1);if(s>0)step(z,(pl.x-z.x)/d*s,(pl.z-z.z)/d*s,.3,"zed");
+    if(dist(z.x,z.z,pl.x,pl.z)<=5.5&&fActive(F).length<6){z.st="chase";Z.tgt=pl;const f=zedFoe(z,F);F.foes.push(f);flog(fx(pick(["{T} comes out of nowhere.","Another one: {T}.","{T} heard the noise. {he}'s coming."]),f),"them")}}}
+// what each person means to do this round, which you can read on them before you choose
+function fPlan(){const F=UI.fight;const dead=fActive(F).some(f=>f.k==="zed");
+  for(const f of fActive(F)){if(f.k!=="p")continue;const p=fObj(f);if(!p||!p.alive){f.out="gone";continue}
+    const proud=p.tr.brave>.8&&p.tr.temper>.6;
+    if(p.health<=(proud?10:25)){f.out="gave up";f.intent="surrender";const s=styleSay(p,pick(["Okay! Okay. Stop. I'm done.","Enough! You win. Just... enough.","*hands up* Take whatever you want. Please."]));bubble(p,s,2.4);flog(fx("{T} drops to {his} knees with {his} hands up.",f)+` “${esc(s)}”`,"good");continue}
+    if(dead||p.health<40&&p.tr.brave<.5){f.intent="flee";continue}
+    f.intent=rf()<(1-p.tr.temper)*.35+(p.health<60?.15:0)?"defend":"attack"}
+  const t=fTarget();if(t)F.sel=t.id}
+
+// ---------- how it ends ----------
+function fPersonDies(f,p,by,finished){const F=UI.fight;const pl=S.player;const pn=pl.name;const seen=fWitnesses(p);const where=whereAt(p);
+  kill(p,seen.length?`was killed by ${by?fullName(by):pn}${where}`:`was found dead${where}`);if(!finished&&rf()<.5)riseLater(p,rnd(5,15));
+  tally(by?"killed by someone with you":"killed a person");if(!by)S.stats.pkills=(S.stats.pkills||0)+1;
+  for(const q of seen){const bad=F.you;q.trust=clamp(q.trust-(bad?25:6),-100,100);q.aff=clamp(q.aff-(bad?15:3),-100,100);
+    mem(q,bad?`I watched ${pn} kill ${fullName(p)}.`:`${pn} killed ${fullName(p)}. ${p.name} started it, but still.`,bad?-10:-3);
+    const rel=q.fam[p.id]||(q.partner===p.id?"partner":null);if(rel){q.trust=clamp(q.trust-60,-100,100);q.aff=clamp(q.aff-60,-100,100);mem(q,`${pn} killed my ${rel}. I saw it happen.`,-20)}
+    else if(q.group&&q.group===p.group)q.trust=clamp(q.trust-20,-100,100)}}
+function fPackLine(p){const L=Object.entries(p.pack||{}).filter(([k,n])=>ITEMS[k]&&n>0);if(!L.length)return"They don't have much";const w=L.slice(0,3).map(([k,n])=>itemPhrase(k,n));return cap(w.join(", "))+(L.length>3?", and more":"")}
+function fRob(p){const got=[];for(const [k,n] of Object.entries(p.pack||{})){if(!ITEMS[k]||n<=0)continue;invAdd(k,n,true);got.push(itemPhrase(k,n))}p.pack={};return got}
+function fDecide(c){const F=UI.fight;const f=F&&F.foes.find(g=>g.id===F.ask);if(!f)return;const p=fObj(f);const pl=S.player;
+  if(c==="finish"&&wKind()==="fist"){toast("Not with your bare hands.");return}
+  f.done=true;F.ask=null;F.log.push({rd:0});
+  if(c==="spare"){f.fate="spared";flog(fx(pick(["You step back and let {T} go.","You lower your {w}. “Go.” {T} goes."]),f),"you");p.trust=clamp(p.trust+(F.you?6:4),-100,100);
+    mem(p,F.you?`${pl.name} beat me, then let me go.`:`I went after ${pl.name} and lost. They let me walk away.`,F.you?-4:2);goHome(p)}
+  else if(c==="rob"){f.fate="robbed";const got=fRob(p);flog(got.length?`You take everything ${esc(f.name)} has on ${esc(f.him)}: ${esc(got.join(", "))}.`:fx("You go through {T}'s pockets. Nothing worth taking.",f),"you");
+    p.trust=clamp(p.trust-15,-100,100);p.aff=clamp(p.aff-15,-100,100);mem(p,`${pl.name} beat me and took everything I had.`,-12);bubble(p,styleSay(p,pick(["...That's everything I had.","Take it. I hope it chokes you."])),2.2);goHome(p)}
+  else{f.fate="killed";f.out="dead";flog(fx(pick(["You finish it. {T} stops moving. It's quieter than you thought it would be.","You make sure {he} won't get back up."]),f),"bad");fPersonDies(f,p,null,true)}
+  endFight("won")}
+function endFight(how){const F=UI.fight;if(!F||F.over)return;const pl=S.player;
+  if(how==="won"){const s=F.foes.find(f=>f.out==="gave up"&&!f.done&&fObj(f)?.alive);if(s){F.ask=s.id;render();return}}
+  F.over=how;F.ask=null;W3.fightCd=performance.now()+2500;W3.acc+=Math.min(3,F.round*.1);W3.keys={};
+  // whatever is still standing loses you for a moment
+  for(const f of F.foes){if(f.k!=="zed"||f.out)continue;const z=fObj(f);if(z){z.stun=1.8+rf()*.8;fNudge(z,1.6)}}
+  if(F.hits)skillUp("fight",Math.min(.3,.04*F.hits));
+  fAftermath(how);F.sum=fSummary(how);render()}
+function fAftermath(how){const F=UI.fight;const pl=S.player;const pn=pl.name;const ppl=F.foes.filter(f=>f.k==="p");if(!ppl.length)return;
+  for(const f of ppl){const p=P(f.id);if(!p||!p.alive)continue;
+    if(F.you){if(p.partner==="you"){p.partner=null;pl.partner=null;pl.trying=false;journal(`You and ${p.name} are finished. You saw it in ${f.his} face.`,"bad")}
+      if(how==="ran")mem(p,`${pn} came at me and then ran off.`,-3);
+      const seen=fWitnesses(p);for(const q of living())if(q!==p&&(q.fam[p.id]||q.group&&q.group===p.group)&&!seen.includes(q)){q.trust=clamp(q.trust-(q.fam[p.id]?20:8),-100,100);mem(q,`${pn} attacked ${q.fam[p.id]?"my "+q.fam[p.id]:p.name}.`,-6)}}
+    else if(!f.fate&&how!=="ran"&&f.out!=="backed off")mem(p,`I went after ${pn} and lost.`,-3);
+    if(F.talked===p.id)mem(p,F.you?`${pn} jumped me, then tried to talk their way out of it.`:`${pn} talked me down when I was ready to fight.`,F.you?-6:3)}
+  journal(fSummary(how),F.foes.some(f=>f.fate==="killed"||f.out==="dead"&&f.k==="p")?"bad":"")}
+function fSummary(how){const F=UI.fight;const pl=S.player;const zk=F.foes.filter(f=>f.k==="zed"&&f.out==="dead");const ppl=F.foes.filter(f=>f.k==="p");const lost=Math.round(F.hp0-pl.hp);
+  const hurt=F.bit?"And you've been bitten.":lost>=20?"You're hurt.":lost>0?"You took a few knocks.":"Not a scratch on you.";
+  if(how==="ran")return ppl.length?`You got away from ${ppl.map(f=>f.name).join(" and ")}. ${hurt}`:`You got away. They're still out there. ${hurt}`;
+  if(how==="talked"&&!zk.length)return`${cap(ppl[0].name)} backed off. It's over. ${hurt}`;
+  const bits=[];if(zk.length)bits.push(zk.length===1?`You put ${zk[0].name} down.`:`You put ${numWord(zk.length)} of the dead down.`);
+  for(const f of ppl){const n=cap(f.name);bits.push(f.fate==="spared"?`You let ${f.name} go.`:f.fate==="robbed"?`You took everything ${f.name} had.`:f.out==="dead"?`${n} is dead.`:f.out==="fled"?`${n} ran off.`:f.out==="backed off"?`${n} backed off.`:`${n} gave up.`)}
+  return`${bits.join(" ")} ${hurt}`.trim()}
+function fightLost(){const F=UI.fight;UI.fight=null;W3.keys={};die(F?F.cause:"the dead")}
+function closeFight(){if(!UI.fight||!UI.fight.over)return;UI.fight=null;W3.keys={};save();render()}
+
+// ---------- the screen ----------
+function fIntent(f){if(f.out)return{dead:f.k==="zed"?"Down":"Dead",fled:"Ran off","gave up":f.ko?"Knocked down":"Gave up","backed off":"Backed off",gone:"Gone"}[f.out]||"";
+  if(f.stun>0)return"Off balance";if(f.grab)return"Has hold of you";if(f.k==="zed")return f.gap===0?"Reaching for you":f.gap===1?"A step away":"Coming";
+  const p=fObj(f);return{attack:p&&npcGun(p)?"Aiming at you":"About to swing",defend:"Guarding",flee:"Looking for a way out"}[f.intent]||""}
+function fightHtml(F){const pl=S.player;const t=F.over||F.ask?null:fTarget();
+  const foes=F.foes.map(f=>{const hp=f.out==="dead"?0:Math.max(0,fHp(f));const st=fIntent(f);const hot=!f.out&&(f.k==="zed"?f.gap===0&&!(f.stun>0):f.intent==="attack");const grip=!f.out&&f.grab;
+    return`<button class="foe${t&&t.id===f.id?" sel":""}${f.out?" out":""}" data-act="ftarget" data-v="${esc(f.id)}"${f.out||F.over||F.ask?" disabled":""} aria-label="${esc(cap(f.name))}: ${esc(st)}"><span class="fn">${esc(cap(f.name))}</span><span class="mono ${grip?"neg":hot?"warn":"mute"}">${esc(st)}</span><span class="fbar"><i style="width:${Math.round(clamp(hp/f.max,0,1)*100)}%"></i></span></button>`}).join("");
+  const al=F.allies.map(P).filter(q=>q&&q.alive);
+  const log=F.log.slice(-40).map(e=>e.rd!=null?(e.rd?`<div class="flr">Round ${e.rd}</div>`:`<div class="flr">After</div>`):`<div class="fl ${e.w}">${e.h}</div>`).join("");
+  const you=`<div class="fyou"><span>You</span><span class="fbar"><i style="width:${Math.round(clamp(pl.hp,0,100))}%"></i></span><span>${Math.round(pl.hp)}</span></div>
+    <div class="mono mute fwho">${esc(cap(wNoun()))}${wKind()==="gun"?` · ${invCount("ammo")} rounds`:wKind()==="butt"?" · no rounds left":""}${armor()?` · armor ${armor()}`:""}${pl.energy<10?' · <span class="warn">exhausted</span>':""}${bleedTotal()>.03?' · <span class="neg">bleeding</span>':""}${pl.bitten?' · <span class="neg">bitten</span>':""}</div>`;
+  let acts;
+  if(F.over)acts=`<p class="fsum">${esc(F.sum||"")}</p><div class="facts one"><button class="btn pri" data-act="fclose">Back to it <small>Enter</small></button></div>`;
+  else if(F.ask){const f=F.foes.find(g=>g.id===F.ask);const p=fObj(f);const fists=wKind()==="fist";
+    acts=`<p class="fsum">${esc(cap(f.name))} has given up. What now?</p><div class="facts">${[["spare","Let them go",F.you?"They'll remember this either way":"They walk away"],["rob","Take their things",fPackLine(p)],["finish","Finish it",fists?"Not with your bare hands":"There's no taking it back"]].map(([v,l,s],i)=>`<button class="btn${v==="finish"?" danger":""}" data-act="fdecide" data-v="${v}"${v==="finish"&&fists?" disabled":""}><span><b class="fk">${i+1}</b> ${l}</span><small>${esc(s)}</small></button>`).join("")}</div>`}
+  else{const L=fActive(F);const ppl=L.filter(f=>f.k==="p");const gun=wKind()==="gun";
+    const near=L.filter(f=>f.gap===0&&!(f.stun>0)&&!(f.k==="p"&&f.intent!=="attack"));const worst=near.reduce((m,f)=>Math.max(m,foeAtk(f)),-99);
+    const B=[];
+    B.push(["attack",gun?"Shoot":"Attack",t?`${fPct(fOdds(youAtk(t),foeDef(t)))} to hit${L.length>1?" · "+esc(t.name):""}`:"Nothing in reach",!t]);
+    B.push(["defend","Defend",near.length?`Their odds drop from ${fPct(fOdds(worst,youDef(false)))} to ${fPct(fOdds(worst,youDef(true)))}`:"Wait for them to come",false]);
+    if(t&&t.gap===0)B.push(["shove",t.grab?"Break free":"Shove",`${fPct(fOdds(fShoveMod(),fShoveDef(t)))} · ${t.grab?"before it bites":"they lose a turn"}`,false]);else B.push(["shove","Shove","Nothing in reach",true]);
+    const R=fRunners();B.push(["run","Run",`${fPct(fOddsAll(fRunMod(),R.map(fRunDef)))} to get away`,false]);
+    if(ppl.length){const p=fObj(ppl[0]);B.push(["talk","Talk them down",`${fPct(fOdds(fTalkMod(p),fTalkDef(p)))} they back off`,false])}
+    acts=`<div class="facts">${B.map(([v,l,s,dis],i)=>`<button class="btn${v==="attack"?" pri":""}" data-act="fact" data-v="${v}"${dis?" disabled":""}><span><b class="fk">${i+1}</b> ${l}</span><small>${s}</small></button>`).join("")}</div>`}
+  return`<header><div><b>${F.over?"It's over":"Fight"}</b> <span class="mono mute">${F.over?"":"Round "+F.round}</span></div><span class="mono mute">${F.over?"":"Time holds still until it's done"}</span></header>
+  <div class="foes">${foes}</div>${al.length?`<div class="mono mute fwho">With you: ${al.map(q=>esc(q.name)+(q.health<40?' <span class="neg">(hurt)</span>':"")).join(", ")}</div>`:""}
+  <div class="flog" id="flog" aria-live="polite">${log}</div>${you}${acts}`}
+function renderFight(){const el=$("fight");if(!el)return;const F=UI.fight;const on=!!(F&&S&&S.player.alive!==false);const g=$("game");if(g)g.classList.toggle("fighting",on);
+  if(!on){if(!el.hidden){el.hidden=true;el.innerHTML=""}return}
+  el.hidden=false;el.innerHTML=fightHtml(F);const L=$("flog");if(L)L.scrollTop=L.scrollHeight}
+function onFightAct(a,v){switch(a){
+  case"fact":fightAct(v);return true;
+  case"ftarget":if(UI.fight&&!UI.fight.over&&!UI.fight.ask){UI.fight.sel=v;render()}return true;
+  case"fdecide":fDecide(v);return true;
+  case"fclose":closeFight();return true;
+  case"fattackp":armAttack(v);return true}
+  return false}
+// going after someone you're talking to takes two clicks, so it's never an accident
+function armAttack(pid){const p=P(pid);const pl=S.player;if(!p||!p.alive||p.age<18)return;
+  if(dist(p.x,p.z,pl.x,pl.z)>2.6){toast(`You'd have to get closer to ${p.met?p.name:"them"} first.`);return}
+  if(UI.atkArm===pid&&performance.now()-(UI.atkArmT||0)<4000){UI.atkArm=null;startFight({person:p});return}
+  UI.atkArm=pid;UI.atkArmT=performance.now();renderTalk();setTimeout(()=>{if(UI.atkArm===pid){UI.atkArm=null;if(UI.talkTo===pid)renderTalk()}},4100)}
+function fightKey(k,e){const F=UI.fight;if(!F)return;const onBtn=e.target&&e.target.tagName==="BUTTON";
+  if(F.over){if(["enter"," ","escape","e"].includes(k)&&!onBtn){e.preventDefault();closeFight()}return}
+  if(F.ask){const m={"1":"spare","2":"rob","3":"finish"}[k];if(m)fDecide(m);return}
+  if(k===" "||k==="enter"){if(onBtn)return;e.preventDefault();fightAct("attack");return}
+  if(["arrowleft","arrowright","arrowup","arrowdown"].includes(k)){e.preventDefault();const L=fActive(F).filter(fReach);if(L.length>1){const t=fTarget();const i=L.indexOf(t);F.sel=L[(i+(k==="arrowleft"||k==="arrowup"?L.length-1:1))%L.length].id;render()}return}
+  const btn=[...document.querySelectorAll('#fight [data-act=fact]')][+k-1];if(btn&&!btn.disabled)fightAct(btn.dataset.v)}
 
 // ================= the screen: one view of the world, with everything else laid over it =================
 function typing(){const a=document.activeElement;return!!a&&a!==document.body&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")}
@@ -3892,6 +4244,7 @@ function layout(){if($("game"))return;$app.innerHTML=`<div id="game">
   <div id="bar" class="hud"></div>
   <aside id="panel" hidden></aside>
   <section id="talk" hidden aria-label="Conversation"></section>
+  <section id="fight" hidden aria-label="Fight"></section>
   <div id="modal"></div>
 </div><div id="create" hidden></div>`;
   const root=$("game");root.addEventListener("click",onClickUI);root.addEventListener("submit",e=>{e.preventDefault();onForm(e.target.dataset.form,e.target)});
@@ -3899,7 +4252,7 @@ function layout(){if($("game"))return;$app.innerHTML=`<div id="game">
   $("create").addEventListener("click",onClickUI);$("create").addEventListener("input",onInputUI);}
 function render(){if(UI.create||!S){if(typeof renderCreate==="function")renderCreate();return}
   $("create").hidden=true;$("game").classList.remove("creating");$("game").classList.toggle("dead",S.player.alive===false);
-  hud();renderBar();renderLog();if(!UI.drag)renderPanel();renderTalk();renderModal();UI.dirty=false}
+  hud();renderBar();renderLog();if(!UI.drag)renderPanel();renderTalk();renderFight();renderModal();UI.dirty=false}
 function hud(){if(!S||UI.create)return;const tl=$("hudtl"),v=$("vitals"),c=$("ctrls");if(tl)tl.innerHTML=clockHtml();if(v)v.innerHTML=vitalsHtml();if(c)c.innerHTML=ctrlsHtml();UI.hudDirty=false}
 
 // ---------- the corners: time, place, how you're doing ----------
@@ -3907,7 +4260,7 @@ function wxWord(){return{clear:"Clear",overcast:"Overcast",rain:"Rain",snow:"Sno
 function clockHtml(){const pl=S.player;const inB=bldAt(pl.x,pl.z);const r=roomAt(pl.x,pl.z);const zc=S.zeds.filter(z=>Math.abs(z.x-pl.x)<14&&Math.abs(z.z-pl.z)<14&&dist(z.x,z.z,pl.x,pl.z)<14).length;
   return `<div class="clk"><b>${esc(stamp(S.t))}</b> <span class="mute">${wxWord()}, ${temp()}°C</span></div>
   <div class="where">${esc(inB?inB.n:PLACES[here()].n)}${r?`<span class="mute"> · ${esc(ROOMNAME[inB.rooms[r.ri].t]||"")}</span>`:""}</div>
-  ${zc?`<div class="warn mono">${zc===1?"One of the dead is":zc+" of the dead are"} close.</div>`:""}${UI.paused?'<div class="warn mono">Paused</div>':W3.pausedNow&&UI.talkTo?'<div class="mute mono">Time stops while you talk</div>':""}`}
+  ${zc?`<div class="warn mono">${zc===1?"One of the dead is":zc+" of the dead are"} close.</div>`:""}${UI.paused?'<div class="warn mono">Paused</div>':W3.pausedNow&&UI.talkTo?'<div class="mute mono">Time stops while you talk</div>':UI.fight?'<div class="warn mono">Fighting</div>':""}`}
 function vitalsHtml(){const pl=S.player;const v=(n,val,k)=>`<div class="vital ${val<25?"low":val<50?"mid":""}" title="${n} ${Math.round(val)}"><span class="lbl">${n}</span><div class="bar"><i style="width:${Math.round(clamp(val,0,100))}%"></i></div></div>`;
   const w=weight(),m=maxW();
   return `<button class="vbtn" data-act="panel" data-v="health" title="Your body (H)" aria-label="Your body: health ${Math.round(pl.hp)}">${v("Health",pl.hp)}</button>`+v("Food",pl.food)+v("Water",pl.water)+v("Warmth",pl.warmth)+v("Energy",pl.energy)+
@@ -4029,7 +4382,7 @@ function craftHtml(){const fire=nearFire();return `<p class="mute">Making things
   return `<div class="card"><div class="row">${typeof itemIcon==="function"?itemIcon(r.id,32):""}<b>${esc(r.verb||it.n)}</b></div><div class="mono mute">${Object.entries(r.need).map(([k,v])=>`${esc(ITEMS[k].n)} ×${v}`).join(", ")}${r.tool?` · a ${r.tool}`:""}${r.at?" · a fire":""} · ${r.h<1?Math.round(r.h*60)+" min":r.h+" h"}</div>${gearStats(r.id)?`<div class="mono mute">${gearStats(r.id)}</div>`:""}<button class="btn${ok===true?" pri":""}" data-act="craft" data-v="${r.key||r.id}"${ok===true?"":" disabled"}>Make it<small>${ok===true?"Ready":esc(ok)}</small></button></div>`}).join("")}</div>`}
 
 // journal and the map
-function journalHtml(){const F=S.flags;const tip=(F.wake?S.t-F.wake<300:dayOf(S.t)===1&&hourOf(S.t)<12)?`<div class="card"><b>Getting started</b><div class="mute">Walk with WASD or by clicking the ground. Click a person to talk. Press E to open doors and search furniture, Space to fight. Tab opens your inventory. One real second is one minute here, and time stops while you talk.</div></div>`:"";
+function journalHtml(){const F=S.flags;const tip=(F.wake?S.t-F.wake<300:dayOf(S.t)===1&&hourOf(S.t)<12)?`<div class="card"><b>Getting started</b><div class="mute">Walk with WASD or by clicking the ground. Click a person to talk. Press E to open doors and search furniture, Space to fight. Fights go in turns, and you can see every roll. Tab opens your inventory. One real second is one minute here, and time stops while you talk.</div></div>`:"";
   return `${tip}<div class="lbl">What's happened to you</div><div class="journal">${S.journal.map(j=>`<div class="entry ${j.k}"><div class="mono">${stamp(j.t)}</div>${esc(j.x)}</div>`).join("")}</div>
   <div class="lbl" style="margin-top:14px">Around Limon</div><div class="journal">${(()=>{const L=S.news.filter(n=>!F.wake||n.t>=F.wake).slice(0,60);return L.length?L.map(n=>`<div class="entry ${n.k}"><div class="mono">${stamp(n.t)}</div>${esc(n.x)}</div>`).join(""):`<div class="entry mute">You slept through the first week. Whatever happened in Limon, you'll have to hear it from someone.</div>`})()}</div>`}
 function mapHtml(){const gs=Object.values(S.groups).filter(o=>!o.dead&&groupSize(o.id)>0);
@@ -4156,7 +4509,7 @@ function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close
   return out.slice(0,8)}
 function openTalk(pid){const p=P(pid);if(!p||!p.alive)return;if(UI.panel&&UI.panel!=="inv")UI.panel=null;UI.talkTo=pid;UI.talkFresh=true;p.lastTalk=S.t;cancelWalk();
   const pl=S.player;W3.ang=Math.atan2(p.x-pl.x,p.z-pl.z);render();const box=$("talkbox");if(box&&matchMedia("(pointer:fine)").matches)box.focus({preventScroll:true})}
-function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}
+function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.atkArm=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}
 function talkHead(p){const g=p.group?G(p.group):null;return `<div class="who"><b>${esc(p.met?fullName(p):"A stranger")}</b><span class="mono mute">${p.age} · ${esc(p.met?JOBS[p.job]?.n||"":p.look||"")}${g?" · "+esc(g.name):""}${p.met?" · "+esc(relLabel(p)):""}${isFollower(p)?" · with you":""}</span></div>`}
 function chatHtml(p){const L=p.chat.slice(-30);if(!L.length)return `<div class="msg sys">${p.met?`You know ${esc(p.name)}. Say something.`:"You haven't met. Say something."}</div>`;
   return L.map(m=>`<div class="msg ${m.w}${m.live?" live":""}">${esc(m.x)}${m.live&&!m.x?'<span class="dots"><i></i><i></i><i></i></span>':""}</div>`).join("")}
@@ -4169,7 +4522,7 @@ function renderTalk(){const el=$("talk");if(!el)return;const p=UI.talkTo?P(UI.ta
   ${far?`<p class="warn mono">${esc(p.met?p.name:"They")} can't hear you from here. Walk closer.</p>`:""}
   <form class="say" data-form="talk"><input id="talkbox" autocomplete="off" placeholder="${busy?"They're answering...":"Say anything..."}" value="${esc(UI.draft)}" maxlength="300" aria-label="What you say"${busy?" disabled":""}><button class="btn pri" type="submit"${busy?" disabled":""}>Say</button></form>
   ${bondRow(p)}<div class="chips">${talkChips(p).map(q=>`<button class="chip" data-act="quick" data-v="${esc(q)}"${busy?" disabled":""}>${esc(q)}</button>`).join("")}</div>
-  <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}${typeof AI!=="undefined"&&AI.ns?`<button class="tag" id="aistate" data-act="aitoggle" title="${AI.on?"Switch to built-in lines (no Claude usage)":"Let Claude write what people say"}">${esc(aiStateText())}</button>`:""}</footer>`;
+  <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}${p.age>=18?`<button class="tag danger" data-act="fattackp" data-v="${p.id}" title="Start a fight with ${esc(p.met?p.name:"them")}">${UI.atkArm===p.id?"Really attack?":"Attack"}</button>`:""}${typeof AI!=="undefined"&&AI.ns?`<button class="tag" id="aistate" data-act="aitoggle" title="${AI.on?"Switch to built-in lines (no Claude usage)":"Let Claude write what people say"}">${esc(aiStateText())}</button>`:""}</footer>`;
   const c=$("chat");if(c)c.scrollTop=c.scrollHeight;positionTalk(true);
   const nb=$("talkbox");if(nb&&(had||UI.talkFresh)&&!busy){nb.focus({preventScroll:true});if(sel)try{nb.setSelectionRange(sel[0],sel[1])}catch(e){}}UI.talkFresh=false}
 function renderTalkLog(){const p=UI.talkTo?P(UI.talkTo):null;const c=$("chat");if(!p||!c)return;const stick=c.scrollTop+c.clientHeight>=c.scrollHeight-30;c.innerHTML=chatHtml(p);if(stick)c.scrollTop=c.scrollHeight}
@@ -4225,7 +4578,7 @@ function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small 
 <tr><td>Doors</td><td>E opens and closes doors. Locked ones can be knocked on, pried with a crowbar or kicked in. B boards a door up if you have a hammer, wood and nails. The dead can't open doors, but they can break them down.</td></tr>
 <tr><td>Search</td><td>Click furniture, or stand next to it and press E. Things turn up as you look. Drag them into your pockets, bag or rig. R turns an item while you drag it.</td></tr>
 <tr><td>Inventory</td><td>Tab. Your clothes have pockets and your bag holds the most. Double-click to eat, drink, use or wear. Right-click for more.</td></tr>
-<tr><td>Fight</td><td>Space, or click one of the dead. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
+<tr><td>Fight</td><td>Space, or click one of the dead. A fight goes in turns and time holds still: pick a move, both sides roll a d20, and the higher total wins. Ties go to whoever is defending. Each button shows your odds. To fight a person, use Attack in the talk window. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
 <tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, and where. Wash a wound (water, alcohol or whiskey) so it doesn't turn, and wrap it (a bandage or a strip of cloth) to stop the bleeding. Wrap a broken bone tight to hold it still. If one turns, antibiotics cure it. Eat, drink and sleep: being fed and rested is what heals you.</td></tr>
 <tr><td>Light</td><td>F switches your flashlight on and off at night. The dead see it too.</td></tr>
 <tr><td>Panels</td><td>H your body, C make things, G your group, N people you know, J journal, M map, P pause, Esc closes things.</td></tr>
@@ -4249,9 +4602,12 @@ function onChangeUI(e){const el=e.target;if(el.dataset.sel==="role"){setRole(el.
 function onAct(a,v,el,e){const pl=S&&S.player;
   if(typeof onCreateAct==="function"&&onCreateAct(a,v,el,e))return;
   if(!S)return;
+  // mid-fight, the only things you can do are the fight's own moves
+  if(UI.fight&&!["fact","ftarget","fdecide","fclose","zoom","help","closemodal"].includes(a))return;
   if(typeof onInvAct==="function"&&onInvAct(a,v,el,e))return;
   if(typeof onBondAct==="function"&&onBondAct(a,v,el,e))return;
   if(typeof onHealthAct==="function"&&onHealthAct(a,v,el,e))return;
+  if(typeof onFightAct==="function"&&onFightAct(a,v,el,e))return;
   switch(a){
     case"speed":if(v==="pause")UI.paused=!UI.paused;else{UI.speed=+v;UI.paused=false}hud();return;
     case"zoom":W3.zoom=clamp(W3.zoom*(v==="in"?1.2:1/1.2),.55,2.6);return;
