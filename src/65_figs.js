@@ -32,11 +32,12 @@ function initFigs(sc){const G=figGeo();for(const [k,g] of Object.entries(G)){con
 // what a person looks like, decided once from who they are
 function lookOf(p){if(p.id==="you")return playerLook();const R=srng(hashStr(p.id));const l=(p.look||"").toLowerCase();const F=p.sex==="F";const age=p.age??30;
   const kid=age<13;let hairC=/gray/.test(l)||age>62?(age>74?HAIRC.white:HAIRC.gray):/black hair/.test(l)?HAIRC.black:/red hair/.test(l)?HAIRC.red:/blond/.test(l)?HAIRC.blond:pick2([HAIRC.brown,HAIRC.black,HAIRC.brown,HAIRC.blond],R);
-  let hair=F?pick2(["hLong","hPony","hBun","hLong","hShort"],R):pick2(["hShort","hShort","hBuzz","hShort",age>50?null:"hShort"],R);if(/shaved/.test(l))hair=null;if(/ponytail/.test(l))hair="hPony";if(/curls/.test(l)&&!F)hair="hShort";
-  const beard=!F&&!kid&&age>17&&(/beard/.test(l)||R()<.18);
+  let hair=F?pick2(["hLong","hPony","hBun","hLong","hShort"],R):pick2(["hShort","hShort","hBuzz","hShort",age>50?null:"hShort"],R);if(/shaved/.test(l))hair=null;if(/ponytail/.test(l))hair="hPony";if(/curls/.test(l)&&!F)hair="hShort";if(/pigtails/.test(l))hair="hPony";if(/buzz/.test(l))hair="hBuzz";if(/long hair/.test(l))hair="hLong";if(/gray curls/.test(l))hair="hShort";
+  const beard=!F&&!kid&&age>17&&(/beard|mustache/.test(l)||R()<.18);
   const J=p.job;let top=pick2(TOPS,R),pants=pick2(PANTS,R),shoes=pick2(SHOES,R),hat=null,hatC=null;
   if(J==="deputy"){top="#b8a47a";pants="#4a4636";hat="hat";hatC="#5a4a32"}else if(J==="nurse"||J==="doctor"){top=J==="nurse"?"#7aa8b8":"#d8dcd8";pants=J==="nurse"?"#7aa8b8":"#3a4048"}else if(J==="farmer"||J==="farmhand"){top=pick2(["#8a3a32","#6a7a8a","#7a5a3a"],R);pants="#3a4a6a";if(R()<.6){hat="hat";hatC=pick2(["#c8b890","#3a5a3a","#8a3a32"],R)}}
   else if(J==="quarry"||J==="foreman"){top="#c8a03a";pants="#4a4038";hat=R()<.4?"helmet":null;hatC="#e8c83a"}else if(J==="cook"||J==="waitress"){top="#e8e4dc"}else if(J==="pastor"){top="#2a2a2e";pants="#2a2a2e"}else if(J==="soldier"){top="#5a6040";pants="#5a6040"}else if(J==="hunter"){top="#6a5a3a";hat="hat";hatC="#c8681a"}
+  if(/ball cap/.test(l)&&!hat){hat="hat";hatC=pick2(["#8a3a32","#2f3e58","#3a5a3a"],R)}
   if(kid){top=pick2(["#c83a32","#3a6ac8","#e8c83a","#3a9a5a","#c85a9a","#e88a3a"],R);shoes=pick2(["#d8d4c8","#c83a32","#3a6ac8"],R)}
   const sleeve=R()<.3&&!kid?pick2(["#3a3a3e","#5a3a26","#2f3e58","#6a6a52"],R):top;
   const build=/heavyset/.test(l)?[1.16,1]:/wiry|slight/.test(l)?[.88,1]:/broad/.test(l)?[1.1,1.02]:/athletic/.test(l)?[1.02,1.02]:[1,1];

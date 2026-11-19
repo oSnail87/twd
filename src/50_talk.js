@@ -6,7 +6,7 @@ const INTENTS=[
   ["threat",/\b(kill you|hurt you|or else|make you pay|you'?ll regret|beat you|i'?ll shoot|watch your back)\b/],
   ["child",/\b(have a (baby|kid|child)|start a family|try for a (baby|kid)|our own (kid|baby)|make a baby)\b/],
   ["romance",/\b(love you|be together|go out with me|date me|kiss (me|you)|be with me|be mine|marry me|be my (girlfriend|boyfriend|partner))\b/],
-  ["flirt",/\b(cute|beautiful|handsome|pretty|gorgeous|attractive|i like you|you look good|nice eyes|nice smile)\b/],
+  ["flirt",/\b(cute|beautiful|handsome|pretty|gorgeous|attractive|sexy|i like you|you look (good|nice|great|amazing|lovely|hot)|you'?re (so )?(hot|fine|lovely)|nice (eyes|smile|lips))\b/],
   ["breakup",/\b(break up|it'?s over between|we'?re done|i'?m leaving you|end this)\b/],
   ["ask_join",/\b(can i join|let me join|join your (group|people|camp)|take (me|us) in|room for (me|one more|us)|let (me|us) in|can (we|i) (come|stay) with you)\b/],
   ["join_me",/\b(join (me|us|my group|my people|my camp)|be part of my|be in my group|start a group|be my people)\b/],
@@ -35,13 +35,15 @@ const INTENTS=[
   ["how",/\b(how are you|how'?re you|you ok|you okay|are you alright|holding up|how do you feel|how'?s it going|doing ok|you good)\b/],
   ["where",/\b(where('?s| is| are| did)|have you seen|seen \w+|know where)\b/],
   ["outbreak",/\b(flu|virus|outbreak|the radio|on the radio|what'?s going on|what'?s happening|what is happening|what happened|sick people|epidemic|plague|disease|infection|the clinic|the hospital)\b/],
-  ["favorite",/\b(favou?rite|what do you (like|love|enjoy)|for fun|hobbies|hobby)\b/],
+  ["favorite",/\b(favou?rite|what (\w+ )?do you (like|love|enjoy)|for fun|hobbies|hobby|what do you miss|miss (the )?most|do you miss)\b/],
+  ["story",/\b(how'?d you (make it|survive|get (here|through))|how did you (make it|survive|get (here|through))|what happened to you|got any (good )?stories|tell me a story|your story)\b/],
+  ["mind",/\b(what'?s on your mind|what are you thinking( about)?|penny for your thoughts|what'?s eating you|something on your mind)\b/],
   ["sleep_q",/\b(sleep (ok|okay|well|alright|at all)|get (any )?sleep|sleep last night|slept|tired)\b/],
   ["kidding",/\b(just kidding|jk|i'?m joking|only joking|kidding)\b/],
   ["dead",/\b(dead ones|zombies?|walkers?|biters?|infected|the sick|bite|bitten|undead|corpses|them out there|the dead)\b/],
   ["food",/\b(food|hungry|eat|eaten|ate|meals?|starving|water|thirsty|supplies)\b/],
   ["plan",/\b(plan|what now|what do we do|what should we|winter|future|going to do)\b/],
-  ["news",/\b(news|heard anything|what'?s new|gossip|rumou?r|anything happen)\b/],
+  ["news",/\b(news|heard anything|what'?s new|gossip|rumou?r|anything happen|what did i miss|what i missed|catch me up|fill me in)\b/],
   ["joke",/\b(joke|make me laugh|something funny)\b/],
   ["comfort",/\b(sorry (for|about) your|i'?m here for you|it'?ll be (ok|okay|alright)|not your fault|hang in there|you'?re not alone)\b/],
   ["apology",/\b(sorry|apologi[sz]e|my bad|forgive me)\b/],
@@ -69,19 +71,24 @@ function styleSay(p,t){if(!t)return t;const st=p.style;
   const lc=x=>{const w=x.split(/[\s,.?!]/)[0];return LCW.test(w)?x[0].toLowerCase()+x.slice(1):x};
   if(st==="crude"&&rf()<.2&&t[0]!=="*"&&LCW.test(t.split(/[\s,.?!]/)[0]))t=pick(["Hell, ","Look, "])+lc(t);
   if(st==="nervous"&&rf()<.3&&t[0]!=="*"){const u=t.replace(/\. /," ... ");t=LCW.test(u.split(/[\s,.?!]/)[0])||/^I\b/.test(u)?"Uh, "+lc(u):"Uh... "+u}
-  if(st==="warm"&&rf()<.25&&tier(p)!=="hostile"&&!t.includes(S.player.name.split(" ")[0]))t=t.replace(/\.$/,", hon.");
+  if(st==="folksy"&&p.age>=50&&rf()<.25&&tier(p)!=="hostile"&&S.player.age<=p.age-15&&!t.includes(S.player.name.split(" ")[0])&&/\.$/.test(t)&&t[t.length-2]!=="*")t=t.replace(/\.$/,", "+petName(p)+".");
+  if(st==="sullen"&&t[0]!=="*"){if(t.split(". ").length>2&&rf()<.4)t=t.split(". ")[0]+".";else if(rf()<.2)t="*shrugs* "+t}
+  if(st==="chatty"&&rf()<.25&&t[0]!=="*")t=pick(["Honestly? ","Okay so, ","Oh my God. ","Like, "])+(/^(Honestly|Okay|Like)/.test(t)?t:lc(t));
+  if(st==="tough"&&rf()<.18&&t[0]!=="*"&&!/^(Whatever|Pfft)/.test(t))t=pick(["Whatever. ","Pfft. "])+t;
+  if(st==="shy"&&rf()<.25&&t[0]!=="*")t=pick(["*looks at the ground* ","Um... ","*quietly* "])+t;
   if(st==="preachy"&&rf()<.15&&t.length>25&&!/\?$/.test(t))t+=" "+pick(["The Lord tests us.","We reap what we sow.","This too shall pass.","Love thy neighbor. Even now."]);
   if(st==="joker"&&rf()<.15&&t.length>30)t+=" "+pick(["Ha. Kidding. Mostly.","At least the commute's shorter now."]);
   if(st==="dry"&&t.split(". ").length>3)t=t.split(". ").slice(0,3).join(". ")+(t.endsWith(".")?"":".");
   return t}
+function petName(p){const pl=S.player;return pick(p.age>=65?["hon","sweetheart",pl.sex==="M"?"son":"young lady"]:["hon","sweetheart","kiddo"])}
 function famList(p){return Object.entries(p.fam).map(([id,r])=>[id==="you"?S.player:P(id),r]).filter(([q])=>q)}
 function jobPhrase(q){const k=q.job;const SP={pastor:"the pastor at St. Brigid's",doctor:"the town doctor",deputy:"a sheriff's deputy",foreman:"the foreman up at the quarry",farmer:q.seed==="walt"?"the farmer out at Holloway Farm":"a farmer",retiree:"retired",kid:"just a kid",unemployed:"between jobs"};if(SP[k])return SP[k];const n=(JOBS[k]?.n||"local").toLowerCase();return(/^[aeiou]/.test(n)?"an ":"a ")+n}
 function whereIs(q){if(q.id==="you")return"right here";if(!q.alive)return null;return q.act==="with you"?`with ${S.player.name}`:`${q.act} at ${PLACES[q.loc]?.n||"somewhere"}`}
 function groupOf(p){return p.group?G(p.group):null}
 function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();const t=tier(p);const pn=pl.name.split(" ")[0];const kid=p.age<13;
-  const R={text:"",dt:0,da:0,action:null,memory:"",ask:null};
+  const R={text:"",dt:0,da:0,action:null,memory:"",ask:null,intents:[],M:null};
   const intents=INTENTS.filter(([k,re])=>re.test(low)).map(([k])=>k);
-  const M=findMentions(msg,p);
+  const M=findMentions(msg,p);R.intents=intents;R.M=M;
   const has=k=>intents.includes(k);
   const g=groupOf(p);const myG=myGroup();const sameGroup=g&&myG&&g.id===myG.id;const isLeader=g&&g.leader===p.id;
   const recentGrief=p.mem.filter(m=>m.v<=-8&&S.t-m.t<DAY*4&&m.a!=="you").slice(-1)[0];
@@ -89,13 +96,15 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(p.act==="asleep"){p.act="awake";say(t==="hostile"||t==="cold"?"*jolts awake* What do you want? It's the middle of the night.":pick(["*blinks awake* ...Oh. It's you. Everything okay?","*sits up fast* What? What happened? ...Oh. It's you."]))}
   // first meeting
   if(!p.met){p.met=true;mem(p,`Met ${pl.name} at ${PLACES[here()].n}.`,0);
-    if(kid)say(pick([`I'm ${p.name}. Are you a good guy or a bad guy?`,`Hi. I'm ${p.name}. Do you have any candy?`]));
-    else if(t==="hostile"||(!S.flags.alarm&&false))say(`Back up. Who are you?`);
+    if(kid)say(pick([`I'm ${p.name}. Are you a good guy or a bad guy?`,`Hi. I'm ${p.name}. Do you have any candy?`,`I'm ${p.name}. I'm ${p.age}. How old are you?`]));
+    else if(t==="hostile"||(!S.flags.alarm&&false))say(p.age<18?`Don't come any closer. Who are you?`:`Back up. Who are you?`);
+    else if(p.age<18)say(pick([`Uh... hi. I'm ${p.name}.`,`${p.name}.${S.flags.alarm?" You're not bit or anything, right?":""}`,`I'm ${p.name}. Who are you?`,`Oh. Hey. I'm ${p.name}.`]));
+    else if(p.age>=60)say(pick([`${p.name} ${p.sur}. Pleased to meet you.`,`Name's ${p.name}. Folks around here know me.`,`I'm ${p.name}. Don't believe we've met.`]));
     else say(pick([`I'm ${p.name}. ${p.name==="Walt"?"This is my land.":""}`,`Name's ${p.name}${p.sur?" "+p.sur:""}.`,`${p.name}. ${S.flags.alarm?"You're not bit, are you?":"Nice to meet you."}`]).trim());
     if(S.flags.alarm&&!kid&&!has("greet")&&!intents.length){R.ask="bit";}
     if(has("greet")||!intents.length)return finish(p,R,out)}
   // pending question
-  const q=p.cv?.q;if(q&&(has("yes")||has("no"))&&intents.length<=2){p.cv.q=null;const y=has("yes");
+  const q=p.cv?.q;if(q&&(has("yes")||has("no"))&&intents.length<=2){p.cv.q=null;const y=has("yes");R.answered=q;
     const A={bit:y?["What?! Get away from me!",-20,-10]:["Good. Keep it that way.",3,0],okay:y?["Good. Stay that way.",2,1]:["Yeah. Me neither. We'll get through it.",2,4],town:y?["Find anything worth the risk?",1,0]:["Smart. It's a graveyard in there.",1,0],
       eat:y?["Good. Don't skip meals, it makes you stupid.",1,1]:["Here. *pushes something into your hands* Don't argue.",3,5],group:y?["Then you should talk to "+(g?(g.leader==="you"?"yourself, apparently":fullName(P(g.leader)||p)):"someone who's in charge")+".",1,0]:["Lone wolf, huh. Doesn't last long out here.",0,0],
       help:y?["Thank you. Really.",4,4]:["Right. Of course. Forget I asked.",-3,-3],
@@ -119,7 +128,8 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     else if(has("family")){const f=famList(p);say(f.length?f.map(([q,r])=>`My ${r} is ${q.alive?(q.id==="you"?"you, silly":q.name):"gone"}.`).join(" "):"I don't know where my family is.")}
     else if(has("dead"))say("Mom says don't look at them. They used to be people.");
     else if(has("joke"))say("Knock knock. ...You're supposed to say who's there!");
-    else if(has("romance")||has("flirt"))say(p.fam.you?"*hugs you* Love you too.":"*makes a face* Gross.");
+    else if(has("flirt")&&!has("romance")&&!has("child"))say(pick(["*grins* Thanks!","*looks down at their shirt* It's my favorite.","My mom says I look like my dad."]));
+    else if(has("romance")||has("child")){if(p.fam.you)say("*hugs you* Love you too.");else{say("*makes a face* Gross.");if(pl.age>=18){R.dt-=10;R.memory=`${pn} said something weird to me.`;R.mv=-6;for(const q of living())if(q!==p&&q.age>=18&&dist(q.x,q.z,pl.x,pl.z)<12){q.trust-=10;mem(q,`${pn} was saying creepy things to ${p.name}, a little kid.`,-8,"you")}}}}
     else if(has("join_me")||has("follow_me")){if(p.follow)say("I'm right here!");else if((p.fam.you||feel(p)>30)&&(!p.group||p.group===S.player.group)){R.action="follow";say("Okay! Can I hold your hand?")}else say("I'm not allowed to go anywhere without a grown-up I know.")}
     else if(has("thanks")||has("compliment")){R.da+=4;say("*grins*")}
     else if(has("who"))say(`I'm ${p.name}. I'm ${["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"][p.age]||p.age}${p.age<9?" and a half":""}.`);
@@ -129,6 +139,9 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     else if(has("food"))say(p.hunger>50?"I had crackers. And some peaches.":"I'm really hungry. My tummy keeps making noises.");
     else if(has("fear"))say("The monsters. And the dark. And when grown-ups whisper.");
     else if(has("hope"))say(pick(["I want everything to go back to normal. And a dog.","I want to go back to school. Even math."]));
+    else if(has("favorite"))say(/animal/.test(low)?pick(["Dogs. No, horses. No, dogs.","Frogs! They can freeze solid and come back alive. The good kind of alive.","Do dinosaurs count? Then T. rex."]):/miss/.test(low)?`${cap(p.facts.likes)}. And my room.`:`${cap(p.facts.likes)}!`);
+    else if(has("story"))say(pick([`${(()=>{const f=famList(p).find(([q])=>q.alive&&q.id!=="you"&&q.age>=18);return f?`My ${f[1]} carried me most of the way.`:"I hid in a closet for a really long time."})()} I was really quiet. I'm good at quiet.`,"I don't want to talk about it. *picks at a scab*"]));
+    else if(has("mind"))say(pick([`${cap(p.facts.fear)}. ...And lunch.`,`I keep thinking about ${p.facts.likes}.`,"Nothing. *clearly something*"]));
     else if(M.me||has("opinion")&&/\bme\b/.test(low))say(feel(p)>20?"You're nice. You talk to me like a real person.":"I don't really know you.");
     else if(has("outbreak"))say(S.flags.alarm?"Everybody got sick. It's not a regular sick.":"Is it a flu like the one I had? I had to stay home for a whole week.");
     else if(has("where")||M.people.length)say("I dunno. Ask a grown-up.");
@@ -139,6 +152,37 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     else if(has("greet"))say(pick(["Hi!","Hi. Are you nice?","*waves*"]));
     else if(has("yes")||has("no"))say("Okay.");
     else say(pick(["Do you wanna see my rock collection?","Are the monsters gonna come here?","I'm hungry.","When can we go home?","Did you know frogs can freeze and come back alive? Not like the monsters. Good alive."]));
+    return finish(p,R,out)}
+  // romance needs two grown-ups; anything else gets shut down, and people remember
+  if((has("romance")||has("flirt")||has("child"))&&!p.fam.you&&(p.age<18||pl.age<18)){
+    if(p.age<18&&pl.age>=18&&has("flirt")&&!has("romance")&&!has("child")&&!p.mem.some(m=>m.a==="you"&&/weird|creepy/.test(m.x)&&S.t-m.t<DAY*2)){R.dt-=3;R.da-=2;R.memory=`${pn} said something kind of weird to me.`;R.mv=-3;say(pick(["Um... thanks? That's kind of a weird thing to say.","*crosses arms* Okay...","...Why would you say that?"]));return finish(p,R,out)}
+    if(p.age<18&&pl.age>=18){R.dt-=12;R.da-=10;R.memory=`${pn} said something creepy to me.`;R.mv=-8;R.action="end";say(pick([`...What? I'm ${p.age}. That's so creepy.`,"*steps way back* No. That's gross. You're an adult.","Okay, I'm leaving. That's messed up."]));
+      for(const q of living())if(q!==p&&q.age>=18&&dist(q.x,q.z,pl.x,pl.z)<12){q.trust-=8;mem(q,`${pn} was hitting on ${p.name}, who's ${p.age}.`,-8,"you")}return finish(p,R,out)}
+    if(p.age>=18){R.dt-=2;say(pick(["You're a kid. No. Go find somebody your own age.","*laughs, not unkindly* Kid. No.","How old are you? Yeah. No."]));return finish(p,R,out)}
+    if(Math.abs(p.age-pl.age)>2){say(pick(["*makes a face* Um. No.","That's weird. No."]));R.da-=2;return finish(p,R,out)}
+    if(has("flirt")){R.da+=2;say(pick(["*goes red* Shut up.","...Seriously? *tries not to smile*","Okay, that's weird. But, like. Thanks."]))}else say(pick(["*goes red* I... what? The world's ending. Can we just, like, hang out first?","*laughs nervously* Maybe. Ask me when we're not about to die."]));return finish(p,R,out)}
+  // teenagers: not kids, not adults, and sick of being treated like either. Anything that decides something still goes to the rules below
+  const HARD=["insult","threat","demand","ask_join","join_me","follow_me","leave_group","stay","lead","who_lead","alliance","trade","help","deliver","give_req","secret","remember","breakup","self_lost","comfort","apology","kidding","bitten","self_job","self_name","news","where","food"];
+  if(p.age<18&&!intents.some(k=>HARD.includes(k))&&!M.people.length&&!M.group&&!M.place&&!M.me){const grade=p.age<14?"in eighth grade":["a freshman","a sophomore","a junior","a senior"][clamp(p.age-14,0,3)]+" at the high school";
+    if(has("how"))say(recentGrief?pick(["Not great. *doesn't look at you*","I don't want to talk about it. Okay?"]):p.mood<35?pick(["Fine. *it's obviously not fine*","I'm fine. Can everybody stop asking that?","Honestly? It sucks. All of it."]):p.hunger<35?"Starving. Like, actually starving.":pick(["I'm okay. I guess.","Fine. Kind of bored? Which is messed up, I know.","Alive. So. That's something."]));
+    else if(has("story"))say(pick(["Honestly? I just ran. Like, a lot.",`${(()=>{const f=famList(p).find(([q])=>q.alive&&q.id!=="you");return f?`My ${f[1]} found me.`:"I was on my own for a while."})()} I don't really want to get into the rest.`,"I hid in the school gym for two days. Don't ask."]));
+    else if(has("mind"))say(pick([`Just... ${p.facts.fear}. Sorry. That's dark.`,`Honestly? ${cap(p.facts.likes)}. I miss it so much.`,"Nothing. It's fine."]));
+    else if(has("who")||has("before")||has("from")||/\b(grade|school)\b/.test(low)){say(`I'm ${p.name}. I was ${grade}.${p.facts.from.startsWith("right here")?" Lived here my whole life.":` We moved here from ${p.facts.from}.`} ${pick(["Now I'm... I don't know what I am.","Feels like a different person's life.","I used to think this town was boring."])}`);p.told.who=true;R.da+=1}
+    else if(has("family")){const f=famList(p).filter(([q])=>q.id!=="you");say(f.length?f.slice(0,3).map(([q,r])=>q.alive?`My ${r}'s ${q.group&&q.group===p.group?"here":"out there somewhere"}.`:`My ${r}... ${q.status==="turned"?"turned":"didn't make it"}.`).join(" ")+(f.some(([q])=>!q.alive)?" I don't really want to talk about it.":""):"It's just me now. So.");R.da+=1}
+    else if(has("fear"))say(t==="hostile"?"Why would I tell you?":`${cap(p.facts.fear)}. ${pick(["Don't tell anyone I said that.","...That's dumb, I know.","Okay, can we talk about something else?"])}`);
+    else if(has("hope"))say(`${cap(p.facts.hope)}. ${pick(["Dumb, right?","Don't laugh.","That's probably never happening, but whatever."])}`);
+    else if(has("favorite"))say(`${cap(p.facts.likes)}. ${pick(["Obviously.","That's, like, my whole personality. Was.","I miss it so much."])}`);
+    else if(has("dead"))say(p.tr.brave>.6?pick(["I've seen what they do. I'm not a little kid.","Aim for the head. Everybody acts like I don't know that.","I put one down yesterday. My hands wouldn't stop shaking after."]):pick(["My bus driver's one of them now. I saw him on Fourth Street.","I can't look at them. They used to be people we knew.","The sound they make. I hear it when I try to sleep."]));
+    else if(has("joke"))say(p.tr.social>.4?pick(["Why'd the zombie skip school? He felt rotten. ...That's the only one I know.","Knock knock. ...Nobody, because everybody's dead. Okay, that wasn't funny."]):"I don't really do jokes anymore.");
+    else if(has("outbreak"))say(!S.flags.alarm?pick(["Everyone at school was talking about the flu thing. Like it's some movie.","My mom keeps watching the news about it. It's kind of freaking me out."]):pick(["Nobody tells us anything. Like we're too young to handle it. We're handling it.","There was school, and then there wasn't. That's all I know.","Nobody knows what it is. The adults just pretend they do."]));
+    else if(has("sleep_q"))say(pick(["Not really. Every noise.","Like four hours. It's fine.","I sleep with my shoes on now."]));
+    else if(has("plan"))say(pick([`Plan? I'm ${p.age}. Ask an adult. ...Actually, don't. They don't know either.`,"Stay alive. Find my friends. That's it.","I don't know. Nobody does."]));
+    else if(has("opinion"))say(pick(["I don't know. Why are you asking me?","Honestly? Everyone's just making it up as they go.","Nobody asks what I think. ...It's kind of nice that you did."]));
+    else if(has("thanks")){R.da+=1;say(pick(["Yeah. No problem.","Sure.","*shrugs* It's whatever."]))}
+    else if(has("compliment")){R.da+=4;R.dt+=1;say(pick(["*tries not to smile* ...Thanks.","Wait, really? ...Cool.","Okay, now you're being weird. But thanks."]))}
+    else if(has("bye")){say(pick(["Later.","See ya. Don't die or whatever.","Bye."]));R.action="end"}
+    else if(has("greet")||has("yes")||has("no"))say(pick({hostile:["What.","Go away."],cold:["Oh. It's you.","Hey."],neutral:["Hey.","Uh, hi.","Hi."],friendly:[`Hey, ${pn}.`,"Oh, hey!","Hey. You're back."],close:[`${pn}! You're okay.`,"Hey! I was kind of worried. Not that much. But kind of."]}[t]));
+    else say(pick(["What?","I don't know. Why are you asking me?","*shrugs*","Okay...?","Um. Sure."]));
     return finish(p,R,out)}
   if(has("kidding")&&!has("bitten")){const lastJoke=p.mem.filter(m=>m.a==="you").slice(-1)[0];say(lastJoke&&/joked about being bitten/.test(lastJoke.x)?pick(["Not funny. Not even a little.","*shoves your shoulder* Don't. Ever."]):pick(["Ha. Okay.","You're a strange one.","*half a smile*"]));return finish(p,R,out)}
   // hostility first
@@ -213,7 +257,7 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     if(!q.alive){const how=q.status==="turned"?"turned":q.status==="left"?"left town":"died";const fr=p.fam[q.id];say(fr?`My ${fr}... ${how}. *looks away* I don't want to talk about it.`:`${q.name}? ${how==="left town"?"Gone. Packed up and left.":cap(how)+"."} ${relGet(p,q)>30?"I miss them.":""}`);return finish(p,R,out)}
     const r=relGet(p,q);const fam=p.fam[q.id];const w=whereIs(q);const knowsWhere=q.group&&q.group===p.group||fam||r>30;
     let s="";
-    const obj=q.sex==="F"?"her":"him",subj=q.sex==="F"?"She":"He";const qg=q.group&&G(q.group);const pubWhere=qg?`with ${qg.name}${qg.home?" at "+PLACES[qg.home].n:""}`:null;
+    const obj=q.sex==="F"?"her":"him",subj=q.sex==="F"?"She":"He";const qg=q.group&&G(q.group);const pubWhere=qg?`with ${groupAt(qg)}`:null;
     if(has("where")||/where/.test(low))s=knowsWhere?`Last I knew, ${q.name} was ${w}.`:pubWhere?`I heard ${q.name}'s ${pubWhere}.`:S.flags.alarm?`No idea where ${q.name} is. Haven't seen ${obj} since this started.`:`${q.name}? Probably ${(()=>{const w=JOBS[q.job]?.work;return w&&w!=="home"?"at "+(BMAP[w]?BMAP[w].n:PLACES[w]?PLACES[w].n:"work"):"at home"})()}, like any other day.`;
     else s=fam?`${q.name}'s my ${fam}. ${r>60?"Everything I do, I do for them.":r<0?"We don't get along. Never did.":"We're family. That's all there is to it."}`:r>50?`${q.name}? ${pick(["One of the good ones.","I'd trust them with my life. I have, actually.","My best friend in all this."])}`:r>15?`${q.name}'s alright.`:r<-40?`${q.name}? ${pick(["Don't get me started.","Keep them away from me.","I don't trust them as far as I can throw them."])}`:r<-10?`We're not friends.`:`${q.name}? ${subj}${q.age<13?"'s just a kid":"'s "+jobPhrase(q)}${pubWhere?`, ${pubWhere} now`:""}. I don't know ${obj} well.`;
     if(q.partner&&q.partner!==p.id&&rf()<.5&&r>-10)s+=` ${subj}'s with ${q.partner==="you"?"you":P(q.partner)?.name||"someone"}, I think.`;
@@ -237,14 +281,16 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(has("remember")){const ms=p.mem.filter(m=>m.a==="you").slice(-3);say(ms.length?"I remember. "+ms.map(m=>toYou(m.x)).join(" "):"We haven't really been through anything together. Not yet.");return finish(p,R,out)}
   if(has("how")){const parts=[];
     if(p.bitten&&p.trust>=45&&rf()<.7){say(`*pulls up a sleeve. The bite is black at the edges* ...Don't tell anyone. Please. I just need a little more time.`);R.memory=`I showed ${pn} my bite.`;R.mv=6;R.dt+=5;p.revealed=true;return finish(p,R,out)}
-    if(recentGrief)parts.push(`Not good. ${recentGrief.x}`);else if(p.health<45)parts.push("Hurts to breathe. I'll live. Probably.");else if(p.hunger<30)parts.push("Hungry. Everyone's hungry.");else if(p.mood<30)parts.push(pick(["Honestly? Barely holding it together.","I keep waking up and remembering.","Tired. All the way down."]));else if(p.mood>70)parts.push(pick(["Better than I have any right to be.","Good, actually. We're still here.","Not bad. Got a few hours of sleep."]));else parts.push(pick(["Getting by.","Same as everyone. Scared, mostly.","Alive. That counts for something now."]));
+    if(recentGrief)parts.push(`Not good. ${recentGrief.x}`);else if(p.health<45)parts.push("Hurts to breathe. I'll live. Probably.");else if(p.hunger<30)parts.push("Hungry. Everyone's hungry.");else if(p.mood<30)parts.push(pick(["Honestly? Barely holding it together.","I keep waking up and remembering.","Tired. All the way down."]));else if(p.mood>70)parts.push(pick(["Better than I have any right to be.","Good, actually. We're still here.","Not bad. Got a few hours of sleep."]));else parts.push(pick(p.age>=60?["Oh, these old bones have been through worse. ...No, they haven't.","Tired. I'm too old to be this scared.","Getting by. My knees have opinions about all the running."]:p.age<30?["Getting by. I guess.","Honestly? I don't know. Okay, mostly.","Alive. That counts for something now."]:["Getting by.","Same as everyone. Scared, mostly.","Alive. That counts for something now."]));
     say(parts.join(" "));R.ask=rf()<.5?pick(["okay","eat"]):null;if(R.ask==="okay")out.push("You doing alright?");if(R.ask==="eat")out.push("You eaten today?");R.da+=1;return finish(p,R,out)}
   if(has("comfort")){if(recentGrief){R.da+=7;R.dt+=3;say(pick(["*nods, doesn't trust their voice* ...Thanks.","That helps. More than you know.","*leans into you for a second* Thank you."]));R.memory=`${pn} was kind to me when I was grieving.`;R.mv=6}else{R.da+=2;say("I'm okay. But thanks.")}return finish(p,R,out)}
   if(has("apology")){const bad=p.mem.filter(m=>m.a==="you"&&m.v<0).slice(-1)[0];if(bad){if(rf()<p.tr.kind+.2){R.dt+=4;R.da+=4;say("...Alright. Water under the bridge.");R.memory=`${pn} apologized. I forgave them.`;R.mv=3}else say(`Sorry doesn't fix it. ${toYou(bad.x)}`)}else say("For what?");return finish(p,R,out)}
   if(has("favorite")){const topic=/food|eat|meal|dish|snack/.test(low)?"food":/song|music|band|singer/.test(low)?"music":/movie|film|show|tv/.test(low)?"movie":/book|read/.test(low)?"book":/colou?r/.test(low)?"color":"thing";
     const FAV={food:["my mom's green chili","pancakes with too much syrup","gas station burritos, honestly","peach cobbler","a real cheeseburger","the pho at that place out on Route 9","fried catfish","cold pizza for breakfast"],music:["old country. Patsy Cline","anything loud enough to drive with the windows down","hymns, if you can believe it","blues. The sad kind","eighties stuff. Don't judge me"],movie:["anything with a heist in it","old westerns","cartoons, with the kids","romantic comedies. Don't tell anyone","nature documentaries"],book:["mysteries. I always guess wrong","the Bible, cover to cover, twice","car manuals. I'm serious","history. Wars, mostly","I never sat still long enough to read"],color:["green","blue. Like everybody","red","yellow, like old school buses","gray. Boring, I know"]};
     const L=FAV[topic];const v=L?L[hashStr(p.id+topic)%L.length]:p.facts.likes;
-    say(topic==="food"?`${cap(v)}. ${pick(["What I wouldn't give for some right now.","God, I miss it.","Don't make me think about it."])}`:topic==="thing"?`${cap(p.facts.likes)}. Used to be, anyway.`:`${cap(v)}.`);R.da+=2;return finish(p,R,out)}
+    say(topic==="food"?`${cap(v)}. ${pick(["What I wouldn't give for some right now.","God, I miss it.","Don't make me think about it."])}`:/miss/.test(low)?`${cap(p.facts.likes)}. ${pick(["Stupid, right?","Some days that's all I think about.","Funny what you end up missing."])}`:topic==="thing"?`${cap(p.facts.likes)}. Used to be, anyway.`:`${cap(v)}.`);R.da+=2;return finish(p,R,out)}
+  if(has("story")){const big=p.mem.filter(m=>m.a!=="you"&&Math.abs(m.v)>=6).slice(-1)[0];say(big&&t!=="hostile"&&t!=="cold"?`${pick(["Honestly?","Same as everyone, I guess.","Luck, mostly."])} ${big.x}`:pick(["Luck. Running. Not stopping.","I don't talk about the first night.","Same as everybody. Kept my head down and my door locked."]));R.da+=1;return finish(p,R,out)}
+  if(has("mind")){say(recentGrief&&t!=="hostile"?`${recentGrief.x} I can't stop thinking about it.`:p.hunger<35?"Food. Honestly, just food.":t==="hostile"||t==="cold"?"Nothing you need to worry about.":pick([`${cap(p.facts.hope)}. I keep thinking about it.`,`${cap(p.facts.likes)}. Isn't that stupid? Of all the things.`,`${cap(p.facts.fear)}. That's what keeps me up.`]));R.da+=1;return finish(p,R,out)}
   if(has("outbreak")){const F=S.flags;const d=dayOf(S.t);
     say(!F.clinic?(p.tr.curious>.55?pick(["The flu thing? My cousin in the city says the hospitals are turning people away. That's not nothing.","Radio keeps saying 'unusual flu'. Unusual how? Nobody says."]):pick(["It's a flu. They'll have a shot for it by Christmas.","Every year it's something. We're fine out here."]))
       :!F.alarm?pick(["Did you hear about the hospital? Somebody said a patient bit a nurse. Bit her.","There were sirens at the hospital this morning. Nobody's saying why.","Something happened at the hospital. People are saying things I don't want to repeat."])
@@ -265,10 +311,10 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(has("self_name")){say(`${pn}. I'll remember that.`);return finish(p,R,out)}
   if(has("bye")){say(pick(["Stay alive.","Watch yourself out there.","See you around. Hopefully.","Don't do anything stupid."]));R.action="end";return finish(p,R,out)}
   if(has("greet")||has("yes")||has("no")){const hh=hourOf(S.t);const tt=hh>=5&&hh<12?"Morning":hh>=18&&hh<23?"Evening":"Hey";
-    const G1={hostile:["What.","Keep walking.","You've got a lot of nerve."],cold:[`${pn}.`,"Yeah?","Need something?"],neutral:[`${tt}.`,`Hey, ${pn}.`,"Hey."],friendly:[`Hey, ${pn}! Good to see you in one piece.`,"There you are.",`${tt}, ${pn}.`],close:[`${pn}! *hugs you* Don't scare me like that again.`,"Hey, you.","There's my favorite person."]}[t];
-    say(pick(G1));if(p.want&&feel(p)>-10&&rf()<.8){out.push(`Listen... ${p.want.text}`);p.want.told=true;R.ask="help"}else if(t!=="hostile"&&rf()<.35){R.ask=pick(["okay","town"]);out.push(R.ask==="okay"?"You doing alright?":"You been into town?")}return finish(p,R,out)}
+    const old=p.age>=55;const G1={hostile:["What.","Keep walking.","You've got a lot of nerve."],cold:[`${pn}.`,"Yeah?","Need something?"],neutral:old?[`${tt}.`,`${tt}, ${pn}.`,"Well, hello."]:[`${tt}.`,`Hey, ${pn}.`,"Hey."],friendly:old?[`Well, look who it is.`,`${tt}, ${pn}. Good to see you in one piece.`,"There you are."]:[`Hey, ${pn}! Good to see you in one piece.`,"There you are.",`${tt}, ${pn}.`],close:p.style==="folksy"&&pl.age<=p.age-15?[`Come here, ${petName(p)}. *hugs you* Don't scare me like that.`,`There you are, ${petName(p)}.`]:[`${pn}! *hugs you* Don't scare me like that again.`,"Hey, you.","There's my favorite person."]}[t];
+    say(pick(G1));if(p.want&&feel(p)>-10&&rf()<.8){out.push(`Listen... ${p.want.text}`);p.want.told=true;R.ask="help";R.facts=true}else if(t!=="hostile"&&rf()<.35){R.ask=pick(["okay","town"]);out.push(R.ask==="okay"?"You doing alright?":"You been into town?")}return finish(p,R,out)}
   // fallback
-  if(p.want&&rf()<.5){say(`I don't know about that. But listen... ${p.want.text}`);p.want.told=true;R.ask="help";return finish(p,R,out)}
+  if(p.want&&rf()<.5){say(`I don't know about that. But listen... ${p.want.text}`);p.want.told=true;R.ask="help";R.facts=true;return finish(p,R,out)}
   say(pick([`I'm not sure what you mean.`,`Hm. ${p.tr.curious>.6?"Tell me more.":"If you say so."}`,`I don't know anything about that.`,`*shrugs*`,`${p.tr.social>.6?"Funny you'd ask me that.":"..."} Ask me something I can actually answer.`]));
   return finish(p,R,out)}
 function toYou(x){const pn=S.player.name.split(" ")[0];return x.replace(new RegExp("\\b"+pn+"'s\\b","g"),"your").replace(new RegExp("\\b"+pn+"\\b","g"),"you").replace(/^you\b/,"You").replace(/\bthey were\b/g,"you were").replace(/\bthey are\b/g,"you are")}
@@ -288,7 +334,7 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
   if(a==="child_yes"){if((pl.sex==="F"&&p.sex==="M")||(pl.sex==="M"&&p.sex==="F")){pl.trying=true;note(`You and ${p.name} are trying for a child.`)}else note(`You talk about raising a child together. If a child ever loses their parents, you could take them in.`)}
   if(a==="break_up"){pl.partner=null;p.partner=null;pl.trying=false;note(`You and ${p.name} are no longer together.`);news(`${pl.name} and ${p.name} split up.`,"",[p.id])}
   if(a==="join_their"){const g=G(p.group);const old=pl.group;if(old&&G(old)?.leader==="you"){for(const q of members(old))joinGroup(q,g.id,true);G(old).dead=true;news(`${G(old).name} has merged into ${g.name}.`,"big")}
-    pl.group=g.id;for(const q of S.people.filter(q=>q.alive&&q.follow&&!q.group))joinGroup(q,g.id,true);for(const q of members(g.id))if(q.met)q.trust+=3;note(`You're part of ${g.name} now.`);journal(`You joined ${g.name}${g.home?" at "+PLACES[g.home].n:""}.`,"big");news(`${pl.name} joined ${g.name}.`,"")}
+    pl.group=g.id;for(const q of S.people.filter(q=>q.alive&&q.follow&&!q.group))joinGroup(q,g.id,true);for(const q of members(g.id))if(q.met)q.trust+=3;note(`You're part of ${g.name} now.`);journal(`You joined ${groupAt(g)}.`,"big");news(`${pl.name} joined ${g.name}.`,"")}
   if(a==="join_mine"){let g=myGroup();if(!g){g=newGroup(`${pl.name.split(" ")[0]}'s people`,"you",null);pl.group=g.id;for(const q of S.people.filter(q=>q.alive&&q.follow&&!q.group&&q.id!==p.id))joinGroup(q,g.id,true);UI.afterTalkModal={type:"name_group"};news(`${pl.name} has started a group of their own.`,"big")}
     const fam=S.people.filter(q=>q.alive&&q.hh===p.hh&&q!==p&&q.hh&&q.hh!=="you"&&(q.group===p.group));joinGroup(p,g.id,true);if(!g.home)p.follow=true;for(const q of fam){joinGroup(q,g.id,true);if(!g.home)q.follow=true}
     note(`${p.name}${fam.length?` and ${fam.length} family member${fam.length>1?"s":""}`:""} joined ${g.name}.`);journal(`${p.name} joined your group${fam.length?", with family":""}.`,"good");if(g.home)for(const q of [p,...fam])placeTo(q,randIn(g.home,3))}
@@ -301,7 +347,14 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
 // ================= overheard conversations =================
 function overhear(a,b){const r=relGet(a,b);const L=[];const s=(p,t)=>L.push(`${p.name}: ${styleSay(p,t)}`);
   const shared=a.mem.filter(m=>m.v<=-8&&m.a!=="you"&&b.mem.some(n=>n.a===m.a)).slice(-1)[0];
-  if(a.age<13&&b.age<13){s(a,"Do you think the monsters can swim?");s(b,"No. They'd sink. They're too heavy with dead.");s(a,"That's not how it works.");s(b,"You don't know how it works.");return L}
+  if(a.age<13&&b.age<13){pick([()=>{s(a,"Do you think the monsters can swim?");s(b,"No. They'd sink. They're too heavy with dead.");s(a,"That's not how it works.");s(b,"You don't know how it works.")},
+    ()=>{s(a,"I'm gonna be a soldier when I grow up. And kill all of them.");s(b,"I'm gonna be a vet. For dogs.");s(a,"Dogs don't need a vet anymore.");s(b,"Yes they do! *shoves you*")},
+    ()=>{s(a,"Do you remember what pizza tastes like?");s(b,"Pepperoni.");s(a,"That's not a taste, that's a kind.");s(b,"It tastes like pepperoni, duh.")}])();return L}
+  const teen=x=>x.age>=13&&x.age<18;
+  if(teen(a)&&teen(b)){pick([()=>{s(a,"Do you think there's ever gonna be school again?");s(b,"God, I hope not.");s(a,"...I kind of miss it. Is that weird?");s(b,"Yeah. ...No. I miss it too.")},
+    ()=>{s(a,"My phone's been dead for a week and I still reach for it.");s(b,"Same. I had like four hundred unread messages.");s(a,"From who?");s(b,"*quiet* ...Doesn't matter now.")},
+    ()=>{s(a,"What do you think the adults are actually doing?");s(b,"Making it up. Same as us.");s(a,"That's not comforting.");s(b,"Wasn't supposed to be.")}])();return L}
+  const little=a.age<13?a:b.age<13?b:null;if(little){const big=little===a?b:a;s(little,pick(["When can we go home?","Are the monsters gonna come here?","I'm hungry.","Can I sleep next to you tonight?"]));s(big,big.age<18?pick(["I don't know. Soon, maybe.","They won't. I won't let them.","Here. *hands over a cracker* Don't tell anyone."]):pick(["Soon, bud. I promise.","Not while I'm here.","I know. Me too. We'll find something."]));s(little,pick(["You said that yesterday.","Promise promise?","Okay."]));return L}
   if(a.partner===b.id){s(a,pick(["You sleep at all?","Come here. You're freezing.","I keep thinking about the house."]));s(b,pick(["A little. You?","I'm fine. Stop worrying.","We'll get a house again. A better one."]));s(a,"Promise me we stay together. Whatever happens.");s(b,"*takes their hand* Whatever happens.");return L}
   if(shared){const who=P(shared.a);s(a,`I keep thinking about ${who?who.name:"them"}.`);s(b,"Me too. Every time I close my eyes.");s(a,pick(["They didn't deserve that.","It should've been me.","Do you think they knew it was us at the end?"]));s(b,"*long silence* ...Get some sleep. I'll take your watch.");return L}
   if(r<-30){s(a,pick([`You took the last of the coffee again.`,`You were supposed to be on watch.`,`I saw you skimming from the store.`]));s(b,pick(["Prove it.","So report me.","Mind your own business for once."]));s(a,"One of these days, somebody's going to get hurt because of you.");s(b,"Is that a threat?");return L}

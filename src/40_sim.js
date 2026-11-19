@@ -16,7 +16,9 @@ function fullName(p){return p.id==="you"?S.player.name:p.name+(p.sur?" "+p.sur:"
 function G(id){return S.groups[id]}
 function members(gid){return S.people.filter(p=>p.alive&&p.group===gid)}
 function groupSize(gid){return members(gid).length+(S.player.group===gid&&S.player.alive!==false?1:0)}
-function mem(p,text,v=0,about="you"){if(!p||p.id==="you")return;p.mem.push({d:dayOf(S.t),t:S.t,x:text,v,a:about});if(p.mem.length>24)p.mem.splice(0,p.mem.length-24)}
+// memories fade oldest and smallest first; the things that mattered stay
+function mem(p,text,v=0,about="you"){if(!p||p.id==="you"||!text)return;if(p.mem.slice(-4).some(m=>m.x===text))return;p.mem.push({d:dayOf(S.t),t:S.t,x:text,v,a:about});
+  while(p.mem.length>30){let k=0,lo=1e9;for(let i=0;i<p.mem.length-8;i++){const w=Math.abs(p.mem[i].v)*2+i*.6;if(w<lo){lo=w;k=i}}p.mem.splice(k,1)}}
 function relGet(a,b){return a.rel[b.id]||0}
 function relSet(a,b,v){v=clamp(v,-100,100);a.rel[b.id]=v;b.rel[a.id]=v}
 function relAdd(a,b,d){relSet(a,b,relGet(a,b)+d)}
@@ -40,13 +42,19 @@ function makePerson(o={}){
   const sk={fight:rnd(0,2),scavenge:rnd(0,2),craft:rnd(0,2),build:rnd(0,2),medic:rnd(0,1),speak:rnd(0,2),survive:rnd(0,2)};
   for(const [k,v] of Object.entries(JOBS[job]?.sk||{}))sk[k]+=v;
   const age=o.age??rnd(18,60);
-  const p={id:"p"+(NEXT++),name:o.name||pick(sex==="F"?FIRST_F:FIRST_M),sur:o.sur??pick(SUR),sex,age,job,tr:o.tr||traits(),sk,
-    style:o.style||(age<13?"kid":pick(Object.keys(STYLES))),home:o.home||null,hh:o.hh||null,
-    facts:{from:o.from||pick(HOMETOWN),fear:pick(FEARS),hope:pick(HOPES),secret:pick(SECRETS),likes:pick(LIKES),bio:o.bio||""},told:{},
-    look:o.look||(pick(["tall","short","heavyset","wiry","broad-shouldered","slight","stooped","athletic"])+", "+pick(["gray hair","black hair","red hair","blond hair","a shaved head","brown curls","a ponytail","a beard","glasses","a sunburn"])),
+  // a Hispanic surname usually comes with a Spanish first name, and now and then an Anglo one does too
+  const sur=o.sur??(rf()<.15?pick(HSUR):pick(SUR));const hisp=HSUR.includes(sur)?rf()<.65:rf()<.04;
+  const secret=lifeFill(forAge(SECRETS,age),sex);
+  const p={id:"p"+(NEXT++),name:o.name||firstName(sex,age,hisp),sur,sex,age,job,tr:o.tr||traits(),sk,
+    style:o.style||styleFor(age),home:o.home||null,hh:o.hh||null,
+    facts:{from:o.from||pick(HOMETOWN),fear:forAge(FEARS,age),hope:forAge(HOPES,age),secret,likes:forAge(LIKES,age),bio:o.bio||""},told:{},
+    look:o.look||lookFor(sex,age),
     x:0,z:0,tx:0,tz:0,loc:"town",act:"at home",hunger:85,thirst:85,rest:80,fear:0,soc:60,plan:null,health:100,mood:60,rel:{},fam:{},trust:0,aff:0,met:false,
     group:null,role:null,partner:null,kids:[],parents:[],preg:null,alive:true,status:"",bitten:null,mem:[],chat:[],pack:{},want:null,follow:false,seed:o.seed||null};
   return p}
+// a fear of forgetting your kids' faces needs kids: once households are made, swap anything that doesn't fit the life someone has
+function refitLife(p){const f=p.facts;const fix=(L,k)=>{const e=L.find(x=>typeof x!=="string"&&lifeFill(x[0],p.sex)===f[k]);if(e&&(!fitsLife(e,p)||p.age<e[1]||p.age>e[2]))f[k]=lifeFill(forAge(L,p.age,null,p),p.sex)};fix(FEARS,"fear");fix(HOPES,"hope");fix(SECRETS,"secret");fix(LIKES,"likes")}
+function groupAt(g){if(!g)return"";const pl=g.home&&PLACES[g.home]?PLACES[g.home].n:"";return g.name+(pl&&pl!==g.name?" at "+pl:"")}
 function famLink(a,b,ra,rb,v){a.fam[b.id]=ra;b.fam[a.id]=rb;relSet(a,b,v)}
 function packFor(p){const k={};const add=(i,n)=>{if(n>0&&ITEMS[i])k[i]=(k[i]||0)+n};
   add(pick(["snacks","canned_food","water_bottle","cereal"]),rnd(0,2));
@@ -78,14 +86,14 @@ function newWorld(c){
   const ppl=S.people;const P_=o=>{const p=makePerson(o);ppl.push(p);return p};
   const used=new Set(["farmhouse","hall","h3","trailer2"]);const freeHouse=()=>{const h=HOUSES.find(h=>!used.has(h.id));if(h){used.add(h.id);return h.id}return pick(HOUSES).id};
   const walt=P_({name:"Walt",sur:"Holloway",sex:"M",age:61,job:"farmer",home:"farmhouse",hh:"hol",style:"dry",tr:{kind:.7,brave:.7,ambit:.45,temper:.35,social:.4,curious:.3,honest:.9,faith:.6},seed:"walt",bio:"Has farmed this land for forty years. Lost his son in the city on the first night, though he doesn't know it yet."});
-  const june=P_({name:"June",sur:"Holloway",sex:"F",age:59,job:"farmer",home:"farmhouse",hh:"hol",style:"warm",tr:{kind:.9,brave:.5,ambit:.3,temper:.2,social:.7,curious:.4,honest:.8,faith:.8}});
+  const june=P_({name:"June",sur:"Holloway",sex:"F",age:59,job:"farmer",home:"farmhouse",hh:"hol",style:"folksy",tr:{kind:.9,brave:.5,ambit:.3,temper:.2,social:.7,curious:.4,honest:.8,faith:.8}});
   const eli=P_({name:"Eli",sur:"Holloway",sex:"M",age:11,job:"kid",home:"farmhouse",hh:"hol",style:"kid"});
   famLink(walt,june,"wife","husband",85);walt.partner=june.id;june.partner=walt.id;famLink(walt,eli,"grandson","grandfather",80);famLink(june,eli,"grandson","grandmother",90);
-  const grace=P_({name:"Grace",sur:"Okafor",sex:"F",age:47,job:"pastor",home:"hall",hh:"grace",style:"preachy",tr:{kind:.92,brave:.6,ambit:.55,temper:.15,social:.85,curious:.6,honest:.85,faith:.98},seed:"grace",bio:"Pastor of St. Brigid's for eleven years. Believes the church should be a lifeboat."});
+  const grace=P_({name:"Grace",sur:"Whitaker",sex:"F",age:47,job:"pastor",home:"hall",hh:"grace",style:"preachy",tr:{kind:.92,brave:.6,ambit:.55,temper:.15,social:.85,curious:.6,honest:.85,faith:.98},seed:"grace",bio:"Pastor of St. Brigid's for eleven years. Believes the church should be a lifeboat."});
   const rayH=freeHouse();
-  const ray=P_({name:"Ray",sur:"Castell",sex:"M",age:39,job:"deputy",home:rayH,hh:"cas",style:"plain",tr:{kind:.45,brave:.85,ambit:.8,temper:.55,social:.6,curious:.4,honest:.6,faith:.4},seed:"ray",bio:"The only deputy left after the sheriff drove to the city and didn't come back. Thinks someone has to be in charge."});
-  const carmen=P_({name:"Carmen",sur:"Castell",sex:"F",age:37,job:"teacher",home:rayH,hh:"cas",tr:{kind:.75,brave:.5,ambit:.4,temper:.4,social:.7,curious:.7,honest:.75,faith:.5}});
-  const lila=P_({name:"Lila",sur:"Castell",sex:"F",age:9,job:"kid",home:rayH,hh:"cas",style:"kid"});
+  const ray=P_({name:"Ray",sur:"Castillo",sex:"M",age:39,job:"deputy",home:rayH,hh:"cas",style:"plain",tr:{kind:.45,brave:.85,ambit:.8,temper:.55,social:.6,curious:.4,honest:.6,faith:.4},seed:"ray",bio:"The only deputy left after the sheriff drove to the city and didn't come back. Thinks someone has to be in charge."});
+  const carmen=P_({name:"Carmen",sur:"Castillo",sex:"F",age:37,job:"teacher",home:rayH,hh:"cas",tr:{kind:.75,brave:.5,ambit:.4,temper:.4,social:.7,curious:.7,honest:.75,faith:.5}});
+  const lila=P_({name:"Lila",sur:"Castillo",sex:"F",age:9,job:"kid",home:rayH,hh:"cas",style:"kid"});
   famLink(ray,carmen,"wife","husband",70);ray.partner=carmen.id;carmen.partner=ray.id;famLink(ray,lila,"daughter","dad",90);famLink(carmen,lila,"daughter","mom",95);
   const coleH=freeHouse();
   const cole=P_({name:"Cole",sur:"Briggs",sex:"M",age:44,job:"foreman",home:coleH,hh:"bri",style:"crude",tr:{kind:.2,brave:.85,ambit:.9,temper:.8,social:.6,curious:.3,honest:.35,faith:.2},seed:"cole",bio:"Ran the quarry crew. Respected, feared, owed money by half the town."});
@@ -96,15 +104,16 @@ function newWorld(c){
   // generic households
   const types=["couple","family","family","single","single","single","roommates","elders","parent","family","couple","single"];
   let hh=0;
-  while(ppl.length<70){const ty=pick(types);const h=freeHouse();const id="hh"+(hh++);const sur=pick(SUR);
+  const usedSur=new Set(ppl.map(p=>p.sur));const newSur=()=>{const L=rf()<.16?HSUR:SUR;const c=L.filter(x=>!usedSur.has(x));const s=pick(c.length?c:L);usedSur.add(s);return s};
+  while(ppl.length<70){const ty=pick(types);const h=freeHouse();const id="hh"+(hh++);const sur=newSur();
     const adult=(o={})=>P_({sur,home:h,hh:id,job:o.job||pick(["nurse","clerk","hardware","cook","waitress","bartender","attendant","mechanic","teacher","librarian","farmhand","quarry","trucker","electrician","unemployed","vet","soldier","hunter","pharmacist","clerk","quarry"]),...o});
     if(ty==="single")adult({age:rnd(19,55)});
     else if(ty==="couple"||ty==="elders"){const old=ty==="elders";const a=adult({sex:"F",age:old?rnd(64,78):rnd(22,50),job:old?"retiree":undefined}),b=adult({sex:"M",age:clamp(a.age+rnd(-4,5),18,85),job:old?"retiree":undefined});famLink(a,b,"husband","wife",rnd(40,85));a.partner=b.id;b.partner=a.id}
-    else if(ty==="roommates"){const a=adult({age:rnd(19,30)}),b=P_({home:h,hh:id,age:rnd(19,30),job:pick(["student","clerk","waitress","unemployed","attendant"])});relSet(a,b,rnd(20,60));a.fam[b.id]="roommate";b.fam[a.id]="roommate"}
+    else if(ty==="roommates"){const a=adult({age:rnd(19,30)}),b=P_({home:h,hh:id,sur:newSur(),age:rnd(19,30),job:pick(["student","clerk","waitress","unemployed","attendant"])});relSet(a,b,rnd(20,60));a.fam[b.id]="roommate";b.fam[a.id]="roommate"}
     else{const two=ty==="family";const a=adult({sex:"F",age:rnd(28,46)});let b=null;if(two){b=adult({sex:"M",age:clamp(a.age+rnd(-3,6),24,60)});famLink(a,b,"husband","wife",rnd(30,85));a.partner=b.id;b.partner=a.id}
-      const nk=rnd(1,3);for(let i=0;i<nk;i++){const age=rnd(4,17);const k=P_({sur,home:h,hh:id,age,job:age>=14?"student":"kid",style:age<13?"kid":undefined});k.parents=[a.id,b?.id].filter(Boolean);a.kids.push(k.id);if(b)b.kids.push(k.id);famLink(a,k,k.sex==="F"?"daughter":"son","mom",rnd(60,95));if(b)famLink(b,k,k.sex==="F"?"daughter":"son","dad",rnd(40,95))}}
+      const nk=rnd(1,3);for(let i=0;i<nk;i++){const age=rnd(4,clamp(Math.min(a.age,b?b.age:99)-19,4,17));const k=P_({sur,home:h,hh:id,age,job:age>=14?"student":"kid",style:age<13?"kid":undefined});k.parents=[a.id,b?.id].filter(Boolean);k.facts.from=a.facts.from;a.kids.push(k.id);if(b)b.kids.push(k.id);famLink(a,k,k.sex==="F"?"daughter":"son","mom",rnd(60,95));if(b)famLink(b,k,k.sex==="F"?"daughter":"son","dad",rnd(40,95))}}
   }
-  reindex();
+  reindex();for(const p of ppl)refitLife(p);
   // social web: neighbors, coworkers, friends, feuds
   for(const p of ppl){const n=rnd(3,7);for(let j=0;j<n;j++){const q=pick(ppl);if(q===p||q.id in p.rel)continue;let v=rnd(-20,45);if(q.job===p.job&&JOBS[p.job].work!=="home")v+=10;if(rf()<.06)v=rnd(-70,-40);relSet(p,q,v)}}
   // player household
@@ -131,7 +140,7 @@ function newWorld(c){
     if(hhKind==="roommate"){o={...o,age:clamp(c.age+rnd(-3,4),18,60),job:pick(["student","clerk","bartender","attendant","unemployed"])}}
     const q=P_(o);q.style=q.age<13?"kid":q.style;q.fam.you=back;pl.fam[q.id]=rel;q.trust=hhKind==="roommate"?35:60;q.aff=hhKind==="roommate"?30:75;q.met=true;q.follow=!coma;
     if(hhKind==="partner"){q.partner="you";pl.partner=q.id}
-    if(hhKind==="child"){q.parents=["you"];pl.kids.push(q.id)}
+    if(hhKind==="child"){q.parents=["you"];pl.kids.push(q.id)}refitLife(q);
     mem(q,hhKind==="roommate"?`Shared a house with ${c.name} on Birch Street before it all happened.`:`Family. ${c.name} is the person I trust most in the world.`,5);
     if(coma)mem(q,hhKind==="roommate"?`${c.name} has been in a coma at the hospital for weeks. I water their plants and don't know what else to do.`:`${c.name} has been in a coma at Limon Hospital for three weeks. I sit with them every evening and talk, in case they can hear me.`,6,"you");
     reindex();const qp=insidePos(hb);q.x=qp.x;q.z=qp.z;q.tx=q.x;q.tz=q.z;
@@ -247,7 +256,7 @@ function siteBlocked(x,z){const r=regionAt(x,z);if(!PLACES[r]?.site)return null;
 function newGroup(name,leader,home){const id="g"+(S.nextG++);S.groups[id]={id,name,leader,home,stock:{food:20,water:20,wood:10,stone:0,nails:0,scrap:0,cloth:4,meds:2,ammo:0},pol:{focus:"balanced",ration:"normal",stance:"neutral"},rel:{},allied:{},founded:S.t,tools:0,color:pick(["#e48a3f","#86aac4","#a9c38d","#c98bb0","#d6c35a","#9a8bd6"])};
   for(const o of Object.values(S.groups))if(o.id!==id){S.groups[id].rel[o.id]=0;o.rel[id]=0}return S.groups[id]}
 function joinGroup(p,gid,quiet){const old=p.group;p.group=gid;p.role=roleFor(p,gid);p.flee=null;if(p.id!=="you")p.follow=p.follow&&S.player.group===gid;
-  if(!quiet){const g=G(gid);if(rf()<.5||p.seed)news(`${fullName(p)} joined ${g.name}${g.home?" at "+PLACES[g.home].n:""}.`,"",[p.id])}
+  if(!quiet){const g=G(gid);if(rf()<.5||p.seed)news(`${fullName(p)} joined ${groupAt(g)}.`,"",[p.id])}
   for(const q of members(gid))if(q!==p){relAdd(p,q,rnd(0,6))}
   if(old&&G(old)?.leader===p.id)newLeader(old)}
 function roleFit(p,r){return({scavenger:p.sk.scavenge+p.tr.brave,hunter:p.sk.survive+p.sk.fight*.5,forager:p.sk.survive,fisher:p.sk.survive*.8,farmer:p.sk.survive+(p.job.startsWith("farm")?3:0),woodcutter:p.sk.build*.5+p.sk.fight*.5+.5,builder:p.sk.build+(p.job==="builder"||p.job==="foreman"?2:0),guard:p.sk.fight+p.tr.brave*2,medic:p.sk.medic*1.5+(p.job==="nurse"||p.job==="doctor"?4:0),cook:p.sk.survive*.5+p.tr.kind,crafter:p.sk.craft})[r]||0}
@@ -345,7 +354,7 @@ function reviewLeader(g){const ms=members(g.id).filter(p=>p.age>=16);if(!ms.leng
 function rally(seed,place,name){const L=S.people.find(p=>p.seed===seed&&p.alive);if(!L||L.group)return;const want=place;if(ownerOf(place)){place=freeSites().filter(k=>k!=="lodge")[0];if(!place)return;name=`${L.name}'s people`}const g=newGroup(name,L.id,place);joinGroup(L,g.id,true);
   for(const q of S.people)if(q.alive&&q.hh===L.hh&&q!==L&&q.hh!=="you")joinGroup(q,g.id,true);for(const q of members(g.id))placeTo(q,randIn(place,3));
   if(place!==want){news(`${fullName(L)} found ${PLACES[want].n} already taken and led people to ${PLACES[place].n} instead.`,"big",[L.id]);return g}
-  news(({walt:`Walt Holloway drove into town with a stock trailer and an offer: anyone who can work is welcome at the farm.`,grace:`Pastor Grace rang the bell at St. Brigid's. The church doors are open to anyone who needs them.`,ray:`Deputy Ray Castell is gathering survivors at Limon High. 'Stay together, stay armed, stay alive.'`,cole:`Cole Briggs and his quarry crew took the trucks up to Redstone Quarry. He says only people who pull their weight should follow.`,nadia:``})[seed],"big",[L.id]);
+  news(({walt:`Walt Holloway drove into town with a stock trailer and an offer: anyone who can work is welcome at the farm.`,grace:`Pastor Grace rang the bell at St. Brigid's. The church doors are open to anyone who needs them.`,ray:`Deputy Ray Castillo is gathering survivors at Limon High. 'Stay together, stay armed, stay alive.'`,cole:`Cole Briggs and his quarry crew took the trucks up to Redstone Quarry. He says only people who pull their weight should follow.`,nadia:``})[seed],"big",[L.id]);
   return g}
 function householdDecisions(h,d){const F=S.flags;const t=S.t;
   if(!F.r_church&&t>=18*60){F.r_church=true;rally("grace","church","St. Brigid's")}

@@ -560,31 +560,129 @@ const LOOT={
 };
 
 // ================= people data =================
-const FIRST_F=["Anya","Bea","Calla","Dana","Esme","Faye","Greer","Hana","Ines","June","Kenna","Lila","Maren","Nadia","Opal","Pia","Quinn","Rhea","Sadie","Tamsin","Uma","Vera","Wren","Yara","Zoe","Mika","Noor","Imani","Selah","Rosa","Thea","Ada","Leni","Priya","Marisol","Keiko","Ife","Jolie","Nell","Ruth","Darlene","Bonnie","Carmen","Gloria","Hattie","Luz","Tess","Cora","Mae","Lorna"];
-const FIRST_M=["Arlo","Bram","Cal","Dev","Emil","Finn","Gage","Hollis","Ivan","Jem","Kofi","Lenny","Mateo","Nico","Owen","Pax","Rafe","Silas","Teo","Vic","Wade","Yusuf","Zeke","Remy","Idris","Joss","Milo","Otto","Sami","Tariq","Benji","Dmitri","Ezra","Hugo","Kai","Luka","Rowan","Abe","Bud","Clint","Earl","Floyd","Gus","Hank","Lyle","Marty","Ned","Royce","Tom","Wes"];
-const SUR=["Abara","Bellweather","Castell","Dunmore","Eskew","Faraday","Greaves","Halvorsen","Ibarra","Juarez","Kowal","Lindqvist","Marsh","Nakamura","Okafor","Pryce","Quill","Rask","Solberg","Tran","Underhill","Vance","Whitlow","Yilmaz","Zeller","Achebe","Brennan","Corso","Delacroix","Engel","Foss","Gallo","Hartigan","Iwu","Jansen","Kade","Lowe","Moreau","Novak","Ortega","Pruitt","Rourke","Beasley","Mercer","Dobbs","Varga"];
-const HOMETOWN=[`right here in ${TOWN}`,"Cedar Fork","Ashby","Dunmore Falls","the city","Brookside","Pell's Crossing","a trailer park outside Ashby","up north","down south"];
-const FEARS=["the dark","getting bitten and not knowing it","being alone","fire","crowds","forgetting my kids' faces","losing my mind out here","that we'll turn on each other before the dead get us","dying somewhere nobody finds me","the sound they make"];
-const HOPES=["a working radio","finding my sister","a hot shower","a real orchard one day","the army coming back","a cure","my kid growing up safe","a quiet place by the water","seeing my mom again","a winter where nobody dies"];
-const SECRETS=["I left someone behind to save myself","I've been hoarding painkillers","I was on parole when it started","I don't believe we'll last the winter","I've killed a living person since this started","I still talk to my dead wife at night","I can't swim","I used to drink. Bad. I'm scared I'll start again","I stole from the hospital before it all went down","I'm not who I said I was"];
-const LIKES=["black coffee","old country songs","card games","fishing","drawing","fixing engines","reading anything I can find","bad jokes","the stars out here","baseball"];
-const STYLES={plain:"plain-spoken",crude:"crude and swears",formal:"formal and careful",nervous:"nervous, trails off",warm:"warm, calls people hon",dry:"dry and short",preachy:"quotes scripture and sayings",joker:"jokes to cope"};
+// first names the way a small town on the Colorado plains has them: by the years people were born
+const NOW_YEAR=2025;
+const NAMES={
+  F:[[0,["Linda","Barbara","Patricia","Carol","Sandra","Nancy","Sharon","Judy","Donna","Shirley","Joyce","Peggy","Darlene","Bonnie","Gloria","Marilyn","Betty","Doris","Phyllis","Connie","Loretta","Wanda","Arlene","Bev"]],
+     [1960,["Debbie","Karen","Lisa","Susan","Kim","Tammy","Lori","Cindy","Teresa","Michelle","Julie","Denise","Tina","Pam","Laura","Sherry","Rhonda","Dawn","Robin","Terri","Vicki","Kathy","Jackie","Shelly"]],
+     [1976,["Jennifer","Amy","Melissa","Heather","Angela","Nicole","Stephanie","Jessica","Amanda","Sarah","Rebecca","Crystal","Misty","April","Shannon","Erin","Kristen","Megan","Rachel","Leah","Christy","Tara","Jamie","Holly"]],
+     [1991,["Ashley","Brittany","Kayla","Taylor","Hannah","Alyssa","Brianna","Emily","Morgan","Courtney","Sierra","Haley","Kelsey","Chelsea","Lauren","Samantha","Jordan","Mackenzie","Paige","Shelby","Destiny","Jenna","Abby","Mariah"]],
+     [2006,["Madison","Emma","Olivia","Abigail","Chloe","Addison","Brooklyn","Peyton","Avery","Kaylee","Makayla","Natalie","Lily","Riley","Savannah","Kylie","Ava","Allison","Sydney","Aubrey","Jada","Kenzie"]],
+     [2014,["Harper","Ella","Aria","Scarlett","Nora","Hazel","Paisley","Everly","Stella","Willow","Aurora","Piper","Kinsley","Ellie","Ivy","Lucy","Josie","Charlotte","Emmy","Rosie","Remi","Ruby"]]],
+  M:[[0,["Gary","Dennis","Larry","Ronald","Donald","Jerry","Roger","Wayne","Dale","Gene","Harold","Ralph","Earl","Floyd","Lyle","Vernon","Glen","Leroy","Duane","Carl","Ken","Jim","Bill","Bob","Don","Frank"]],
+     [1960,["Mike","Steve","Mark","Jeff","Tim","Scott","Greg","Kevin","Rick","Randy","Todd","Craig","Doug","Brian","Tony","Dave","Kurt","Rusty","Curtis","Troy","Darrell","Keith","Russ","Rod"]],
+     [1976,["Jason","Chris","Matt","Josh","Ryan","Justin","Brandon","Travis","Jeremy","Nathan","Aaron","Adam","Shane","Cody","Dustin","Jared","Derek","Eric","Brad","Chad","Corey","Seth","Luke","Ben"]],
+     [1991,["Tyler","Austin","Kyle","Dylan","Zach","Jacob","Trevor","Hunter","Connor","Garrett","Colton","Brett","Tanner","Wyatt","Caleb","Evan","Devin","Blake","Chase","Jake","Bryce","Kaden","Spencer","Mitch"]],
+     [2006,["Ethan","Jayden","Aiden","Mason","Brayden","Gavin","Carter","Landon","Owen","Noah","Elijah","Hayden","Bentley","Jaxon","Isaac","Gabe","Levi","Ryder","Jace","Easton","Tucker","Bryson"]],
+     [2014,["Liam","Grayson","Lincoln","Hudson","Brody","Asher","Colt","Beau","Maverick","Rhett","Waylon","Jase","Ryker","Theo","Archer","Max","Sawyer","Ezra","Bennett","Wes","Gus","Remy"]]]};
+// Hispanic families have been on the plains for generations; their names follow the years too
+const HNAMES={
+  F:[[0,["Rosa","Dolores","Lupe","Yolanda","Irene","Josie","Lorraine","Patsy","Esther","Della","Viola","Ofelia"]],
+     [1966,["Maria","Veronica","Monica","Yvonne","Lorena","Sylvia","Theresa","Anita","Bernadette","Diana"]],
+     [1981,["Vanessa","Erica","Gabriela","Adriana","Elena","Angelica","Leticia","Marisa","Raquel","Celeste"]],
+     [1996,["Daniela","Jasmine","Alexis","Andrea","Priscilla","Karina","Natalia","Selena","Bianca","Marissa"]],
+     [2008,["Isabella","Sofia","Camila","Valeria","Ximena","Lucia","Mia","Gianna","Luna","Elena"]]],
+  M:[[0,["Ruben","Gilbert","Ernie","Arturo","Manuel","Rudy","Eddie","Alfonso","Benny","Fidel","Orlando","Tony"]],
+     [1966,["Carlos","Javier","Ramon","Ricardo","Gerald","Victor","Raymond","Joe","Larry","Frank"]],
+     [1981,["Adrian","Marco","Luis","Mario","Daniel","Roberto","Andres","Jesse","Eric","Anthony"]],
+     [1996,["Diego","Alejandro","Isaiah","Angel","Jonathan","Christian","Josue","Kevin","Brandon","Julian"]],
+     [2008,["Mateo","Santiago","Gael","Elias","Nico","Leo","Adrian","Sebastian","Dominic","Josiah"]]]};
+const SUR=["Miller","Johnson","Smith","Brown","Davis","Wilson","Anderson","Taylor","Moore","Jackson","Martin","Thompson","White","Harris","Clark","Lewis","Walker","Hall","Allen","Young","King","Wright","Scott","Green","Baker","Adams","Nelson","Hill","Campbell","Phillips","Turner","Parker","Collins","Stewart","Morris","Murphy","Cook","Rogers","Cooper","Peterson","Reed","Bailey","Bell","Kelly","Ward","Cox","Brooks","Gray","Hughes","Price","Sanders","Myers","Ross","Foster","Powell","Jenkins","Russell","Sullivan","Fisher","Coleman","Simmons","Patterson","Hayes","Wallace","Graham","Reynolds","Schmidt","Weber","Hoffman","Becker","Olson","Larson","Hansen","Jensen","Lund","Pruitt","Beasley","Mercer","Dobbs","Brennan","Kowalski","Washington","Freeman","Banks","Dawson","Boyd","Shaw","Whitaker"];
+const HSUR=["Garcia","Martinez","Lopez","Sanchez","Romero","Trujillo","Vigil","Archuleta","Maestas","Gallegos","Montoya","Chavez","Valdez","Medina","Sandoval","Lucero","Gonzales","Herrera"];
+// a first name that fits the year someone was born, and nobody else in town already has
+function firstName(sex,age,hisp){const T=(hisp?HNAMES:NAMES)[sex==="F"?"F":"M"];const yr=NOW_YEAR-age;let i=0;for(let k=0;k<T.length;k++)if(yr>=T[k][0])i=k;
+  if(rf()<.2)i=clamp(i+(rf()<.5?-1:1),0,T.length-1);
+  const used=new Set(((typeof S!=="undefined"&&S&&S.people)||[]).map(q=>q.name));if(typeof S!=="undefined"&&S&&S.player)used.add(S.player.name.split(" ")[0]);
+  const pool=T[i][1].filter(n=>!used.has(n));return pick(pool.length?pool:T[i][1])}
+// what part of life someone is in
+function ageBand(a){return a<6?"little":a<13?"kid":a<18?"teen":a<30?"young":a<50?"adult":a<65?"older":"elder"}
+// lists below hold plain strings (grown-ups, 18 and up) or [text, youngest, oldest]
+// a fourth entry says what life it needs: "kids" (has children), "single" (no partner now)
+function fitsLife(x,p){const c=x[3];if(!c||!p)return true;if(c==="kids")return!!(p.kids&&p.kids.length);if(c==="single")return!p.partner;return true}
+function lifeFill(t,sex){return t.replace("{spouse}",sex==="F"?"husband":"wife").replace("{Spouse}",sex==="F"?"He":"She").replace("{spouse2}",sex==="F"?"husband":"wife")}
+function forAge(L,age,R,p){const ok=L.filter(x=>typeof x==="string"?age>=18:age>=x[1]&&age<=x[2]&&fitsLife(x,p));const c=ok.length?ok:L.filter(x=>typeof x==="string");const x=R?pick2(c,R):pick(c);return typeof x==="string"?x:x[0]}
+const kidL=(...a)=>a.map(x=>[x,0,12]),teenL=(...a)=>a.map(x=>[x,13,17]),oldL=(...a)=>a.map(x=>[x,52,99]);
+const HOMETOWN=[`right here in ${TOWN}`,`right here in ${TOWN}`,"Hugo","Ashby","Burlington","Kit Carson","the Springs","Denver","a farm outside Genoa","Kansas","a trailer park outside Limon","Pueblo","up north near Sterling"];
+const FEARS=["the dark","getting bitten and not knowing it","being alone","fire","crowds",["forgetting my kids' faces",28,99,"kids"],"losing my mind out here","that we'll turn on each other before the dead get us","dying somewhere nobody finds me","the sound they make",
+  ...kidL("the monsters","the dark","my mom not coming back","the noises at night","getting lost","the basement","being left behind"),
+  ...teenL("freezing up when it counts","turning into one of them","everyone I know being dead already","getting left behind because I'm 'just a kid'","never getting to grow up","being the one who has to shoot somebody I know"),
+  ...oldL("being a burden","outliving everybody","my heart giving out with no pills left","falling and not being able to get up","dying before I see my grandkids again")];
+const HOPES=["a working radio","finding my sister","a hot shower",["a real orchard one day",28,99],"the army coming back","a cure",["my kid growing up safe",25,70,"kids"],"a quiet place by the water",["seeing my mom again",18,50],"a winter where nobody dies",
+  ...kidL("finding my dog","going home","pancakes, real ones","seeing my friends from school again","a puppy","the monsters going away forever"),
+  ["getting my license someday",13,15],...teenL("finding my best friend","a phone that works, just for one day","seeing the ocean","graduating. Seriously. I'd even go to school","a real shower and my own room again"),
+  ...oldL("seeing my grandkids again","dying in my own bed, old","one more good harvest","a full church on Sunday again","the young ones making it")];
+const SECRETS=["I left someone behind to save myself","I've been hoarding painkillers",["I was on parole when it started",21,70],"I don't believe we'll last the winter","I've killed a living person since this started",["I still talk to my {spouse} at night. Out loud. {Spouse}'s been dead six years",35,99,"single"],"I can't swim",["I used to drink. Bad. I'm scared I'll start again",24,90],"I stole from the hospital before it all went down",["I'm not who I said I was",25,80],
+  ...kidL("I broke the window at school and never told","I'm scared all the time but I don't say it","I took candy from the store when nobody was looking","I saw one of them eat a dog and I didn't tell anybody","I still sleep with a nightlight. When there's power","I don't remember what my dad's voice sounds like anymore"),
+  ...teenL("I snuck out the night it started. That's why I wasn't home when it happened","I took my dad's truck before I had a license, scratched it, and blamed somebody else","I've been stealing cigarettes","I hated my stepdad. When he didn't come back I was kind of relieved","I cry every night where nobody can hear","I failed algebra and hid the report card. Funny that it mattered"),
+  ...oldL("my heart's a lot worse than I let on","I buried money in the backyard in '99 and never told anybody","I never forgave my brother, and now I can't","I've been giving my food to the kids and saying I already ate","I was going to sell the house and move to Arizona. I hadn't told a soul")];
+const LIKES=["black coffee","old country songs","card games","fishing","drawing","fixing engines","reading anything I can find","bad jokes","the stars out here","baseball","football on Sunday","cooking for a crowd",
+  ...kidL("dinosaurs","drawing","cartoons","building blocks","bugs","riding my bike","horses","video games","soccer","frogs"),
+  ...teenL("music, loud","video games","skateboarding","volleyball","my sketchbook","basketball","horror movies","rodeo","my phone, honestly","driving around with the windows down"),
+  ...oldL("crossword puzzles","old westerns","my garden","gospel music","a good card game","polka records","the morning coffee crowd at the diner")];
+const STYLES={plain:"plainly",crude:"crude, and swears a lot",formal:"formally and carefully",nervous:"nervously, and trails off",warm:"warmly",dry:"dry, and keeps it short",preachy:"in scripture and old sayings",joker:"in jokes, to cope",folksy:"old-fashioned and folksy",
+  sullen:"in shrugs and short answers",chatty:"a mile a minute",tough:"tougher than they feel",shy:"quietly, when at all"};
+// which ways of talking fit which part of life
+const STYLE_AGE={teen:{sullen:3,chatty:2,tough:2,shy:2,joker:1,nervous:1},young:{plain:3,crude:2,nervous:2,warm:2,dry:2,joker:2,formal:1,preachy:.5},
+  adult:{plain:3,crude:2,formal:1.5,nervous:1.5,warm:2,dry:2,preachy:1,joker:1.5},older:{plain:2,crude:1,formal:1.5,warm:1.5,dry:2,preachy:1.2,joker:1,folksy:2.5},elder:{plain:1.5,formal:1.5,dry:1.5,preachy:1.5,warm:1,joker:.7,folksy:3.5,crude:.5}};
+function styleFor(age){const b=ageBand(age);if(b==="little"||b==="kid")return"kid";const W=STYLE_AGE[b];let r=rf()*Object.values(W).reduce((a,c)=>a+c,0);for(const [k,w] of Object.entries(W)){r-=w;if(r<=0)return k}return"plain"}
 // how each speaking style should sound, for the conversation writer
 const VOICE={plain:"Plain-spoken and direct. Ordinary words, no flourishes, says what they mean.",
   crude:"Crude and blunt. Swears casually (damn, hell, shit), short punchy sentences, scoffs at softness, but has a code.",
   formal:"Formal and precise. Full sentences, few contractions, chooses words carefully, rarely jokes.",
   nervous:"Nervous. Hesitates, trails off with '...', second-guesses themself, apologizes too much, talks faster when scared.",
-  warm:"Warm and parental. Calls people 'hon' or 'sweetheart', asks if you've eaten, worries out loud, soft but not a pushover.",
+  warm:"Warm and kind. Notices how people are doing, asks real questions, worries out loud, soft but not a pushover. Doesn't use pet names.",
+  folksy:"Old-fashioned and folksy, from another generation. Now and then calls younger people 'hon', 'sweetheart' or 'kiddo', has a saying for everything, remembers how things used to be.",
   dry:"Dry and laconic. Says as little as possible, deadpan humor, understatement, long pauses.",
   preachy:"Earnest and spiritual. Reaches for scripture and old sayings, believes them, and means them kindly.",
   joker:"Jokes to cope. Gallows humor and wisecracks, deflects pain with a punchline, turns serious only when it really matters.",
+  sullen:"Guarded with adults. Short answers, shrugs, 'I guess', 'whatever', 'it's fine'. Opens up a little when treated like an equal instead of a little kid.",
+  chatty:"Talks fast when nervous. Says 'like', 'literally' and 'honestly', jumps between topics, overshares, then gets embarrassed about it.",
+  tough:"Acts tougher than they feel. Talks big, swears a little to sound older, hates being treated like a kid, and the fear shows through the cracks.",
+  shy:"Shy. Quiet, few words, looks away, answers a question with a question, warms up slowly and is fiercely loyal once they do.",
   kid:"A child. Simple words, blunt honesty, sudden topic changes, scared but curious, says exactly what they think."};
-const QUIRKS=["starts with 'Look,' when they mean business","calls people by their last name","answers hard questions with a question","uses farming and weather sayings","talks about food when nervous","counts things under their breath","adds 'I'm just saying' after anything blunt","hums old songs while they think","never says goodbye, just nods","over-explains, then apologizes for over-explaining","keeps bringing up their dog, who ran off on the first night","uses sports metaphors for everything","speaks slowly and picks every word","laughs at the wrong moments","quotes their late mother","uses big words slightly wrong","gives people nicknames","trails off mid-sentence when a memory hits","asks people where they're from","is blunt about money and debts, even now","keeps asking if anyone's heard the radio","makes lists out loud","says 'honest to God' a lot","rubs the back of their neck and says 'yeah, no'"];
-const VALUES=["family above everything","fairness","staying alive no matter what","their faith","loyalty to people who earn it","keeping kids safe","doing things the right way","freedom: nobody tells them what to do","being useful","honesty, even when it hurts","protecting the weak","getting even"];
-const FLAWS=["stubborn as a post","jealous","can't admit when they're wrong","drinks to forget","hoards supplies","lies to avoid trouble","quick to blame others","panics under pressure","holds grudges","talks too much","reckless","suspicious of everyone","self-pitying","bossy"];
-const HOOKS=["was supposed to drive to the city for a job interview today","coached Little League for six years","finished paying off the house last month","was saving up to open a bakery","got divorced in the spring and still wears the ring","moved to Limon two months ago and barely knows anyone","grew up in foster homes and never stayed anywhere long","volunteers at the food pantry every Saturday","has been sober for three years","lost a brother in a wreck on Highway 9","won the county fair pie contest twice","was two weeks from retiring","has a daughter at college in the city who isn't answering the phone","served overseas and doesn't talk about it","bought a motorcycle last week, the first thing just for them in years","owes money to the wrong people","was going to propose this weekend","raised goats until the drought","writes country songs nobody has heard","sings in the church choir","runs the Friday night poker game","was the high school's star pitcher twenty years ago","knows every back road in the county"];
-const MORNING=["was making pancakes","was running late for work","was arguing with the TV news","was fixing a leaky sink","was out for a jog","was hungover","was walking the dog","was on the phone with family in the city","was feeding the chickens","was opening up at work","was still asleep","was driving the kids to school when the buses stopped"];
-const KIDQ=["collects rocks","loves dinosaurs and knows all their names","asks 'why' about everything","pretends to be a superhero","draws on everything","is scared of the dark","knows every kind of car","tells long stories about their friends at school","won't go anywhere without a stuffed rabbit","wants to be a vet"];
+// how someone's age shows in the way they talk, so nobody sounds older or younger than they are
+function ageVoice(p){const a=p.age,n=p.name;const pet=p.style==="folksy"||p.seed==="june";
+  if(a<6)return`${n} is ${a}, a little kid. Very short, simple sentences. Mixes up words, asks for Mommy or Daddy, doesn't understand death, gets distracted by small things. Never uses grown-up words, sarcasm, or pet names.`;
+  if(a<13)return`${n} is ${a}, a kid, and talks exactly like a real ${a}-year-old: simple words, blunt questions, sudden topic changes, brags about small things, gets scared and pretends not to be. Says "Mom", "Dad", "grown-ups", "that's not fair". Never sounds like an adult, never gives advice, never calls anyone "hon" or "sweetheart".`;
+  if(a<18)return`${n} is ${a}, a teenager, and talks like a real teenager from a small American town, not like an adult: casual, a bit awkward or guarded with grown-ups, some slang but not a parody of it, hates being talked down to, can be sarcastic, embarrassed or defensive, still a kid underneath. Never calls anyone "hon", "sweetheart" or "dear", and never lectures.`;
+  if(a<30)return`${n} is ${a}, a young adult. Casual and direct, a little irreverent, talks like people in their twenties do. Might say "man" or "dude" to a friend. Never calls anyone "hon" or "sweetheart".`;
+  if(a<50)return`${n} is ${a}, a grown adult with grown-up worries: work, money, family. Talks like a normal adult. Never calls anyone "hon" or "sweetheart".`;
+  if(a<65)return`${n} is ${a}. Has seen a lot and talks with some weight; references from the eighties and nineties.${pet?` Now and then calls someone younger "hon", "sweetheart" or "kiddo".`:" Doesn't use pet names."}`;
+  return`${n} is ${a}, one of the old-timers. Speaks from a long life, a little slower, remembers how things used to be in town decades ago.${pet?` Now and then calls younger people "hon", "sweetheart", "son" or "young lady".`:""}`}
+const QUIRKS=[["starts with 'Look,' when they mean business",16,99],"calls people by their last name",["answers hard questions with a question",13,99],["uses farming and weather sayings",35,99],["talks about food when nervous",0,99],["counts things under their breath",0,99],
+  ["adds 'I'm just saying' after anything blunt",13,99],["hums old songs while they think",30,99],["never says goodbye, just nods",16,99],["over-explains, then apologizes for over-explaining",16,99],["keeps bringing up their dog, who ran off on the first night",0,99],
+  ["uses sports metaphors for everything",16,99],["speaks slowly and picks every word",25,99],["laughs at the wrong moments",13,99],["quotes their late mother",40,99],"uses big words slightly wrong",["gives people nicknames",13,99],"trails off mid-sentence when a memory hits",
+  "asks people where they're from",["is blunt about money and debts, even now",25,99],["keeps asking if anyone's heard the radio",25,99],["makes lists out loud",16,99],["says 'honest to God' a lot",25,99],"rubs the back of their neck and says 'yeah, no'",
+  ...kidL("collects rocks","loves dinosaurs and knows all their names","asks 'why' about everything","pretends to be a superhero","draws on everything","is scared of the dark","knows every kind of car and truck","tells long stories about their friends at school","won't go anywhere without a stuffed rabbit","wants to be a vet"),
+  ...teenL("says 'literally' and 'honestly' a lot","shrugs before answering anything","gets defensive when adults talk down to them","still checks their dead phone out of habit","tries to sound older than they are","calls everything 'sketchy'","makes fun of adults' music","rolls their eyes, then helps anyway"),
+  ...oldL("tells stories that start 'back in '82'","complains about their knees, then outworks everybody","remembers everyone's parents' names","calls the dead 'those poor souls'","won't let anyone waste a crumb of food","still winds their watch every morning")];
+const VALUES=["family above everything","fairness","staying alive no matter what","their faith","loyalty to people who earn it","keeping kids safe","doing things the right way","freedom: nobody tells them what to do","being useful","honesty, even when it hurts","protecting the weak","getting even",
+  ...kidL("their mom and dad","being brave like a superhero","their pets","being good so nothing bad happens","their best friend"),
+  ...teenL("their friends","not being treated like a kid","fairness","their family, even if they'd never say so","proving themselves")];
+const FLAWS=["stubborn as a post","jealous","can't admit when they're wrong",["drinks to forget",21,99],"hoards supplies","lies to avoid trouble","quick to blame others","panics under pressure","holds grudges","talks too much","reckless","suspicious of everyone","self-pitying","bossy",
+  ...kidL("whines when they're tired","runs off without telling anyone","tells fibs to stay out of trouble","throws tantrums when they're scared","won't eat anything green"),
+  ...teenL("reckless; thinks they can't die","moody","lies to adults by reflex","shows off when people are watching","shuts down instead of asking for help","does things without thinking")];
+const HOOKS=[["was supposed to drive to the city for a job interview that week",22,45],["coached Little League for six years",30,65],["finished paying off the house last spring",40,75],["was saving up to open a bakery",22,55],["got divorced in the spring and still wears the ring",28,65,"single"],
+  ["had moved to Limon two months before it started and barely knew anyone",19,70],["grew up in foster homes and never stayed anywhere long",18,45],["volunteered at the food pantry every Saturday",18,99],["has been sober for three years",25,70],["lost a brother in a wreck on Highway 24",18,99],
+  ["won the county fair pie contest twice",30,99],["was two weeks from retiring",58,68],["has a daughter at college in the city who never answered the phone",42,62],["served overseas and doesn't talk about it",24,80],["had just bought a motorcycle, the first thing just for themself in years",30,65],
+  ["owes money to the wrong people",20,60],["was going to propose that weekend",20,40,"single"],["raised goats until the drought",30,99],["writes country songs nobody has heard",18,60],["sings in the church choir",18,99],["ran the Friday night poker game",30,85],
+  ["was the high school's star pitcher twenty years ago",35,45],["knows every back road in the county",25,99],["dropped out of community college in the spring",19,24],["was saving for a truck",18,26],["had just moved back in with their parents",20,28],
+  ["worked nights at the gas station and slept all day",18,30],["was planning to leave this town for good in the fall",18,24],
+  ...kidL("lost a tooth the day before it started","was going to have a birthday party with a bouncy castle","has a goldfish named Pickles at home","was going to be a pumpkin in the school play","just learned to ride a bike without training wheels"),
+  ...teenL("made the volleyball team in the fall","had a crush on someone in homeroom and never said anything","was grounded the night it started","was raising a 4-H steer for the county fair"),["was supposed to take the driver's test that week",16,17],["worked part-time at the Dairy Barn on Main",15,17],
+  ["buried their {spouse2} two winters ago",60,99,"single"],...oldL("has six grandkids scattered across three states","played the organ at church for thirty years","drove a school bus for twenty-two years and knows every kid in town by name"),["served in Vietnam and came home to a town that didn't want to hear about it",72,99]];
+const MORNING=["was making pancakes","was running late for work","was arguing with the TV news","was fixing a leaky sink","was out for a jog",["was hungover",21,60],"was walking the dog","was on the phone with family in the city","was feeding the chickens","was opening up at work","was still asleep",["was driving the kids to school when the buses stopped",25,60,"kids"],
+  ...kidL("was eating cereal in front of cartoons","was getting ready for school and couldn't find a shoe","was still asleep","was playing in the yard"),
+  ...teenL("slept through three alarms","was at early practice","was on the school bus","was sneaking home from a friend's house"),
+  ...oldL("was reading the paper","was at the diner with the coffee crowd","was watching the morning news")];
+// what someone looks like, in words other parts of the game can read
+function lookFor(sex,age){const F=sex==="F";
+  const build=age<13?pick(["small for their age","skinny","tall for their age","round-cheeked","short"]):age<18?pick(["lanky","tall","short","skinny","athletic","stocky"]):pick(age>60?["tall","short","heavyset","wiry","stooped","slight","broad-shouldered"]:["tall","short","heavyset","wiry","broad-shouldered","slight","athletic"]);
+  const feat=age<13?pick(["freckles","a missing front tooth","scabbed knees","a cowlick","red hair","blond hair","brown curls",...(F?["a ponytail","pigtails"]:["a buzz cut"])]):
+    age<18?pick(["braces","freckles","black hair","red hair","blond hair","brown curls","acne",...(F?["a ponytail","dyed hair"]:["a buzz cut","a ball cap"])]):
+    age<50?pick(["black hair","red hair","blond hair","brown curls","glasses","a sunburn","tattoos",...(F?["a ponytail","long hair"]:["a beard","a shaved head","a mustache"])]):
+    pick(["gray hair","gray hair","glasses","a sunburn","reading glasses on a cord","weathered hands",...(F?["short gray curls"]:["a beard","a shaved head","a mustache"])]);
+  return build+", "+feat}
 const JOBS={
   nurse:{n:"Nurse",work:"clinic",sk:{medic:4}},doctor:{n:"Doctor",work:"clinic",sk:{medic:5}},pharmacist:{n:"Pharmacist",work:"pharmacy",sk:{medic:3}},
   clerk:{n:"Store clerk",work:"grocery",sk:{scavenge:2}},hardware:{n:"Hardware clerk",work:"hardware",sk:{craft:2,build:2}},cook:{n:"Line cook",work:"diner",sk:{survive:2}},
@@ -609,7 +707,7 @@ function itemPhrase(k,n=1){const o=IPH[k];const nm=(ITEMS[k]?.n||k).toLowerCase(
 const SAYBIO={marisol:"I'm a nurse. I was on nights at the hospital, until there wasn't a hospital anymore.",walt:"This land's been in my family four generations. I've worked it forty years.",grace:"I've been the pastor at St. Brigid's for eleven years. A church should be a lifeboat. That's what I believe.",ray:"I'm the only deputy this town has left. The sheriff drove to the city and never came back.",cole:"I ran the crew up at the quarry. Half this town owes me money.",nadia:"I'm the town doctor. I treated the first patient at the hospital. I saw what it does."};
 // hand-written people at the heart of the story
 const SEEDP={
-  walt:{quirk:"uses farming and weather sayings, and calls younger people 'kid'",values:"family, the land, doing things right",flaw:"stubborn; would rather die on the farm than leave it",hook:"His son Danny lives in the city and hasn't answered the phone since last night.",secret:"He keeps one shotgun shell in his shirt pocket, for himself, if it comes to that."},
+  walt:{quirk:"uses farming and weather sayings, and calls younger people 'kid'",values:"family, the land, doing things right",flaw:"stubborn; would rather die on the farm than leave it",hook:"His son Danny lives in the city and hasn't answered the phone since the first night.",secret:"He keeps one shotgun shell in his shirt pocket, for himself, if it comes to that."},
   june:{quirk:"calls everyone 'hon' and feeds people before they can say no",values:"family and kindness",flaw:"hides how scared she is until it spills over",hook:"She was putting up peach preserves this morning when the sirens started.",secret:"She has stopped taking her heart pills to save them for Eli's sake."},
   grace:{quirk:"answers fear with a verse and anger with patience",values:"faith, and an open door for anyone",flaw:"trusts too easily, even people who will use her",hook:"She was writing Sunday's sermon about strangers at the gate.",secret:"Since the first night she has been praying and hearing nothing back. She hasn't told a soul."},
   ray:{quirk:"talks like he's writing a report and calls people 'folks'",values:"order, the law, keeping people together",flaw:"needs to be in control and hates being questioned",hook:"The sheriff drove to the city on the first morning and never came back, so it's all on him now.",secret:"When the hospital went bad he ran, and a nurse he could have pulled out didn't make it."},
@@ -1168,7 +1266,9 @@ function fullName(p){return p.id==="you"?S.player.name:p.name+(p.sur?" "+p.sur:"
 function G(id){return S.groups[id]}
 function members(gid){return S.people.filter(p=>p.alive&&p.group===gid)}
 function groupSize(gid){return members(gid).length+(S.player.group===gid&&S.player.alive!==false?1:0)}
-function mem(p,text,v=0,about="you"){if(!p||p.id==="you")return;p.mem.push({d:dayOf(S.t),t:S.t,x:text,v,a:about});if(p.mem.length>24)p.mem.splice(0,p.mem.length-24)}
+// memories fade oldest and smallest first; the things that mattered stay
+function mem(p,text,v=0,about="you"){if(!p||p.id==="you"||!text)return;if(p.mem.slice(-4).some(m=>m.x===text))return;p.mem.push({d:dayOf(S.t),t:S.t,x:text,v,a:about});
+  while(p.mem.length>30){let k=0,lo=1e9;for(let i=0;i<p.mem.length-8;i++){const w=Math.abs(p.mem[i].v)*2+i*.6;if(w<lo){lo=w;k=i}}p.mem.splice(k,1)}}
 function relGet(a,b){return a.rel[b.id]||0}
 function relSet(a,b,v){v=clamp(v,-100,100);a.rel[b.id]=v;b.rel[a.id]=v}
 function relAdd(a,b,d){relSet(a,b,relGet(a,b)+d)}
@@ -1192,13 +1292,19 @@ function makePerson(o={}){
   const sk={fight:rnd(0,2),scavenge:rnd(0,2),craft:rnd(0,2),build:rnd(0,2),medic:rnd(0,1),speak:rnd(0,2),survive:rnd(0,2)};
   for(const [k,v] of Object.entries(JOBS[job]?.sk||{}))sk[k]+=v;
   const age=o.age??rnd(18,60);
-  const p={id:"p"+(NEXT++),name:o.name||pick(sex==="F"?FIRST_F:FIRST_M),sur:o.sur??pick(SUR),sex,age,job,tr:o.tr||traits(),sk,
-    style:o.style||(age<13?"kid":pick(Object.keys(STYLES))),home:o.home||null,hh:o.hh||null,
-    facts:{from:o.from||pick(HOMETOWN),fear:pick(FEARS),hope:pick(HOPES),secret:pick(SECRETS),likes:pick(LIKES),bio:o.bio||""},told:{},
-    look:o.look||(pick(["tall","short","heavyset","wiry","broad-shouldered","slight","stooped","athletic"])+", "+pick(["gray hair","black hair","red hair","blond hair","a shaved head","brown curls","a ponytail","a beard","glasses","a sunburn"])),
+  // a Hispanic surname usually comes with a Spanish first name, and now and then an Anglo one does too
+  const sur=o.sur??(rf()<.15?pick(HSUR):pick(SUR));const hisp=HSUR.includes(sur)?rf()<.65:rf()<.04;
+  const secret=lifeFill(forAge(SECRETS,age),sex);
+  const p={id:"p"+(NEXT++),name:o.name||firstName(sex,age,hisp),sur,sex,age,job,tr:o.tr||traits(),sk,
+    style:o.style||styleFor(age),home:o.home||null,hh:o.hh||null,
+    facts:{from:o.from||pick(HOMETOWN),fear:forAge(FEARS,age),hope:forAge(HOPES,age),secret,likes:forAge(LIKES,age),bio:o.bio||""},told:{},
+    look:o.look||lookFor(sex,age),
     x:0,z:0,tx:0,tz:0,loc:"town",act:"at home",hunger:85,thirst:85,rest:80,fear:0,soc:60,plan:null,health:100,mood:60,rel:{},fam:{},trust:0,aff:0,met:false,
     group:null,role:null,partner:null,kids:[],parents:[],preg:null,alive:true,status:"",bitten:null,mem:[],chat:[],pack:{},want:null,follow:false,seed:o.seed||null};
   return p}
+// a fear of forgetting your kids' faces needs kids: once households are made, swap anything that doesn't fit the life someone has
+function refitLife(p){const f=p.facts;const fix=(L,k)=>{const e=L.find(x=>typeof x!=="string"&&lifeFill(x[0],p.sex)===f[k]);if(e&&(!fitsLife(e,p)||p.age<e[1]||p.age>e[2]))f[k]=lifeFill(forAge(L,p.age,null,p),p.sex)};fix(FEARS,"fear");fix(HOPES,"hope");fix(SECRETS,"secret");fix(LIKES,"likes")}
+function groupAt(g){if(!g)return"";const pl=g.home&&PLACES[g.home]?PLACES[g.home].n:"";return g.name+(pl&&pl!==g.name?" at "+pl:"")}
 function famLink(a,b,ra,rb,v){a.fam[b.id]=ra;b.fam[a.id]=rb;relSet(a,b,v)}
 function packFor(p){const k={};const add=(i,n)=>{if(n>0&&ITEMS[i])k[i]=(k[i]||0)+n};
   add(pick(["snacks","canned_food","water_bottle","cereal"]),rnd(0,2));
@@ -1230,14 +1336,14 @@ function newWorld(c){
   const ppl=S.people;const P_=o=>{const p=makePerson(o);ppl.push(p);return p};
   const used=new Set(["farmhouse","hall","h3","trailer2"]);const freeHouse=()=>{const h=HOUSES.find(h=>!used.has(h.id));if(h){used.add(h.id);return h.id}return pick(HOUSES).id};
   const walt=P_({name:"Walt",sur:"Holloway",sex:"M",age:61,job:"farmer",home:"farmhouse",hh:"hol",style:"dry",tr:{kind:.7,brave:.7,ambit:.45,temper:.35,social:.4,curious:.3,honest:.9,faith:.6},seed:"walt",bio:"Has farmed this land for forty years. Lost his son in the city on the first night, though he doesn't know it yet."});
-  const june=P_({name:"June",sur:"Holloway",sex:"F",age:59,job:"farmer",home:"farmhouse",hh:"hol",style:"warm",tr:{kind:.9,brave:.5,ambit:.3,temper:.2,social:.7,curious:.4,honest:.8,faith:.8}});
+  const june=P_({name:"June",sur:"Holloway",sex:"F",age:59,job:"farmer",home:"farmhouse",hh:"hol",style:"folksy",tr:{kind:.9,brave:.5,ambit:.3,temper:.2,social:.7,curious:.4,honest:.8,faith:.8}});
   const eli=P_({name:"Eli",sur:"Holloway",sex:"M",age:11,job:"kid",home:"farmhouse",hh:"hol",style:"kid"});
   famLink(walt,june,"wife","husband",85);walt.partner=june.id;june.partner=walt.id;famLink(walt,eli,"grandson","grandfather",80);famLink(june,eli,"grandson","grandmother",90);
-  const grace=P_({name:"Grace",sur:"Okafor",sex:"F",age:47,job:"pastor",home:"hall",hh:"grace",style:"preachy",tr:{kind:.92,brave:.6,ambit:.55,temper:.15,social:.85,curious:.6,honest:.85,faith:.98},seed:"grace",bio:"Pastor of St. Brigid's for eleven years. Believes the church should be a lifeboat."});
+  const grace=P_({name:"Grace",sur:"Whitaker",sex:"F",age:47,job:"pastor",home:"hall",hh:"grace",style:"preachy",tr:{kind:.92,brave:.6,ambit:.55,temper:.15,social:.85,curious:.6,honest:.85,faith:.98},seed:"grace",bio:"Pastor of St. Brigid's for eleven years. Believes the church should be a lifeboat."});
   const rayH=freeHouse();
-  const ray=P_({name:"Ray",sur:"Castell",sex:"M",age:39,job:"deputy",home:rayH,hh:"cas",style:"plain",tr:{kind:.45,brave:.85,ambit:.8,temper:.55,social:.6,curious:.4,honest:.6,faith:.4},seed:"ray",bio:"The only deputy left after the sheriff drove to the city and didn't come back. Thinks someone has to be in charge."});
-  const carmen=P_({name:"Carmen",sur:"Castell",sex:"F",age:37,job:"teacher",home:rayH,hh:"cas",tr:{kind:.75,brave:.5,ambit:.4,temper:.4,social:.7,curious:.7,honest:.75,faith:.5}});
-  const lila=P_({name:"Lila",sur:"Castell",sex:"F",age:9,job:"kid",home:rayH,hh:"cas",style:"kid"});
+  const ray=P_({name:"Ray",sur:"Castillo",sex:"M",age:39,job:"deputy",home:rayH,hh:"cas",style:"plain",tr:{kind:.45,brave:.85,ambit:.8,temper:.55,social:.6,curious:.4,honest:.6,faith:.4},seed:"ray",bio:"The only deputy left after the sheriff drove to the city and didn't come back. Thinks someone has to be in charge."});
+  const carmen=P_({name:"Carmen",sur:"Castillo",sex:"F",age:37,job:"teacher",home:rayH,hh:"cas",tr:{kind:.75,brave:.5,ambit:.4,temper:.4,social:.7,curious:.7,honest:.75,faith:.5}});
+  const lila=P_({name:"Lila",sur:"Castillo",sex:"F",age:9,job:"kid",home:rayH,hh:"cas",style:"kid"});
   famLink(ray,carmen,"wife","husband",70);ray.partner=carmen.id;carmen.partner=ray.id;famLink(ray,lila,"daughter","dad",90);famLink(carmen,lila,"daughter","mom",95);
   const coleH=freeHouse();
   const cole=P_({name:"Cole",sur:"Briggs",sex:"M",age:44,job:"foreman",home:coleH,hh:"bri",style:"crude",tr:{kind:.2,brave:.85,ambit:.9,temper:.8,social:.6,curious:.3,honest:.35,faith:.2},seed:"cole",bio:"Ran the quarry crew. Respected, feared, owed money by half the town."});
@@ -1248,15 +1354,16 @@ function newWorld(c){
   // generic households
   const types=["couple","family","family","single","single","single","roommates","elders","parent","family","couple","single"];
   let hh=0;
-  while(ppl.length<70){const ty=pick(types);const h=freeHouse();const id="hh"+(hh++);const sur=pick(SUR);
+  const usedSur=new Set(ppl.map(p=>p.sur));const newSur=()=>{const L=rf()<.16?HSUR:SUR;const c=L.filter(x=>!usedSur.has(x));const s=pick(c.length?c:L);usedSur.add(s);return s};
+  while(ppl.length<70){const ty=pick(types);const h=freeHouse();const id="hh"+(hh++);const sur=newSur();
     const adult=(o={})=>P_({sur,home:h,hh:id,job:o.job||pick(["nurse","clerk","hardware","cook","waitress","bartender","attendant","mechanic","teacher","librarian","farmhand","quarry","trucker","electrician","unemployed","vet","soldier","hunter","pharmacist","clerk","quarry"]),...o});
     if(ty==="single")adult({age:rnd(19,55)});
     else if(ty==="couple"||ty==="elders"){const old=ty==="elders";const a=adult({sex:"F",age:old?rnd(64,78):rnd(22,50),job:old?"retiree":undefined}),b=adult({sex:"M",age:clamp(a.age+rnd(-4,5),18,85),job:old?"retiree":undefined});famLink(a,b,"husband","wife",rnd(40,85));a.partner=b.id;b.partner=a.id}
-    else if(ty==="roommates"){const a=adult({age:rnd(19,30)}),b=P_({home:h,hh:id,age:rnd(19,30),job:pick(["student","clerk","waitress","unemployed","attendant"])});relSet(a,b,rnd(20,60));a.fam[b.id]="roommate";b.fam[a.id]="roommate"}
+    else if(ty==="roommates"){const a=adult({age:rnd(19,30)}),b=P_({home:h,hh:id,sur:newSur(),age:rnd(19,30),job:pick(["student","clerk","waitress","unemployed","attendant"])});relSet(a,b,rnd(20,60));a.fam[b.id]="roommate";b.fam[a.id]="roommate"}
     else{const two=ty==="family";const a=adult({sex:"F",age:rnd(28,46)});let b=null;if(two){b=adult({sex:"M",age:clamp(a.age+rnd(-3,6),24,60)});famLink(a,b,"husband","wife",rnd(30,85));a.partner=b.id;b.partner=a.id}
-      const nk=rnd(1,3);for(let i=0;i<nk;i++){const age=rnd(4,17);const k=P_({sur,home:h,hh:id,age,job:age>=14?"student":"kid",style:age<13?"kid":undefined});k.parents=[a.id,b?.id].filter(Boolean);a.kids.push(k.id);if(b)b.kids.push(k.id);famLink(a,k,k.sex==="F"?"daughter":"son","mom",rnd(60,95));if(b)famLink(b,k,k.sex==="F"?"daughter":"son","dad",rnd(40,95))}}
+      const nk=rnd(1,3);for(let i=0;i<nk;i++){const age=rnd(4,clamp(Math.min(a.age,b?b.age:99)-19,4,17));const k=P_({sur,home:h,hh:id,age,job:age>=14?"student":"kid",style:age<13?"kid":undefined});k.parents=[a.id,b?.id].filter(Boolean);k.facts.from=a.facts.from;a.kids.push(k.id);if(b)b.kids.push(k.id);famLink(a,k,k.sex==="F"?"daughter":"son","mom",rnd(60,95));if(b)famLink(b,k,k.sex==="F"?"daughter":"son","dad",rnd(40,95))}}
   }
-  reindex();
+  reindex();for(const p of ppl)refitLife(p);
   // social web: neighbors, coworkers, friends, feuds
   for(const p of ppl){const n=rnd(3,7);for(let j=0;j<n;j++){const q=pick(ppl);if(q===p||q.id in p.rel)continue;let v=rnd(-20,45);if(q.job===p.job&&JOBS[p.job].work!=="home")v+=10;if(rf()<.06)v=rnd(-70,-40);relSet(p,q,v)}}
   // player household
@@ -1283,7 +1390,7 @@ function newWorld(c){
     if(hhKind==="roommate"){o={...o,age:clamp(c.age+rnd(-3,4),18,60),job:pick(["student","clerk","bartender","attendant","unemployed"])}}
     const q=P_(o);q.style=q.age<13?"kid":q.style;q.fam.you=back;pl.fam[q.id]=rel;q.trust=hhKind==="roommate"?35:60;q.aff=hhKind==="roommate"?30:75;q.met=true;q.follow=!coma;
     if(hhKind==="partner"){q.partner="you";pl.partner=q.id}
-    if(hhKind==="child"){q.parents=["you"];pl.kids.push(q.id)}
+    if(hhKind==="child"){q.parents=["you"];pl.kids.push(q.id)}refitLife(q);
     mem(q,hhKind==="roommate"?`Shared a house with ${c.name} on Birch Street before it all happened.`:`Family. ${c.name} is the person I trust most in the world.`,5);
     if(coma)mem(q,hhKind==="roommate"?`${c.name} has been in a coma at the hospital for weeks. I water their plants and don't know what else to do.`:`${c.name} has been in a coma at Limon Hospital for three weeks. I sit with them every evening and talk, in case they can hear me.`,6,"you");
     reindex();const qp=insidePos(hb);q.x=qp.x;q.z=qp.z;q.tx=q.x;q.tz=q.z;
@@ -1399,7 +1506,7 @@ function siteBlocked(x,z){const r=regionAt(x,z);if(!PLACES[r]?.site)return null;
 function newGroup(name,leader,home){const id="g"+(S.nextG++);S.groups[id]={id,name,leader,home,stock:{food:20,water:20,wood:10,stone:0,nails:0,scrap:0,cloth:4,meds:2,ammo:0},pol:{focus:"balanced",ration:"normal",stance:"neutral"},rel:{},allied:{},founded:S.t,tools:0,color:pick(["#e48a3f","#86aac4","#a9c38d","#c98bb0","#d6c35a","#9a8bd6"])};
   for(const o of Object.values(S.groups))if(o.id!==id){S.groups[id].rel[o.id]=0;o.rel[id]=0}return S.groups[id]}
 function joinGroup(p,gid,quiet){const old=p.group;p.group=gid;p.role=roleFor(p,gid);p.flee=null;if(p.id!=="you")p.follow=p.follow&&S.player.group===gid;
-  if(!quiet){const g=G(gid);if(rf()<.5||p.seed)news(`${fullName(p)} joined ${g.name}${g.home?" at "+PLACES[g.home].n:""}.`,"",[p.id])}
+  if(!quiet){const g=G(gid);if(rf()<.5||p.seed)news(`${fullName(p)} joined ${groupAt(g)}.`,"",[p.id])}
   for(const q of members(gid))if(q!==p){relAdd(p,q,rnd(0,6))}
   if(old&&G(old)?.leader===p.id)newLeader(old)}
 function roleFit(p,r){return({scavenger:p.sk.scavenge+p.tr.brave,hunter:p.sk.survive+p.sk.fight*.5,forager:p.sk.survive,fisher:p.sk.survive*.8,farmer:p.sk.survive+(p.job.startsWith("farm")?3:0),woodcutter:p.sk.build*.5+p.sk.fight*.5+.5,builder:p.sk.build+(p.job==="builder"||p.job==="foreman"?2:0),guard:p.sk.fight+p.tr.brave*2,medic:p.sk.medic*1.5+(p.job==="nurse"||p.job==="doctor"?4:0),cook:p.sk.survive*.5+p.tr.kind,crafter:p.sk.craft})[r]||0}
@@ -1497,7 +1604,7 @@ function reviewLeader(g){const ms=members(g.id).filter(p=>p.age>=16);if(!ms.leng
 function rally(seed,place,name){const L=S.people.find(p=>p.seed===seed&&p.alive);if(!L||L.group)return;const want=place;if(ownerOf(place)){place=freeSites().filter(k=>k!=="lodge")[0];if(!place)return;name=`${L.name}'s people`}const g=newGroup(name,L.id,place);joinGroup(L,g.id,true);
   for(const q of S.people)if(q.alive&&q.hh===L.hh&&q!==L&&q.hh!=="you")joinGroup(q,g.id,true);for(const q of members(g.id))placeTo(q,randIn(place,3));
   if(place!==want){news(`${fullName(L)} found ${PLACES[want].n} already taken and led people to ${PLACES[place].n} instead.`,"big",[L.id]);return g}
-  news(({walt:`Walt Holloway drove into town with a stock trailer and an offer: anyone who can work is welcome at the farm.`,grace:`Pastor Grace rang the bell at St. Brigid's. The church doors are open to anyone who needs them.`,ray:`Deputy Ray Castell is gathering survivors at Limon High. 'Stay together, stay armed, stay alive.'`,cole:`Cole Briggs and his quarry crew took the trucks up to Redstone Quarry. He says only people who pull their weight should follow.`,nadia:``})[seed],"big",[L.id]);
+  news(({walt:`Walt Holloway drove into town with a stock trailer and an offer: anyone who can work is welcome at the farm.`,grace:`Pastor Grace rang the bell at St. Brigid's. The church doors are open to anyone who needs them.`,ray:`Deputy Ray Castillo is gathering survivors at Limon High. 'Stay together, stay armed, stay alive.'`,cole:`Cole Briggs and his quarry crew took the trucks up to Redstone Quarry. He says only people who pull their weight should follow.`,nadia:``})[seed],"big",[L.id]);
   return g}
 function householdDecisions(h,d){const F=S.flags;const t=S.t;
   if(!F.r_church&&t>=18*60){F.r_church=true;rally("grace","church","St. Brigid's")}
@@ -2180,7 +2287,7 @@ const INTENTS=[
   ["threat",/\b(kill you|hurt you|or else|make you pay|you'?ll regret|beat you|i'?ll shoot|watch your back)\b/],
   ["child",/\b(have a (baby|kid|child)|start a family|try for a (baby|kid)|our own (kid|baby)|make a baby)\b/],
   ["romance",/\b(love you|be together|go out with me|date me|kiss (me|you)|be with me|be mine|marry me|be my (girlfriend|boyfriend|partner))\b/],
-  ["flirt",/\b(cute|beautiful|handsome|pretty|gorgeous|attractive|i like you|you look good|nice eyes|nice smile)\b/],
+  ["flirt",/\b(cute|beautiful|handsome|pretty|gorgeous|attractive|sexy|i like you|you look (good|nice|great|amazing|lovely|hot)|you'?re (so )?(hot|fine|lovely)|nice (eyes|smile|lips))\b/],
   ["breakup",/\b(break up|it'?s over between|we'?re done|i'?m leaving you|end this)\b/],
   ["ask_join",/\b(can i join|let me join|join your (group|people|camp)|take (me|us) in|room for (me|one more|us)|let (me|us) in|can (we|i) (come|stay) with you)\b/],
   ["join_me",/\b(join (me|us|my group|my people|my camp)|be part of my|be in my group|start a group|be my people)\b/],
@@ -2209,13 +2316,15 @@ const INTENTS=[
   ["how",/\b(how are you|how'?re you|you ok|you okay|are you alright|holding up|how do you feel|how'?s it going|doing ok|you good)\b/],
   ["where",/\b(where('?s| is| are| did)|have you seen|seen \w+|know where)\b/],
   ["outbreak",/\b(flu|virus|outbreak|the radio|on the radio|what'?s going on|what'?s happening|what is happening|what happened|sick people|epidemic|plague|disease|infection|the clinic|the hospital)\b/],
-  ["favorite",/\b(favou?rite|what do you (like|love|enjoy)|for fun|hobbies|hobby)\b/],
+  ["favorite",/\b(favou?rite|what (\w+ )?do you (like|love|enjoy)|for fun|hobbies|hobby|what do you miss|miss (the )?most|do you miss)\b/],
+  ["story",/\b(how'?d you (make it|survive|get (here|through))|how did you (make it|survive|get (here|through))|what happened to you|got any (good )?stories|tell me a story|your story)\b/],
+  ["mind",/\b(what'?s on your mind|what are you thinking( about)?|penny for your thoughts|what'?s eating you|something on your mind)\b/],
   ["sleep_q",/\b(sleep (ok|okay|well|alright|at all)|get (any )?sleep|sleep last night|slept|tired)\b/],
   ["kidding",/\b(just kidding|jk|i'?m joking|only joking|kidding)\b/],
   ["dead",/\b(dead ones|zombies?|walkers?|biters?|infected|the sick|bite|bitten|undead|corpses|them out there|the dead)\b/],
   ["food",/\b(food|hungry|eat|eaten|ate|meals?|starving|water|thirsty|supplies)\b/],
   ["plan",/\b(plan|what now|what do we do|what should we|winter|future|going to do)\b/],
-  ["news",/\b(news|heard anything|what'?s new|gossip|rumou?r|anything happen)\b/],
+  ["news",/\b(news|heard anything|what'?s new|gossip|rumou?r|anything happen|what did i miss|what i missed|catch me up|fill me in)\b/],
   ["joke",/\b(joke|make me laugh|something funny)\b/],
   ["comfort",/\b(sorry (for|about) your|i'?m here for you|it'?ll be (ok|okay|alright)|not your fault|hang in there|you'?re not alone)\b/],
   ["apology",/\b(sorry|apologi[sz]e|my bad|forgive me)\b/],
@@ -2243,19 +2352,24 @@ function styleSay(p,t){if(!t)return t;const st=p.style;
   const lc=x=>{const w=x.split(/[\s,.?!]/)[0];return LCW.test(w)?x[0].toLowerCase()+x.slice(1):x};
   if(st==="crude"&&rf()<.2&&t[0]!=="*"&&LCW.test(t.split(/[\s,.?!]/)[0]))t=pick(["Hell, ","Look, "])+lc(t);
   if(st==="nervous"&&rf()<.3&&t[0]!=="*"){const u=t.replace(/\. /," ... ");t=LCW.test(u.split(/[\s,.?!]/)[0])||/^I\b/.test(u)?"Uh, "+lc(u):"Uh... "+u}
-  if(st==="warm"&&rf()<.25&&tier(p)!=="hostile"&&!t.includes(S.player.name.split(" ")[0]))t=t.replace(/\.$/,", hon.");
+  if(st==="folksy"&&p.age>=50&&rf()<.25&&tier(p)!=="hostile"&&S.player.age<=p.age-15&&!t.includes(S.player.name.split(" ")[0])&&/\.$/.test(t)&&t[t.length-2]!=="*")t=t.replace(/\.$/,", "+petName(p)+".");
+  if(st==="sullen"&&t[0]!=="*"){if(t.split(". ").length>2&&rf()<.4)t=t.split(". ")[0]+".";else if(rf()<.2)t="*shrugs* "+t}
+  if(st==="chatty"&&rf()<.25&&t[0]!=="*")t=pick(["Honestly? ","Okay so, ","Oh my God. ","Like, "])+(/^(Honestly|Okay|Like)/.test(t)?t:lc(t));
+  if(st==="tough"&&rf()<.18&&t[0]!=="*"&&!/^(Whatever|Pfft)/.test(t))t=pick(["Whatever. ","Pfft. "])+t;
+  if(st==="shy"&&rf()<.25&&t[0]!=="*")t=pick(["*looks at the ground* ","Um... ","*quietly* "])+t;
   if(st==="preachy"&&rf()<.15&&t.length>25&&!/\?$/.test(t))t+=" "+pick(["The Lord tests us.","We reap what we sow.","This too shall pass.","Love thy neighbor. Even now."]);
   if(st==="joker"&&rf()<.15&&t.length>30)t+=" "+pick(["Ha. Kidding. Mostly.","At least the commute's shorter now."]);
   if(st==="dry"&&t.split(". ").length>3)t=t.split(". ").slice(0,3).join(". ")+(t.endsWith(".")?"":".");
   return t}
+function petName(p){const pl=S.player;return pick(p.age>=65?["hon","sweetheart",pl.sex==="M"?"son":"young lady"]:["hon","sweetheart","kiddo"])}
 function famList(p){return Object.entries(p.fam).map(([id,r])=>[id==="you"?S.player:P(id),r]).filter(([q])=>q)}
 function jobPhrase(q){const k=q.job;const SP={pastor:"the pastor at St. Brigid's",doctor:"the town doctor",deputy:"a sheriff's deputy",foreman:"the foreman up at the quarry",farmer:q.seed==="walt"?"the farmer out at Holloway Farm":"a farmer",retiree:"retired",kid:"just a kid",unemployed:"between jobs"};if(SP[k])return SP[k];const n=(JOBS[k]?.n||"local").toLowerCase();return(/^[aeiou]/.test(n)?"an ":"a ")+n}
 function whereIs(q){if(q.id==="you")return"right here";if(!q.alive)return null;return q.act==="with you"?`with ${S.player.name}`:`${q.act} at ${PLACES[q.loc]?.n||"somewhere"}`}
 function groupOf(p){return p.group?G(p.group):null}
 function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();const t=tier(p);const pn=pl.name.split(" ")[0];const kid=p.age<13;
-  const R={text:"",dt:0,da:0,action:null,memory:"",ask:null};
+  const R={text:"",dt:0,da:0,action:null,memory:"",ask:null,intents:[],M:null};
   const intents=INTENTS.filter(([k,re])=>re.test(low)).map(([k])=>k);
-  const M=findMentions(msg,p);
+  const M=findMentions(msg,p);R.intents=intents;R.M=M;
   const has=k=>intents.includes(k);
   const g=groupOf(p);const myG=myGroup();const sameGroup=g&&myG&&g.id===myG.id;const isLeader=g&&g.leader===p.id;
   const recentGrief=p.mem.filter(m=>m.v<=-8&&S.t-m.t<DAY*4&&m.a!=="you").slice(-1)[0];
@@ -2263,13 +2377,15 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(p.act==="asleep"){p.act="awake";say(t==="hostile"||t==="cold"?"*jolts awake* What do you want? It's the middle of the night.":pick(["*blinks awake* ...Oh. It's you. Everything okay?","*sits up fast* What? What happened? ...Oh. It's you."]))}
   // first meeting
   if(!p.met){p.met=true;mem(p,`Met ${pl.name} at ${PLACES[here()].n}.`,0);
-    if(kid)say(pick([`I'm ${p.name}. Are you a good guy or a bad guy?`,`Hi. I'm ${p.name}. Do you have any candy?`]));
-    else if(t==="hostile"||(!S.flags.alarm&&false))say(`Back up. Who are you?`);
+    if(kid)say(pick([`I'm ${p.name}. Are you a good guy or a bad guy?`,`Hi. I'm ${p.name}. Do you have any candy?`,`I'm ${p.name}. I'm ${p.age}. How old are you?`]));
+    else if(t==="hostile"||(!S.flags.alarm&&false))say(p.age<18?`Don't come any closer. Who are you?`:`Back up. Who are you?`);
+    else if(p.age<18)say(pick([`Uh... hi. I'm ${p.name}.`,`${p.name}.${S.flags.alarm?" You're not bit or anything, right?":""}`,`I'm ${p.name}. Who are you?`,`Oh. Hey. I'm ${p.name}.`]));
+    else if(p.age>=60)say(pick([`${p.name} ${p.sur}. Pleased to meet you.`,`Name's ${p.name}. Folks around here know me.`,`I'm ${p.name}. Don't believe we've met.`]));
     else say(pick([`I'm ${p.name}. ${p.name==="Walt"?"This is my land.":""}`,`Name's ${p.name}${p.sur?" "+p.sur:""}.`,`${p.name}. ${S.flags.alarm?"You're not bit, are you?":"Nice to meet you."}`]).trim());
     if(S.flags.alarm&&!kid&&!has("greet")&&!intents.length){R.ask="bit";}
     if(has("greet")||!intents.length)return finish(p,R,out)}
   // pending question
-  const q=p.cv?.q;if(q&&(has("yes")||has("no"))&&intents.length<=2){p.cv.q=null;const y=has("yes");
+  const q=p.cv?.q;if(q&&(has("yes")||has("no"))&&intents.length<=2){p.cv.q=null;const y=has("yes");R.answered=q;
     const A={bit:y?["What?! Get away from me!",-20,-10]:["Good. Keep it that way.",3,0],okay:y?["Good. Stay that way.",2,1]:["Yeah. Me neither. We'll get through it.",2,4],town:y?["Find anything worth the risk?",1,0]:["Smart. It's a graveyard in there.",1,0],
       eat:y?["Good. Don't skip meals, it makes you stupid.",1,1]:["Here. *pushes something into your hands* Don't argue.",3,5],group:y?["Then you should talk to "+(g?(g.leader==="you"?"yourself, apparently":fullName(P(g.leader)||p)):"someone who's in charge")+".",1,0]:["Lone wolf, huh. Doesn't last long out here.",0,0],
       help:y?["Thank you. Really.",4,4]:["Right. Of course. Forget I asked.",-3,-3],
@@ -2293,7 +2409,8 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     else if(has("family")){const f=famList(p);say(f.length?f.map(([q,r])=>`My ${r} is ${q.alive?(q.id==="you"?"you, silly":q.name):"gone"}.`).join(" "):"I don't know where my family is.")}
     else if(has("dead"))say("Mom says don't look at them. They used to be people.");
     else if(has("joke"))say("Knock knock. ...You're supposed to say who's there!");
-    else if(has("romance")||has("flirt"))say(p.fam.you?"*hugs you* Love you too.":"*makes a face* Gross.");
+    else if(has("flirt")&&!has("romance")&&!has("child"))say(pick(["*grins* Thanks!","*looks down at their shirt* It's my favorite.","My mom says I look like my dad."]));
+    else if(has("romance")||has("child")){if(p.fam.you)say("*hugs you* Love you too.");else{say("*makes a face* Gross.");if(pl.age>=18){R.dt-=10;R.memory=`${pn} said something weird to me.`;R.mv=-6;for(const q of living())if(q!==p&&q.age>=18&&dist(q.x,q.z,pl.x,pl.z)<12){q.trust-=10;mem(q,`${pn} was saying creepy things to ${p.name}, a little kid.`,-8,"you")}}}}
     else if(has("join_me")||has("follow_me")){if(p.follow)say("I'm right here!");else if((p.fam.you||feel(p)>30)&&(!p.group||p.group===S.player.group)){R.action="follow";say("Okay! Can I hold your hand?")}else say("I'm not allowed to go anywhere without a grown-up I know.")}
     else if(has("thanks")||has("compliment")){R.da+=4;say("*grins*")}
     else if(has("who"))say(`I'm ${p.name}. I'm ${["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"][p.age]||p.age}${p.age<9?" and a half":""}.`);
@@ -2303,6 +2420,9 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     else if(has("food"))say(p.hunger>50?"I had crackers. And some peaches.":"I'm really hungry. My tummy keeps making noises.");
     else if(has("fear"))say("The monsters. And the dark. And when grown-ups whisper.");
     else if(has("hope"))say(pick(["I want everything to go back to normal. And a dog.","I want to go back to school. Even math."]));
+    else if(has("favorite"))say(/animal/.test(low)?pick(["Dogs. No, horses. No, dogs.","Frogs! They can freeze solid and come back alive. The good kind of alive.","Do dinosaurs count? Then T. rex."]):/miss/.test(low)?`${cap(p.facts.likes)}. And my room.`:`${cap(p.facts.likes)}!`);
+    else if(has("story"))say(pick([`${(()=>{const f=famList(p).find(([q])=>q.alive&&q.id!=="you"&&q.age>=18);return f?`My ${f[1]} carried me most of the way.`:"I hid in a closet for a really long time."})()} I was really quiet. I'm good at quiet.`,"I don't want to talk about it. *picks at a scab*"]));
+    else if(has("mind"))say(pick([`${cap(p.facts.fear)}. ...And lunch.`,`I keep thinking about ${p.facts.likes}.`,"Nothing. *clearly something*"]));
     else if(M.me||has("opinion")&&/\bme\b/.test(low))say(feel(p)>20?"You're nice. You talk to me like a real person.":"I don't really know you.");
     else if(has("outbreak"))say(S.flags.alarm?"Everybody got sick. It's not a regular sick.":"Is it a flu like the one I had? I had to stay home for a whole week.");
     else if(has("where")||M.people.length)say("I dunno. Ask a grown-up.");
@@ -2313,6 +2433,37 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     else if(has("greet"))say(pick(["Hi!","Hi. Are you nice?","*waves*"]));
     else if(has("yes")||has("no"))say("Okay.");
     else say(pick(["Do you wanna see my rock collection?","Are the monsters gonna come here?","I'm hungry.","When can we go home?","Did you know frogs can freeze and come back alive? Not like the monsters. Good alive."]));
+    return finish(p,R,out)}
+  // romance needs two grown-ups; anything else gets shut down, and people remember
+  if((has("romance")||has("flirt")||has("child"))&&!p.fam.you&&(p.age<18||pl.age<18)){
+    if(p.age<18&&pl.age>=18&&has("flirt")&&!has("romance")&&!has("child")&&!p.mem.some(m=>m.a==="you"&&/weird|creepy/.test(m.x)&&S.t-m.t<DAY*2)){R.dt-=3;R.da-=2;R.memory=`${pn} said something kind of weird to me.`;R.mv=-3;say(pick(["Um... thanks? That's kind of a weird thing to say.","*crosses arms* Okay...","...Why would you say that?"]));return finish(p,R,out)}
+    if(p.age<18&&pl.age>=18){R.dt-=12;R.da-=10;R.memory=`${pn} said something creepy to me.`;R.mv=-8;R.action="end";say(pick([`...What? I'm ${p.age}. That's so creepy.`,"*steps way back* No. That's gross. You're an adult.","Okay, I'm leaving. That's messed up."]));
+      for(const q of living())if(q!==p&&q.age>=18&&dist(q.x,q.z,pl.x,pl.z)<12){q.trust-=8;mem(q,`${pn} was hitting on ${p.name}, who's ${p.age}.`,-8,"you")}return finish(p,R,out)}
+    if(p.age>=18){R.dt-=2;say(pick(["You're a kid. No. Go find somebody your own age.","*laughs, not unkindly* Kid. No.","How old are you? Yeah. No."]));return finish(p,R,out)}
+    if(Math.abs(p.age-pl.age)>2){say(pick(["*makes a face* Um. No.","That's weird. No."]));R.da-=2;return finish(p,R,out)}
+    if(has("flirt")){R.da+=2;say(pick(["*goes red* Shut up.","...Seriously? *tries not to smile*","Okay, that's weird. But, like. Thanks."]))}else say(pick(["*goes red* I... what? The world's ending. Can we just, like, hang out first?","*laughs nervously* Maybe. Ask me when we're not about to die."]));return finish(p,R,out)}
+  // teenagers: not kids, not adults, and sick of being treated like either. Anything that decides something still goes to the rules below
+  const HARD=["insult","threat","demand","ask_join","join_me","follow_me","leave_group","stay","lead","who_lead","alliance","trade","help","deliver","give_req","secret","remember","breakup","self_lost","comfort","apology","kidding","bitten","self_job","self_name","news","where","food"];
+  if(p.age<18&&!intents.some(k=>HARD.includes(k))&&!M.people.length&&!M.group&&!M.place&&!M.me){const grade=p.age<14?"in eighth grade":["a freshman","a sophomore","a junior","a senior"][clamp(p.age-14,0,3)]+" at the high school";
+    if(has("how"))say(recentGrief?pick(["Not great. *doesn't look at you*","I don't want to talk about it. Okay?"]):p.mood<35?pick(["Fine. *it's obviously not fine*","I'm fine. Can everybody stop asking that?","Honestly? It sucks. All of it."]):p.hunger<35?"Starving. Like, actually starving.":pick(["I'm okay. I guess.","Fine. Kind of bored? Which is messed up, I know.","Alive. So. That's something."]));
+    else if(has("story"))say(pick(["Honestly? I just ran. Like, a lot.",`${(()=>{const f=famList(p).find(([q])=>q.alive&&q.id!=="you");return f?`My ${f[1]} found me.`:"I was on my own for a while."})()} I don't really want to get into the rest.`,"I hid in the school gym for two days. Don't ask."]));
+    else if(has("mind"))say(pick([`Just... ${p.facts.fear}. Sorry. That's dark.`,`Honestly? ${cap(p.facts.likes)}. I miss it so much.`,"Nothing. It's fine."]));
+    else if(has("who")||has("before")||has("from")||/\b(grade|school)\b/.test(low)){say(`I'm ${p.name}. I was ${grade}.${p.facts.from.startsWith("right here")?" Lived here my whole life.":` We moved here from ${p.facts.from}.`} ${pick(["Now I'm... I don't know what I am.","Feels like a different person's life.","I used to think this town was boring."])}`);p.told.who=true;R.da+=1}
+    else if(has("family")){const f=famList(p).filter(([q])=>q.id!=="you");say(f.length?f.slice(0,3).map(([q,r])=>q.alive?`My ${r}'s ${q.group&&q.group===p.group?"here":"out there somewhere"}.`:`My ${r}... ${q.status==="turned"?"turned":"didn't make it"}.`).join(" ")+(f.some(([q])=>!q.alive)?" I don't really want to talk about it.":""):"It's just me now. So.");R.da+=1}
+    else if(has("fear"))say(t==="hostile"?"Why would I tell you?":`${cap(p.facts.fear)}. ${pick(["Don't tell anyone I said that.","...That's dumb, I know.","Okay, can we talk about something else?"])}`);
+    else if(has("hope"))say(`${cap(p.facts.hope)}. ${pick(["Dumb, right?","Don't laugh.","That's probably never happening, but whatever."])}`);
+    else if(has("favorite"))say(`${cap(p.facts.likes)}. ${pick(["Obviously.","That's, like, my whole personality. Was.","I miss it so much."])}`);
+    else if(has("dead"))say(p.tr.brave>.6?pick(["I've seen what they do. I'm not a little kid.","Aim for the head. Everybody acts like I don't know that.","I put one down yesterday. My hands wouldn't stop shaking after."]):pick(["My bus driver's one of them now. I saw him on Fourth Street.","I can't look at them. They used to be people we knew.","The sound they make. I hear it when I try to sleep."]));
+    else if(has("joke"))say(p.tr.social>.4?pick(["Why'd the zombie skip school? He felt rotten. ...That's the only one I know.","Knock knock. ...Nobody, because everybody's dead. Okay, that wasn't funny."]):"I don't really do jokes anymore.");
+    else if(has("outbreak"))say(!S.flags.alarm?pick(["Everyone at school was talking about the flu thing. Like it's some movie.","My mom keeps watching the news about it. It's kind of freaking me out."]):pick(["Nobody tells us anything. Like we're too young to handle it. We're handling it.","There was school, and then there wasn't. That's all I know.","Nobody knows what it is. The adults just pretend they do."]));
+    else if(has("sleep_q"))say(pick(["Not really. Every noise.","Like four hours. It's fine.","I sleep with my shoes on now."]));
+    else if(has("plan"))say(pick([`Plan? I'm ${p.age}. Ask an adult. ...Actually, don't. They don't know either.`,"Stay alive. Find my friends. That's it.","I don't know. Nobody does."]));
+    else if(has("opinion"))say(pick(["I don't know. Why are you asking me?","Honestly? Everyone's just making it up as they go.","Nobody asks what I think. ...It's kind of nice that you did."]));
+    else if(has("thanks")){R.da+=1;say(pick(["Yeah. No problem.","Sure.","*shrugs* It's whatever."]))}
+    else if(has("compliment")){R.da+=4;R.dt+=1;say(pick(["*tries not to smile* ...Thanks.","Wait, really? ...Cool.","Okay, now you're being weird. But thanks."]))}
+    else if(has("bye")){say(pick(["Later.","See ya. Don't die or whatever.","Bye."]));R.action="end"}
+    else if(has("greet")||has("yes")||has("no"))say(pick({hostile:["What.","Go away."],cold:["Oh. It's you.","Hey."],neutral:["Hey.","Uh, hi.","Hi."],friendly:[`Hey, ${pn}.`,"Oh, hey!","Hey. You're back."],close:[`${pn}! You're okay.`,"Hey! I was kind of worried. Not that much. But kind of."]}[t]));
+    else say(pick(["What?","I don't know. Why are you asking me?","*shrugs*","Okay...?","Um. Sure."]));
     return finish(p,R,out)}
   if(has("kidding")&&!has("bitten")){const lastJoke=p.mem.filter(m=>m.a==="you").slice(-1)[0];say(lastJoke&&/joked about being bitten/.test(lastJoke.x)?pick(["Not funny. Not even a little.","*shoves your shoulder* Don't. Ever."]):pick(["Ha. Okay.","You're a strange one.","*half a smile*"]));return finish(p,R,out)}
   // hostility first
@@ -2387,7 +2538,7 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
     if(!q.alive){const how=q.status==="turned"?"turned":q.status==="left"?"left town":"died";const fr=p.fam[q.id];say(fr?`My ${fr}... ${how}. *looks away* I don't want to talk about it.`:`${q.name}? ${how==="left town"?"Gone. Packed up and left.":cap(how)+"."} ${relGet(p,q)>30?"I miss them.":""}`);return finish(p,R,out)}
     const r=relGet(p,q);const fam=p.fam[q.id];const w=whereIs(q);const knowsWhere=q.group&&q.group===p.group||fam||r>30;
     let s="";
-    const obj=q.sex==="F"?"her":"him",subj=q.sex==="F"?"She":"He";const qg=q.group&&G(q.group);const pubWhere=qg?`with ${qg.name}${qg.home?" at "+PLACES[qg.home].n:""}`:null;
+    const obj=q.sex==="F"?"her":"him",subj=q.sex==="F"?"She":"He";const qg=q.group&&G(q.group);const pubWhere=qg?`with ${groupAt(qg)}`:null;
     if(has("where")||/where/.test(low))s=knowsWhere?`Last I knew, ${q.name} was ${w}.`:pubWhere?`I heard ${q.name}'s ${pubWhere}.`:S.flags.alarm?`No idea where ${q.name} is. Haven't seen ${obj} since this started.`:`${q.name}? Probably ${(()=>{const w=JOBS[q.job]?.work;return w&&w!=="home"?"at "+(BMAP[w]?BMAP[w].n:PLACES[w]?PLACES[w].n:"work"):"at home"})()}, like any other day.`;
     else s=fam?`${q.name}'s my ${fam}. ${r>60?"Everything I do, I do for them.":r<0?"We don't get along. Never did.":"We're family. That's all there is to it."}`:r>50?`${q.name}? ${pick(["One of the good ones.","I'd trust them with my life. I have, actually.","My best friend in all this."])}`:r>15?`${q.name}'s alright.`:r<-40?`${q.name}? ${pick(["Don't get me started.","Keep them away from me.","I don't trust them as far as I can throw them."])}`:r<-10?`We're not friends.`:`${q.name}? ${subj}${q.age<13?"'s just a kid":"'s "+jobPhrase(q)}${pubWhere?`, ${pubWhere} now`:""}. I don't know ${obj} well.`;
     if(q.partner&&q.partner!==p.id&&rf()<.5&&r>-10)s+=` ${subj}'s with ${q.partner==="you"?"you":P(q.partner)?.name||"someone"}, I think.`;
@@ -2411,14 +2562,16 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(has("remember")){const ms=p.mem.filter(m=>m.a==="you").slice(-3);say(ms.length?"I remember. "+ms.map(m=>toYou(m.x)).join(" "):"We haven't really been through anything together. Not yet.");return finish(p,R,out)}
   if(has("how")){const parts=[];
     if(p.bitten&&p.trust>=45&&rf()<.7){say(`*pulls up a sleeve. The bite is black at the edges* ...Don't tell anyone. Please. I just need a little more time.`);R.memory=`I showed ${pn} my bite.`;R.mv=6;R.dt+=5;p.revealed=true;return finish(p,R,out)}
-    if(recentGrief)parts.push(`Not good. ${recentGrief.x}`);else if(p.health<45)parts.push("Hurts to breathe. I'll live. Probably.");else if(p.hunger<30)parts.push("Hungry. Everyone's hungry.");else if(p.mood<30)parts.push(pick(["Honestly? Barely holding it together.","I keep waking up and remembering.","Tired. All the way down."]));else if(p.mood>70)parts.push(pick(["Better than I have any right to be.","Good, actually. We're still here.","Not bad. Got a few hours of sleep."]));else parts.push(pick(["Getting by.","Same as everyone. Scared, mostly.","Alive. That counts for something now."]));
+    if(recentGrief)parts.push(`Not good. ${recentGrief.x}`);else if(p.health<45)parts.push("Hurts to breathe. I'll live. Probably.");else if(p.hunger<30)parts.push("Hungry. Everyone's hungry.");else if(p.mood<30)parts.push(pick(["Honestly? Barely holding it together.","I keep waking up and remembering.","Tired. All the way down."]));else if(p.mood>70)parts.push(pick(["Better than I have any right to be.","Good, actually. We're still here.","Not bad. Got a few hours of sleep."]));else parts.push(pick(p.age>=60?["Oh, these old bones have been through worse. ...No, they haven't.","Tired. I'm too old to be this scared.","Getting by. My knees have opinions about all the running."]:p.age<30?["Getting by. I guess.","Honestly? I don't know. Okay, mostly.","Alive. That counts for something now."]:["Getting by.","Same as everyone. Scared, mostly.","Alive. That counts for something now."]));
     say(parts.join(" "));R.ask=rf()<.5?pick(["okay","eat"]):null;if(R.ask==="okay")out.push("You doing alright?");if(R.ask==="eat")out.push("You eaten today?");R.da+=1;return finish(p,R,out)}
   if(has("comfort")){if(recentGrief){R.da+=7;R.dt+=3;say(pick(["*nods, doesn't trust their voice* ...Thanks.","That helps. More than you know.","*leans into you for a second* Thank you."]));R.memory=`${pn} was kind to me when I was grieving.`;R.mv=6}else{R.da+=2;say("I'm okay. But thanks.")}return finish(p,R,out)}
   if(has("apology")){const bad=p.mem.filter(m=>m.a==="you"&&m.v<0).slice(-1)[0];if(bad){if(rf()<p.tr.kind+.2){R.dt+=4;R.da+=4;say("...Alright. Water under the bridge.");R.memory=`${pn} apologized. I forgave them.`;R.mv=3}else say(`Sorry doesn't fix it. ${toYou(bad.x)}`)}else say("For what?");return finish(p,R,out)}
   if(has("favorite")){const topic=/food|eat|meal|dish|snack/.test(low)?"food":/song|music|band|singer/.test(low)?"music":/movie|film|show|tv/.test(low)?"movie":/book|read/.test(low)?"book":/colou?r/.test(low)?"color":"thing";
     const FAV={food:["my mom's green chili","pancakes with too much syrup","gas station burritos, honestly","peach cobbler","a real cheeseburger","the pho at that place out on Route 9","fried catfish","cold pizza for breakfast"],music:["old country. Patsy Cline","anything loud enough to drive with the windows down","hymns, if you can believe it","blues. The sad kind","eighties stuff. Don't judge me"],movie:["anything with a heist in it","old westerns","cartoons, with the kids","romantic comedies. Don't tell anyone","nature documentaries"],book:["mysteries. I always guess wrong","the Bible, cover to cover, twice","car manuals. I'm serious","history. Wars, mostly","I never sat still long enough to read"],color:["green","blue. Like everybody","red","yellow, like old school buses","gray. Boring, I know"]};
     const L=FAV[topic];const v=L?L[hashStr(p.id+topic)%L.length]:p.facts.likes;
-    say(topic==="food"?`${cap(v)}. ${pick(["What I wouldn't give for some right now.","God, I miss it.","Don't make me think about it."])}`:topic==="thing"?`${cap(p.facts.likes)}. Used to be, anyway.`:`${cap(v)}.`);R.da+=2;return finish(p,R,out)}
+    say(topic==="food"?`${cap(v)}. ${pick(["What I wouldn't give for some right now.","God, I miss it.","Don't make me think about it."])}`:/miss/.test(low)?`${cap(p.facts.likes)}. ${pick(["Stupid, right?","Some days that's all I think about.","Funny what you end up missing."])}`:topic==="thing"?`${cap(p.facts.likes)}. Used to be, anyway.`:`${cap(v)}.`);R.da+=2;return finish(p,R,out)}
+  if(has("story")){const big=p.mem.filter(m=>m.a!=="you"&&Math.abs(m.v)>=6).slice(-1)[0];say(big&&t!=="hostile"&&t!=="cold"?`${pick(["Honestly?","Same as everyone, I guess.","Luck, mostly."])} ${big.x}`:pick(["Luck. Running. Not stopping.","I don't talk about the first night.","Same as everybody. Kept my head down and my door locked."]));R.da+=1;return finish(p,R,out)}
+  if(has("mind")){say(recentGrief&&t!=="hostile"?`${recentGrief.x} I can't stop thinking about it.`:p.hunger<35?"Food. Honestly, just food.":t==="hostile"||t==="cold"?"Nothing you need to worry about.":pick([`${cap(p.facts.hope)}. I keep thinking about it.`,`${cap(p.facts.likes)}. Isn't that stupid? Of all the things.`,`${cap(p.facts.fear)}. That's what keeps me up.`]));R.da+=1;return finish(p,R,out)}
   if(has("outbreak")){const F=S.flags;const d=dayOf(S.t);
     say(!F.clinic?(p.tr.curious>.55?pick(["The flu thing? My cousin in the city says the hospitals are turning people away. That's not nothing.","Radio keeps saying 'unusual flu'. Unusual how? Nobody says."]):pick(["It's a flu. They'll have a shot for it by Christmas.","Every year it's something. We're fine out here."]))
       :!F.alarm?pick(["Did you hear about the hospital? Somebody said a patient bit a nurse. Bit her.","There were sirens at the hospital this morning. Nobody's saying why.","Something happened at the hospital. People are saying things I don't want to repeat."])
@@ -2439,10 +2592,10 @@ function respond(p,msg){const pl=S.player;const low=msg.toLowerCase().trim();con
   if(has("self_name")){say(`${pn}. I'll remember that.`);return finish(p,R,out)}
   if(has("bye")){say(pick(["Stay alive.","Watch yourself out there.","See you around. Hopefully.","Don't do anything stupid."]));R.action="end";return finish(p,R,out)}
   if(has("greet")||has("yes")||has("no")){const hh=hourOf(S.t);const tt=hh>=5&&hh<12?"Morning":hh>=18&&hh<23?"Evening":"Hey";
-    const G1={hostile:["What.","Keep walking.","You've got a lot of nerve."],cold:[`${pn}.`,"Yeah?","Need something?"],neutral:[`${tt}.`,`Hey, ${pn}.`,"Hey."],friendly:[`Hey, ${pn}! Good to see you in one piece.`,"There you are.",`${tt}, ${pn}.`],close:[`${pn}! *hugs you* Don't scare me like that again.`,"Hey, you.","There's my favorite person."]}[t];
-    say(pick(G1));if(p.want&&feel(p)>-10&&rf()<.8){out.push(`Listen... ${p.want.text}`);p.want.told=true;R.ask="help"}else if(t!=="hostile"&&rf()<.35){R.ask=pick(["okay","town"]);out.push(R.ask==="okay"?"You doing alright?":"You been into town?")}return finish(p,R,out)}
+    const old=p.age>=55;const G1={hostile:["What.","Keep walking.","You've got a lot of nerve."],cold:[`${pn}.`,"Yeah?","Need something?"],neutral:old?[`${tt}.`,`${tt}, ${pn}.`,"Well, hello."]:[`${tt}.`,`Hey, ${pn}.`,"Hey."],friendly:old?[`Well, look who it is.`,`${tt}, ${pn}. Good to see you in one piece.`,"There you are."]:[`Hey, ${pn}! Good to see you in one piece.`,"There you are.",`${tt}, ${pn}.`],close:p.style==="folksy"&&pl.age<=p.age-15?[`Come here, ${petName(p)}. *hugs you* Don't scare me like that.`,`There you are, ${petName(p)}.`]:[`${pn}! *hugs you* Don't scare me like that again.`,"Hey, you.","There's my favorite person."]}[t];
+    say(pick(G1));if(p.want&&feel(p)>-10&&rf()<.8){out.push(`Listen... ${p.want.text}`);p.want.told=true;R.ask="help";R.facts=true}else if(t!=="hostile"&&rf()<.35){R.ask=pick(["okay","town"]);out.push(R.ask==="okay"?"You doing alright?":"You been into town?")}return finish(p,R,out)}
   // fallback
-  if(p.want&&rf()<.5){say(`I don't know about that. But listen... ${p.want.text}`);p.want.told=true;R.ask="help";return finish(p,R,out)}
+  if(p.want&&rf()<.5){say(`I don't know about that. But listen... ${p.want.text}`);p.want.told=true;R.ask="help";R.facts=true;return finish(p,R,out)}
   say(pick([`I'm not sure what you mean.`,`Hm. ${p.tr.curious>.6?"Tell me more.":"If you say so."}`,`I don't know anything about that.`,`*shrugs*`,`${p.tr.social>.6?"Funny you'd ask me that.":"..."} Ask me something I can actually answer.`]));
   return finish(p,R,out)}
 function toYou(x){const pn=S.player.name.split(" ")[0];return x.replace(new RegExp("\\b"+pn+"'s\\b","g"),"your").replace(new RegExp("\\b"+pn+"\\b","g"),"you").replace(/^you\b/,"You").replace(/\bthey were\b/g,"you were").replace(/\bthey are\b/g,"you are")}
@@ -2462,7 +2615,7 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
   if(a==="child_yes"){if((pl.sex==="F"&&p.sex==="M")||(pl.sex==="M"&&p.sex==="F")){pl.trying=true;note(`You and ${p.name} are trying for a child.`)}else note(`You talk about raising a child together. If a child ever loses their parents, you could take them in.`)}
   if(a==="break_up"){pl.partner=null;p.partner=null;pl.trying=false;note(`You and ${p.name} are no longer together.`);news(`${pl.name} and ${p.name} split up.`,"",[p.id])}
   if(a==="join_their"){const g=G(p.group);const old=pl.group;if(old&&G(old)?.leader==="you"){for(const q of members(old))joinGroup(q,g.id,true);G(old).dead=true;news(`${G(old).name} has merged into ${g.name}.`,"big")}
-    pl.group=g.id;for(const q of S.people.filter(q=>q.alive&&q.follow&&!q.group))joinGroup(q,g.id,true);for(const q of members(g.id))if(q.met)q.trust+=3;note(`You're part of ${g.name} now.`);journal(`You joined ${g.name}${g.home?" at "+PLACES[g.home].n:""}.`,"big");news(`${pl.name} joined ${g.name}.`,"")}
+    pl.group=g.id;for(const q of S.people.filter(q=>q.alive&&q.follow&&!q.group))joinGroup(q,g.id,true);for(const q of members(g.id))if(q.met)q.trust+=3;note(`You're part of ${g.name} now.`);journal(`You joined ${groupAt(g)}.`,"big");news(`${pl.name} joined ${g.name}.`,"")}
   if(a==="join_mine"){let g=myGroup();if(!g){g=newGroup(`${pl.name.split(" ")[0]}'s people`,"you",null);pl.group=g.id;for(const q of S.people.filter(q=>q.alive&&q.follow&&!q.group&&q.id!==p.id))joinGroup(q,g.id,true);UI.afterTalkModal={type:"name_group"};news(`${pl.name} has started a group of their own.`,"big")}
     const fam=S.people.filter(q=>q.alive&&q.hh===p.hh&&q!==p&&q.hh&&q.hh!=="you"&&(q.group===p.group));joinGroup(p,g.id,true);if(!g.home)p.follow=true;for(const q of fam){joinGroup(q,g.id,true);if(!g.home)q.follow=true}
     note(`${p.name}${fam.length?` and ${fam.length} family member${fam.length>1?"s":""}`:""} joined ${g.name}.`);journal(`${p.name} joined your group${fam.length?", with family":""}.`,"good");if(g.home)for(const q of [p,...fam])placeTo(q,randIn(g.home,3))}
@@ -2475,7 +2628,14 @@ function applyTalk(p,r){const pl=S.player;p.chat.push({w:"them",x:r.text});if(p.
 // ================= overheard conversations =================
 function overhear(a,b){const r=relGet(a,b);const L=[];const s=(p,t)=>L.push(`${p.name}: ${styleSay(p,t)}`);
   const shared=a.mem.filter(m=>m.v<=-8&&m.a!=="you"&&b.mem.some(n=>n.a===m.a)).slice(-1)[0];
-  if(a.age<13&&b.age<13){s(a,"Do you think the monsters can swim?");s(b,"No. They'd sink. They're too heavy with dead.");s(a,"That's not how it works.");s(b,"You don't know how it works.");return L}
+  if(a.age<13&&b.age<13){pick([()=>{s(a,"Do you think the monsters can swim?");s(b,"No. They'd sink. They're too heavy with dead.");s(a,"That's not how it works.");s(b,"You don't know how it works.")},
+    ()=>{s(a,"I'm gonna be a soldier when I grow up. And kill all of them.");s(b,"I'm gonna be a vet. For dogs.");s(a,"Dogs don't need a vet anymore.");s(b,"Yes they do! *shoves you*")},
+    ()=>{s(a,"Do you remember what pizza tastes like?");s(b,"Pepperoni.");s(a,"That's not a taste, that's a kind.");s(b,"It tastes like pepperoni, duh.")}])();return L}
+  const teen=x=>x.age>=13&&x.age<18;
+  if(teen(a)&&teen(b)){pick([()=>{s(a,"Do you think there's ever gonna be school again?");s(b,"God, I hope not.");s(a,"...I kind of miss it. Is that weird?");s(b,"Yeah. ...No. I miss it too.")},
+    ()=>{s(a,"My phone's been dead for a week and I still reach for it.");s(b,"Same. I had like four hundred unread messages.");s(a,"From who?");s(b,"*quiet* ...Doesn't matter now.")},
+    ()=>{s(a,"What do you think the adults are actually doing?");s(b,"Making it up. Same as us.");s(a,"That's not comforting.");s(b,"Wasn't supposed to be.")}])();return L}
+  const little=a.age<13?a:b.age<13?b:null;if(little){const big=little===a?b:a;s(little,pick(["When can we go home?","Are the monsters gonna come here?","I'm hungry.","Can I sleep next to you tonight?"]));s(big,big.age<18?pick(["I don't know. Soon, maybe.","They won't. I won't let them.","Here. *hands over a cracker* Don't tell anyone."]):pick(["Soon, bud. I promise.","Not while I'm here.","I know. Me too. We'll find something."]));s(little,pick(["You said that yesterday.","Promise promise?","Okay."]));return L}
   if(a.partner===b.id){s(a,pick(["You sleep at all?","Come here. You're freezing.","I keep thinking about the house."]));s(b,pick(["A little. You?","I'm fine. Stop worrying.","We'll get a house again. A better one."]));s(a,"Promise me we stay together. Whatever happens.");s(b,"*takes their hand* Whatever happens.");return L}
   if(shared){const who=P(shared.a);s(a,`I keep thinking about ${who?who.name:"them"}.`);s(b,"Me too. Every time I close my eyes.");s(a,pick(["They didn't deserve that.","It should've been me.","Do you think they knew it was us at the end?"]));s(b,"*long silence* ...Get some sleep. I'll take your watch.");return L}
   if(r<-30){s(a,pick([`You took the last of the coffee again.`,`You were supposed to be on watch.`,`I saw you skimming from the store.`]));s(b,pick(["Prove it.","So report me.","Mind your own business for once."]));s(a,"One of these days, somebody's going to get hurt because of you.");s(b,"Is that a threat?");return L}
@@ -2595,11 +2755,11 @@ function onBondAct(a,v){if(a!=="bond")return false;const p=P(UI.talkTo);if(p&&p.
 function gain(p,k,base){const log=p.bondLog||(p.bondLog={});const rep=log[k]&&S.t-log[k]<DAY*.5?.35:1;log[k]=S.t;return(base+p.tr.social*3+(feel(p)>0?1.5:0)+rf()*3)*rep}
 // something true about them that you didn't know yet
 function opensUp(p){const pz=persona(p);const t=p.told||(p.told={});const opts=[];
-  if(!t.from)opts.push(["from",p.facts.from.startsWith("right here")?`I've lived in ${TOWN} my whole life. Never even wanted to leave. Funny, now.`:`I grew up in ${p.facts.from}. Moved here for ${pick(["work","a girl","a guy","the quiet","cheap rent","my mother"])}.`]);
+  if(!t.from)opts.push(["from",p.facts.from.startsWith("right here")?(p.age<18?`I've lived in ${TOWN} my whole life. I used to think it was the most boring place on earth.`:`I've lived in ${TOWN} my whole life. Never even wanted to leave. Funny, now.`):p.age<18?`We moved here from ${p.facts.from} ${p.age<13?"when I was little. I don't remember it much.":"a couple years ago. I hated it here at first."}`:`I grew up in ${p.facts.from}. Moved here for ${pick(p.age<30?["work","a girl","a guy","cheap rent","my mom"]:["work","a girl","a guy","the quiet","cheap rent","my mother"])}.`]);
   if(!t.likes)opts.push(["likes",`You know what I miss? ${cap(p.facts.likes)}. Isn't that stupid?`]);
-  if(!t.hope)opts.push(["hope",`If we make it through this, I want ${p.facts.hope}.`]);
-  if(!t.fear)opts.push(["fear",`I'm scared of ${p.facts.fear}. More than them, some days.`]);
-  if(pz.hook&&!t.hook)opts.push(["hook",cap(pz.hook.replace(/^(was|has|had|is|lost|won|writes|sings|runs|knows|grew|got|moved|bought|owes|finished|served|raised|volunteers|coached)\b/,m=>"I "+({was:"was",has:"have",had:"had",is:"am"}[m]||m)))+"."]);
+  if(!t.hope)opts.push(["hope",`What keeps me going? ${cap(p.facts.hope)}.`]);
+  if(!t.fear)opts.push(["fear",`You want to know what scares me? ${cap(p.facts.fear)}. More than them, some days.`]);
+  if(pz.hook&&!t.hook)opts.push(["hook",sentence(cap(firstPerson(pz.hook)))]);
   if(!t.secret&&feel(p)>=45)opts.push(["secret",`I've never told anyone this. ${pz.secret}.`]);
   if(!opts.length)return null;const o=opts[opts.length>1&&feel(p)>=45&&opts.some(x=>x[0]==="secret")?opts.length-1:Math.floor(rf()*opts.length)];t[o[0]]=true;return o[1]}
 function doBond(p,k){const pl=S.player;if(!bondOk(p,k))return;if(zedNear(9)){toast("Not with the dead this close.");return}
@@ -2663,7 +2823,7 @@ function aiHelpText(){return AI.ns?"When you talk to people, Claude writes their
 function talkAbort(){if(AI.ctl){try{AI.ctl.abort()}catch(e){}AI.ctl=null}}
 // the small details that make each person themselves, fixed for life by who they are
 function persona(p){if(p._pz)return p._pz;const R=srng(hashStr(p.id+"/voice"));const sd=p.seed&&SEEDP[p.seed]||{};
-  const o={quirk:sd.quirk||pick2(QUIRKS,R),values:sd.values||pick2(VALUES,R),flaw:sd.flaw||pick2(FLAWS,R),hook:sd.hook||(p.age<13?"":pick2(HOOKS,R)),morning:pick2(MORNING,R),kid:p.age<13?pick2(KIDQ,R):"",secret:sd.secret||p.facts.secret};
+  const a=p.age;const o={quirk:sd.quirk||forAge(QUIRKS,a,R,p),values:sd.values||forAge(VALUES,a,R,p),flaw:sd.flaw||forAge(FLAWS,a,R,p),hook:sd.hook||(a<4?"":lifeFill(forAge(HOOKS,a,R,p),p.sex)),morning:forAge(MORNING,a,R,p),kid:"",secret:sd.secret||p.facts.secret};
   Object.defineProperty(p,"_pz",{value:o,enumerable:false,writable:true});return o}
 const ACTWORDS={follow:"agrees to come along with {pn} and starts following them",stay:"stops following {pn} and stays where they are",trade:"is willing to trade; a trade opens right after this line",
   attack:"loses their temper and swings at {pn}",romance_yes:"says yes: they want to be together with {pn}",child_yes:"agrees to try for a child with {pn}",break_up:"ends their relationship with {pn}",
@@ -2677,69 +2837,118 @@ function worldWords(){const F=S.flags;const d=dayOf(S.t);const L=[];
   else if(!F.alarm)L.push("Something terrible happened at the hospital: sick people attacked others, and the bitten got up again. Rumors are spreading.");
   else L.push("The dead are walking. The town has fallen apart; people are hiding, fleeing, or banding together.");
   if(F.blackout)L.push("The power is out.");if(d>=3)L.push(`It's been ${d-1} days since it started.`);
-  const gs=Object.values(S.groups).filter(g=>!g.dead&&groupSize(g.id)>0).slice(0,5).map(g=>`${g.name}${g.home?" at "+PLACES[g.home].n:""}`);if(gs.length)L.push("Groups that have formed: "+gs.join(", ")+".");
+  const gs=Object.values(S.groups).filter(g=>!g.dead&&groupSize(g.id)>0).slice(0,5).map(g=>`${groupAt(g)}`);if(gs.length)L.push("Groups that have formed: "+gs.join(", ")+".");
   return L.join(" ")}
-function aiPrompt(p,msg,r){const pl=S.player;const pn=pl.name.split(" ")[0];const pz=persona(p);const g=p.group?G(p.group):null;const kid=p.age<13;const f=feel(p);const b=bldAt(p.x,p.z);
-  const memYou=p.mem.filter(m=>m.a==="you").slice(-7).map(m=>`- (day ${m.d}) ${m.x}`).join("\n")||"- nothing yet";
+// "I" for a line about themselves: "knows every back road" becomes "I know every back road"
+function firstPerson(h){h=String(h||"").trim();if(/^[A-Z]/.test(h))return h.replace(/\b(He|She)\b/g,"I").replace(/^(His|Her)\b/,"My").replace(/\b(on|owes) (him|her)\b/g,"$1 me");
+  const V={has:"have",is:"am",knows:"know",writes:"write",sings:"sing",owes:"owe",runs:"run"};return"I "+h.replace(/^(\w+)/,w=>V[w]||w).replace(/\btheir\b/g,"my").replace(/\bthemself\b/g,"myself")}
+function thirdPerson(p,h){h=String(h||"").trim();if(!h)return"";if(/^[A-Z]/.test(h))return sentence(h);const F=p.sex==="F";return sentence((F?"She ":"He ")+h.replace(/\btheir\b/g,F?"her":"his").replace(/\bthemself\b/g,F?"herself":"himself"))}
+// what the game settled before Claude says a word: a decision, facts to pass on, or nothing but talk
+const TALK_HARD=["bitten","insult","threat","demand","ask_join","join_me","follow_me","leave_group","stay","lead","alliance","romance","flirt","child","breakup","deliver","give_req","trade","secret","apology"];
+const TALK_FACT=["who_lead","where","news","family","food","remember","help"];
+function talkMode(r){const I=r.intents||[];if(r.action&&r.action!=="end"||r.answered||I.some(k=>TALK_HARD.includes(k)))return"decided";
+  if(r.facts||I.some(k=>TALK_FACT.includes(k))||r.M&&(r.M.people.length||r.M.group||r.M.place))return"facts";return"free"}
+// a couple of things on their mind right now, different every time, so they bring up their own life instead of waiting to be asked
+function onMind(p){const pl=S.player,pn=pl.name.split(" ")[0],pz=persona(p);const L=[];const youMem=p.mem.filter(m=>m.a==="you").map(m=>m.x).join(" ");
+  const grief=p.mem.filter(m=>m.v<=-8&&S.t-m.t<DAY*4&&m.a!=="you").slice(-1)[0];if(grief)L.push(`grieving: ${grief.x}`);
+  if(p.hunger<35)L.push("hungry, and it's hard to think about anything else");if((p.thirst??80)<35)L.push("thirsty");if((p.rest??80)<30)L.push("worn out; hasn't really slept");if(p.health<50)L.push("hurt, and trying not to show how much");
+  if(p.bitten)L.push("hiding a bite, and terrified");if(p.want&&!p.want.told)L.push(`needs help with something and might ask: "${p.want.text}"`);
+  const n=S.news.filter(n=>S.t-n.t<DAY*2&&!/household|joined|is old enough|went up at/.test(n.x)).slice(-4);if(n.length)L.push(`something they heard lately: ${pick(n).x}`);
+  if(pz.hook)L.push(`something from their own life they might mention: ${firstPerson(pz.hook)}`);
+  L.push(pick([`what they miss: ${p.facts.likes}`,`what they hope for: ${p.facts.hope}`,`what they were doing the morning it started: ${firstPerson(pz.morning)}`]));
+  const wx=wxWord().toLowerCase();if(rf()<.4)L.push(`the weather: ${wx}, ${temp()}°C`);if(p.act)L.push(`what they're doing right now: ${p.act}`);
+  const ask=[];if(!/used to|before all this|worked|was a /i.test(youMem))ask.push(`what ${pn} did before all this`);if(!/from /i.test(youMem))ask.push(`where ${pn} is from`);
+  if(S.flags.wake&&!/coma|hospital|woke/i.test(youMem))ask.push(`how ${pn} made it through the first week (they don't know ${pn} slept through it in a hospital bed)`);
+  if(Object.keys(pl.fam||{}).length&&!/family|find/i.test(youMem))ask.push(`whether ${pn} has found their people`);if(ask.length&&p.age>=8)L.push(`curious about ${pick(ask)}`);
+  return shuffle(L).slice(0,3).map(x=>x.replace(/[.\s]+$/,""))}
+function relWords(p){const t=p.trust,a=p.aff;const tw=t>60?"trusts them completely":t>30?"trusts them":t>5?"is starting to trust them":t>-20?"isn't sure they can trust them":"doesn't trust them at all";
+  const aw=a>60?"loves them":a>35?"really likes them":a>10?"likes them":a>-15?"has no strong feelings about them yet":a>-40?"doesn't much like them":"can't stand them";return`${tw}, and ${aw}`}
+function aiPrompt(p,msg,r,mode){const pl=S.player;const pn=pl.name.split(" ")[0];const pz=persona(p);const g=p.group?G(p.group):null;const f=feel(p);const b=bldAt(p.x,p.z);mode=mode||talkMode(r);
+  const memYou=p.mem.filter(m=>m.a==="you").slice(-10).map(m=>`- (day ${m.d}) ${m.x}`).join("\n")||"- nothing yet";
   const memOther=p.mem.filter(m=>m.a!=="you"&&Math.abs(m.v)>=4).slice(-3).map(m=>`- (day ${m.d}) ${m.x}`).join("\n");
-  const hist=p.chat.slice(-12,-1).filter(m=>m.w!=="sys"||true).map(m=>m.w==="you"?`${pn}: ${m.x}`:m.w==="them"?`${p.name}: ${m.x}`:`(${m.x})`).join("\n");
-  const shift=r.dt+r.da>1.5?"warmer toward "+pn:r.dt+r.da<-1.5?"colder toward "+pn:"about the same";
-  const act=r.action&&!r.action.startsWith("note:")?(r.action.startsWith("reunite:")?`learns where their ${p.fam[r.action.slice(8)]||"loved one"} is, and is overwhelmed`:(ACTWORDS[r.action]||"").replace(/\{pn\}/g,pn)):"just talks; nothing changes in what they do";
+  const hist=p.chat.slice(-15,-1).map(m=>m.w==="you"?`${pn}: ${m.x}`:m.w==="them"?`${p.name}: ${m.x}`:`(${m.x})`).join("\n");
+  const said=p.chat.filter(m=>m.w==="them").slice(-6).map(m=>m.x);
+  const act=r.action&&!r.action.startsWith("note:")?(r.action.startsWith("reunite:")?`learns where their ${p.fam[r.action.slice(8)]||"loved one"} is, and is overwhelmed`:(ACTWORDS[r.action]||"").replace(/\{pn\}/g,pn)):"";
+  const shift=r.dt+r.da>1.5?"warmer toward "+pn:r.dt+r.da<-1.5?"colder toward "+pn:"";
   const rel=p.fam.you?`${pn} is their ${p.fam.you}. `:p.partner==="you"?`${pn} is their partner. `:"";
-  const secret=(f>55||p.told?.secret)?`Their secret (they may finally share it if it fits): ${pz.secret}`:`Their secret (never say it outright; at most a hint): ${pz.secret}`;
-  return `You write one spoken reply for a character in a slow, grounded survival story set in Limon, a small rural American town, at the start of an outbreak where the dead come back. People in this world never say "zombie": they say the dead, the sick, walkers, them.
+  const secret=(f>55||p.told?.secret)?`Their secret (they may finally share it, if the moment is right): ${pz.secret}`:`Their secret (never say it outright; at most a hint): ${pz.secret}`;
+  const mind=onMind(p);
+  const what=mode==="decided"?`WHAT HAPPENS (the game has decided this; the reply must match it)
+${act?`- ${p.name} ${act}.\n`:""}${shift?`- They come away feeling ${shift}.\n`:""}- The gist of what they say: "${r.text}"
+Keep every decision and fact in the gist: if it refuses, refuse; if it agrees, agree; keep names, places, numbers and items, and don't promise anything it doesn't. Say it the way ${p.name} would, in your own words, not the gist's.`
+    :mode==="facts"?`WHAT ${p.name.toUpperCase()} KNOWS THAT ANSWERS THIS
+"${r.text}"
+Pass these facts on accurately, in ${p.name}'s own words. Don't change names, places, numbers or who is alive or dead, and don't add facts about other people that aren't here. They can add their own feelings about it, or ask something back.`
+    :`NOTHING IS DECIDED. This is just talk.
+Answer what ${pn} actually said, the way ${p.name} really would. If it's small talk, make small talk: react to it, share something small and specific from their own life, and often turn it around with a question of their own. If ${pn} tells them something about themself, react to it like a person would, and remember it. If ${pn} answers a question ${p.name} asked, respond to the answer.`;
+  return `You are writing what one person says next in a conversation, in a slow, grounded survival story set in ${TOWN}, a small town on the plains of eastern Colorado, in the weeks after the dead started walking. People here never say "zombie": they say the dead, the sick, walkers, them, those things.
 
-CHARACTER
-${fullName(p)}, ${p.age}, ${p.sex==="F"?"woman":"man"}${kid?" (a child)":""}. ${JOBS[p.job]?.n||""}. Looks: ${p.look}.
-Temperament: ${traitWords(p.tr).join(", ")||"even-keeled"}.
+WHO THEY ARE
+${fullName(p)}, ${p.age}, ${p.sex==="F"?(p.age<18?"girl":"woman"):(p.age<18?"boy":"man")}. ${p.age<18?(p.age<13?"A kid.":"In school, before."):`Before all this: ${JOBS[p.job]?.n||"between jobs"}.`} Looks: ${p.look}.
+Their age, and how it sounds: ${ageVoice(p)}
 How they talk: ${VOICE[p.style]||VOICE.plain}
-Quirk: ${pz.quirk}. Cares about: ${pz.values}. Flaw: ${pz.flaw}.${kid?` As a kid, ${heShe(p)} ${pz.kid}.`:""}
-Background: ${sentence(p.facts.bio)} ${pz.hook?sentence(/^[A-Z]/.test(pz.hook)?pz.hook:cap(heShe(p))+" "+pz.hook):""} From ${p.facts.from}. Misses ${p.facts.likes}. Afraid of ${p.facts.fear}. Hopes for ${p.facts.hope}.
+Temperament: ${traitWords(p.tr).join(", ")||"even-keeled"}. Quirk: ${pz.quirk}. Cares about: ${pz.values}. Flaw: ${pz.flaw}.
+Their life: ${[sentence(p.facts.bio),thirdPerson(p,pz.hook),`From ${p.facts.from}.`].filter(Boolean).join(" ")} In their own words, what they miss: "${p.facts.likes}"; what scares them: "${p.facts.fear}"; what they hope for: "${p.facts.hope}".
 ${secret}
 Family: ${famWords(p)}.${p.partner&&p.partner!=="you"?` Partner: ${P(p.partner)?.name||"someone"}.`:""}
-${g?`Group: ${g.name}${g.leader===p.id?" (they lead it)":g.leader==="you"?` (led by ${pn})`:` (led by ${P(g.leader)?.name||"someone"})`}${p.role?", job: "+ROLES[p.role]?.n:""}.`:"Not in any group."}
+${g?`Group: ${g.name}${g.leader===p.id?" (they lead it)":g.leader==="you"?` (led by ${pn})`:` (led by ${P(g.leader)?.name||"someone"})`}${p.role?", their job there: "+ROLES[p.role]?.n:""}.`:"Not part of any group."}
 Right now: ${p.act||"around"}${b?` inside ${b.n}`:` at ${PLACES[regionAt(p.x,p.z)]?.n||"town"}`}. Health ${Math.round(p.health)}/100${p.hunger<30?", hungry":""}${(p.thirst??80)<30?", thirsty":""}${(p.rest??80)<25?", exhausted":""}${(p.fear||0)>60?", frightened":""}${p.mood<30?", miserable":p.mood>75?", in decent spirits":""}.${p.bitten?" They were bitten and are hiding it from everyone.":""}
-${memOther?"Weighing on them:\n"+memOther:""}
-
-THE PERSON TALKING TO THEM
-${pl.name}, ${pl.age}${pl.bg?", used to be a "+pl.bg.toLowerCase():""}, pronouns ${pl.pron}. ${rel}${p.met?`${p.name} ${feelWords(tier(p),pn)} (trust ${Math.round(p.trust)}, warmth ${Math.round(p.aff)}, from -100 to 100).`:`${p.name} has never met ${pn}.`}
-${S.flags.wake?`${pn} lay in a coma at Limon Hospital for weeks and woke up ${(()=>{const m=S.t-S.flags.wake;return m<180?"less than three hours ago":m<DAY?"earlier today":Math.floor(m/DAY)===1?"a day ago":Math.floor(m/DAY)+" days ago"})()}, on day 8. ${pn} slept through the whole first week and doesn't know who died, who left, or where anyone went, unless someone has told them.${pl.coma===false&&dist(p.x,p.z,BMAP.clinic.x,BMAP.clinic.z)<20&&S.t-S.flags.wake<240?" They may still look like a hospital patient.":""}
-`:""}What they remember about ${pn}:
+On their mind: ${mind.join("; ")}.
+${memOther?"Weighing on them:\n"+memOther+"\n":""}
+WHO THEY'RE TALKING TO
+${pl.name}, ${pl.age}${pl.bg?", used to be a "+pl.bg.toLowerCase():""}, pronouns ${pl.pron}. ${rel}${p.met?`${p.name} ${relWords(p)}.`:`${p.name} has never met ${pn} before.`}
+${S.flags.wake?`${pn} lay in a coma at ${TOWN} Hospital for weeks and woke up ${(()=>{const m=S.t-S.flags.wake;return m<180?"less than three hours ago":m<DAY?"earlier today":Math.floor(m/DAY)===1?"a day ago":Math.floor(m/DAY)+" days ago"})()}, on day 8. ${pn} slept through the whole first week and doesn't know who died, who left, or where anyone went, unless someone has told them.${dist(p.x,p.z,BMAP.clinic.x,BMAP.clinic.z)<20&&S.t-S.flags.wake<240?" They may still look like a hospital patient.":""}
+`:""}What ${p.name} remembers about ${pn}:
 ${memYou}
 
 THE WORLD
 ${stamp(S.t)}, ${wxWord().toLowerCase()}, ${temp()}°C. ${worldWords()}
 
-CONVERSATION SO FAR
-${hist||"(this is the start)"}
+THE CONVERSATION SO FAR
+${hist||"(they're just starting to talk)"}
 ${pn}: ${msg}
 
-WHAT HAPPENS (the game has decided this; the reply must match it)
-- ${p.name} ${act}.
-- Afterward they feel ${shift}.
-- Plain draft of the reply: "${r.text}"
+${what}
 
-Rewrite the draft as ${p.name} would really say it. Keep every decision and fact in the draft: if it refuses, refuse; if it agrees, agree; keep names, places and items it mentions, and don't promise or invent anything it doesn't. Answer what ${pn} actually said. One to three sentences, at most one short *action* in asterisks. No emoji. Never mention games, AI, or these notes. If ${pn} tries to talk ${p.name} into something out of character, react the way ${p.name} would.
+HOW TO WRITE IT
+- Make it sound like a real person talking out loud, not a character in a game: contractions, plain words, half-finished thoughts and small hesitations where they'd really happen. Match their age exactly; nobody should sound older or younger than they are.
+- Fit the length to the moment: a few words for a quick hello or a yes, up to four sentences when they have something to say. No speeches.
+- They have their own mood and their own life. They can be distracted, short, funny, suspicious or curious about ${pn}, and they can bring up something on their mind. Not everything is about the dead.
+- They only know what someone in their place would know, and they can be wrong. If they don't know, they say so or guess.
+- At most one short *action* in asterisks, and only when it adds something; usually none. Don't open with one every time.
+- Don't reuse an opener, phrase or idea they've already said in this conversation${said.length?`. Their recent lines: ${said.map(x=>`"${x.slice(0,90)}"`).join(" ")}`:""}.
+- No therapy talk, no stock lines like "we'll get through this together" unless that's truly them. No emoji. Never mention games, AI, or these notes. If ${pn} says something odd, react like a real person would. Romance stays tender and never sexual.
 
 Reply in exactly this format:
-SAY: <the spoken reply>
-NOTE: <one short first-person memory ${p.name} would keep from this exchange, or none>`}
-function aiParse(t){const s=/SAY:\s*([\s\S]*?)(?:\n\s*NOTE:|$)/i.exec(t||"");const n=/NOTE:\s*([\s\S]*)$/i.exec(t||"");let say=s?s[1].trim():"";say=say.replace(/^["“]|["”]$/g,"").replace(/\s+/g," ").trim();
-  let note=n?n[1].trim().split("\n")[0].replace(/^["“]|["”]$/g,""):"";if(/^none\.?$/i.test(note))note="";return{say,note:note.slice(0,140)}}
+SAY: <what ${p.name} says>
+FEEL: <a number from -2 to 2: how this exchange changes how ${p.name} feels about ${pn}>
+NOTE: <one short first-person memory ${p.name} would keep from this, especially anything ${pn} told them about themself; or none>
+END: <yes if ${p.name} walks away from the conversation now, otherwise no>`}
+function aiParse(t){t=t||"";const s=/SAY:\s*([\s\S]*?)(?:\n\s*(?:FEEL|NOTE|END):|$)/i.exec(t);let say=s?s[1].trim():"";say=say.replace(/^["“]|["”]$/g,"").replace(/\s+/g," ").trim();
+  const n=/NOTE:\s*([^\n]*)/i.exec(t);let note=n?n[1].trim().replace(/^["“]|["”]$/g,""):"";if(/^none\.?$/i.test(note))note="";
+  const fm=/FEEL:\s*([+-]?\d(?:\.\d+)?)/i.exec(t);const feelv=fm?clamp(parseFloat(fm[1]),-2,2):null;const end=/END:\s*yes/i.test(t);
+  return{say,note:note.slice(0,160),feel:feelv,end}}
+// how much small talk alone can move someone in a day, so people warm up over time and not in five minutes
+function talkGain(p,v){const d=dayOf(S.t);if(!p.tg||p.tg.d!==d)p.tg={d,n:0};if(v<=0)return v;const left=Math.max(0,12-p.tg.n);const g=Math.min(v,left)+Math.max(0,v-left)*.25;p.tg.n+=g;return g}
 async function sendTalk(){const p=P(UI.talkTo);const msg=(UI.draft||"").trim();if(!p||!msg||UI.talkBusy)return;
   if(!p.alive){toast(`${p.name} is gone.`);closeTalk();return}
   if(dist(p.x,p.z,S.player.x,S.player.z)>6&&!p.follow){toast(`${p.met?p.name:"They"} can't hear you from there. Walk closer.`);return}
   p.chat.push({w:"you",x:msg});UI.draft="";p.lastTalk=S.t;
-  const r=respond(p,msg);
-  if(!aiReady()){applyTalk(p,r);advance(3);save();render();if(UI.talkTo!==p.id)bubble(p,r.text);return}
-  const prompt=aiPrompt(p,msg,r);const live={w:"them",x:"",live:true};p.chat.push(live);UI.talkBusy=true;render();
+  const r=respond(p,msg);const mode=talkMode(r);
+  if(!aiReady()){r.da=talkGain(p,r.da);applyTalk(p,r);advance(3);save();render();if(UI.talkTo!==p.id)bubble(p,r.text);return}
+  const prompt=aiPrompt(p,msg,r,mode);const live={w:"them",x:"",live:true};p.chat.push(live);UI.talkBusy=true;render();
   const ctl=new AbortController();AI.ctl=ctl;let out=null;
   try{const res=await AI.ns(prompt,{signal:ctl.signal,cache:false,modelTier:"default",onText:({text})=>{const a=aiParse(text);if(a.say!==live.x){live.x=a.say;renderTalkLog()}}});
     out=aiParse(res&&res.text);AI.fails=0}
   catch(err){const code=err&&err.code;if(code==="not_granted"){AI.on=false;toast("Claude voices are off. People will use their built-in lines.")}else if(code==="rate_limited"){AI.cool=Date.now()+60000}else if(ctl.signal.aborted){}else{AI.fails++;if(AI.fails>=3)AI.cool=Date.now()+120000}}
   const i=p.chat.indexOf(live);if(i>=0)p.chat.splice(i,1);AI.ctl=null;UI.talkBusy=false;
-  if(out&&out.say&&out.say.length>1){r.text=out.say;if(out.note&&!r.memory){r.memory=out.note;r.mv=r.dt+r.da>2?1:r.dt+r.da<-2?-1:0}}
-  applyTalk(p,r);advance(3);save();render();if(UI.talkTo!==p.id)bubble(p,r.text)}
+  if(out&&out.say&&out.say.length>1){r.text=out.say;
+    // in plain talk, how it went is up to the person; when something was decided, their feelings only lean a little
+    if(out.feel!==null){if(mode==="free"){r.da=r.da*.5+out.feel*1.5;r.dt=r.dt*.5+out.feel*.6}else{r.da+=out.feel*.7}}
+    if(out.note&&!r.memory){r.memory=out.note;r.mv=out.feel!==null?Math.round(out.feel*2):r.dt+r.da>2?1:r.dt+r.da<-2?-1:0}
+    if(out.end&&!r.action)r.action="end";
+    if(mode==="free"&&r.ask&&p.cv)p.cv.q=null}
+  r.da=talkGain(p,r.da);applyTalk(p,r);advance(3);save();render();if(UI.talkTo!==p.id)bubble(p,r.text)}
 
 // ================= the world view: renderer, textures, buildings, terrain =================
 const W3={ok:false,wrap:null,ren:null,scene:null,cam:null,rc:null,zoom:1.25,keys:{},run:false,path:null,ptarget:null,talkOnArrive:null,attackT:null,useOnArrive:null,
@@ -3116,11 +3325,12 @@ function initFigs(sc){const G=figGeo();for(const [k,g] of Object.entries(G)){con
 // what a person looks like, decided once from who they are
 function lookOf(p){if(p.id==="you")return playerLook();const R=srng(hashStr(p.id));const l=(p.look||"").toLowerCase();const F=p.sex==="F";const age=p.age??30;
   const kid=age<13;let hairC=/gray/.test(l)||age>62?(age>74?HAIRC.white:HAIRC.gray):/black hair/.test(l)?HAIRC.black:/red hair/.test(l)?HAIRC.red:/blond/.test(l)?HAIRC.blond:pick2([HAIRC.brown,HAIRC.black,HAIRC.brown,HAIRC.blond],R);
-  let hair=F?pick2(["hLong","hPony","hBun","hLong","hShort"],R):pick2(["hShort","hShort","hBuzz","hShort",age>50?null:"hShort"],R);if(/shaved/.test(l))hair=null;if(/ponytail/.test(l))hair="hPony";if(/curls/.test(l)&&!F)hair="hShort";
-  const beard=!F&&!kid&&age>17&&(/beard/.test(l)||R()<.18);
+  let hair=F?pick2(["hLong","hPony","hBun","hLong","hShort"],R):pick2(["hShort","hShort","hBuzz","hShort",age>50?null:"hShort"],R);if(/shaved/.test(l))hair=null;if(/ponytail/.test(l))hair="hPony";if(/curls/.test(l)&&!F)hair="hShort";if(/pigtails/.test(l))hair="hPony";if(/buzz/.test(l))hair="hBuzz";if(/long hair/.test(l))hair="hLong";if(/gray curls/.test(l))hair="hShort";
+  const beard=!F&&!kid&&age>17&&(/beard|mustache/.test(l)||R()<.18);
   const J=p.job;let top=pick2(TOPS,R),pants=pick2(PANTS,R),shoes=pick2(SHOES,R),hat=null,hatC=null;
   if(J==="deputy"){top="#b8a47a";pants="#4a4636";hat="hat";hatC="#5a4a32"}else if(J==="nurse"||J==="doctor"){top=J==="nurse"?"#7aa8b8":"#d8dcd8";pants=J==="nurse"?"#7aa8b8":"#3a4048"}else if(J==="farmer"||J==="farmhand"){top=pick2(["#8a3a32","#6a7a8a","#7a5a3a"],R);pants="#3a4a6a";if(R()<.6){hat="hat";hatC=pick2(["#c8b890","#3a5a3a","#8a3a32"],R)}}
   else if(J==="quarry"||J==="foreman"){top="#c8a03a";pants="#4a4038";hat=R()<.4?"helmet":null;hatC="#e8c83a"}else if(J==="cook"||J==="waitress"){top="#e8e4dc"}else if(J==="pastor"){top="#2a2a2e";pants="#2a2a2e"}else if(J==="soldier"){top="#5a6040";pants="#5a6040"}else if(J==="hunter"){top="#6a5a3a";hat="hat";hatC="#c8681a"}
+  if(/ball cap/.test(l)&&!hat){hat="hat";hatC=pick2(["#8a3a32","#2f3e58","#3a5a3a"],R)}
   if(kid){top=pick2(["#c83a32","#3a6ac8","#e8c83a","#3a9a5a","#c85a9a","#e88a3a"],R);shoes=pick2(["#d8d4c8","#c83a32","#3a6ac8"],R)}
   const sleeve=R()<.3&&!kid?pick2(["#3a3a3e","#5a3a26","#2f3e58","#6a6a52"],R):top;
   const build=/heavyset/.test(l)?[1.16,1]:/wiry|slight/.test(l)?[.88,1]:/broad/.test(l)?[1.1,1.02]:/athletic/.test(l)?[1.02,1.02]:[1,1];
@@ -3941,7 +4151,20 @@ function setPol(k,v){const g=myGroup();if(!g||g.leader!=="you")return;const old=
 
 // ---------- talking: a box that opens beside the person you clicked ----------
 const QUICK=["How are you holding up?","Who are you?","What do you need?","Come with me.","Can I join your group?","Heard any news?"];
-function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close.","No. Not now.",...QUICK.slice(0,3)];if(q==="hang")return["Yes, I'll sit with you.","No, not now.",...QUICK.slice(0,3)];return p.follow?QUICK.filter(x=>x!=="Come with me.").concat(["Wait here."]):QUICK}
+// small talk to get them going; it changes as the day goes on, and it's only a start: type anything
+const SMALLTALK=["What did you do before all this?","Where are you from?","What do you miss most?","What's on your mind?","Sleep at all last night?","Tell me about your family.","What scares you most?","What are you hoping for?","What's your favorite food?","How'd you make it this far?"];
+const KIDTALK=["Are you okay?","Where's your family?","What's your favorite animal?","Want to hear a joke?","Are you hungry?","What's your name?"];
+const TEENTALK=["You doing okay?","What grade were you in?","What do you miss most?","What music do you like?","How'd you make it this far?","Where's your family?"];
+function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close.","No. Not now.",...QUICK.slice(0,3)];if(q==="hang")return["Yes, I'll sit with you.","No, not now.",...QUICK.slice(0,3)];
+  const out=[];if(q)out.push("Yes.","No.");const R=srng(hashStr(p.id+"/"+Math.floor(S.t/30)));
+  out.push(!p.met?"Hi. Who are you?":p.age<13?"Hey, buddy. You okay?":"How are you holding up?");
+  if(S.flags.wake&&S.t-S.flags.wake<DAY*2)out.push("What did I miss?");
+  const pool=(p.age<13?KIDTALK:p.age<18?TEENTALK:SMALLTALK).filter(x=>!out.includes(x));for(let i=0;i<2&&pool.length;i++)out.push(pool.splice(Math.floor(R()*pool.length),1)[0]);
+  if(p.met&&p.age>=13)out.push(p.want?"What do you need?":"Need anything?");
+  if(p.follow)out.push("Wait here.");else if(p.age>=8&&p.met)out.push("Come with me.");
+  const g=p.group&&G(p.group);if(g&&g.leader===p.id&&S.player.group!==g.id&&p.met)out.push("Can I join your group?");
+  if(!(S.flags.wake&&S.t-S.flags.wake<DAY*2))out.push("Heard any news?");
+  return out.slice(0,8)}
 function openTalk(pid){const p=P(pid);if(!p||!p.alive)return;if(UI.panel&&UI.panel!=="inv")UI.panel=null;UI.talkTo=pid;UI.talkFresh=true;p.lastTalk=S.t;cancelWalk();
   const pl=S.player;W3.ang=Math.atan2(p.x-pl.x,p.z-pl.z);render();const box=$("talkbox");if(box&&matchMedia("(pointer:fine)").matches)box.focus({preventScroll:true})}
 function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}

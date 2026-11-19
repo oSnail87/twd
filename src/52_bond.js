@@ -79,11 +79,11 @@ function onBondAct(a,v){if(a!=="bond")return false;const p=P(UI.talkTo);if(p&&p.
 function gain(p,k,base){const log=p.bondLog||(p.bondLog={});const rep=log[k]&&S.t-log[k]<DAY*.5?.35:1;log[k]=S.t;return(base+p.tr.social*3+(feel(p)>0?1.5:0)+rf()*3)*rep}
 // something true about them that you didn't know yet
 function opensUp(p){const pz=persona(p);const t=p.told||(p.told={});const opts=[];
-  if(!t.from)opts.push(["from",p.facts.from.startsWith("right here")?`I've lived in ${TOWN} my whole life. Never even wanted to leave. Funny, now.`:`I grew up in ${p.facts.from}. Moved here for ${pick(["work","a girl","a guy","the quiet","cheap rent","my mother"])}.`]);
+  if(!t.from)opts.push(["from",p.facts.from.startsWith("right here")?(p.age<18?`I've lived in ${TOWN} my whole life. I used to think it was the most boring place on earth.`:`I've lived in ${TOWN} my whole life. Never even wanted to leave. Funny, now.`):p.age<18?`We moved here from ${p.facts.from} ${p.age<13?"when I was little. I don't remember it much.":"a couple years ago. I hated it here at first."}`:`I grew up in ${p.facts.from}. Moved here for ${pick(p.age<30?["work","a girl","a guy","cheap rent","my mom"]:["work","a girl","a guy","the quiet","cheap rent","my mother"])}.`]);
   if(!t.likes)opts.push(["likes",`You know what I miss? ${cap(p.facts.likes)}. Isn't that stupid?`]);
-  if(!t.hope)opts.push(["hope",`If we make it through this, I want ${p.facts.hope}.`]);
-  if(!t.fear)opts.push(["fear",`I'm scared of ${p.facts.fear}. More than them, some days.`]);
-  if(pz.hook&&!t.hook)opts.push(["hook",cap(pz.hook.replace(/^(was|has|had|is|lost|won|writes|sings|runs|knows|grew|got|moved|bought|owes|finished|served|raised|volunteers|coached)\b/,m=>"I "+({was:"was",has:"have",had:"had",is:"am"}[m]||m)))+"."]);
+  if(!t.hope)opts.push(["hope",`What keeps me going? ${cap(p.facts.hope)}.`]);
+  if(!t.fear)opts.push(["fear",`You want to know what scares me? ${cap(p.facts.fear)}. More than them, some days.`]);
+  if(pz.hook&&!t.hook)opts.push(["hook",sentence(cap(firstPerson(pz.hook)))]);
   if(!t.secret&&feel(p)>=45)opts.push(["secret",`I've never told anyone this. ${pz.secret}.`]);
   if(!opts.length)return null;const o=opts[opts.length>1&&feel(p)>=45&&opts.some(x=>x[0]==="secret")?opts.length-1:Math.floor(rf()*opts.length)];t[o[0]]=true;return o[1]}
 function doBond(p,k){const pl=S.player;if(!bondOk(p,k))return;if(zedNear(9)){toast("Not with the dead this close.");return}

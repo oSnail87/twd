@@ -262,7 +262,20 @@ function setPol(k,v){const g=myGroup();if(!g||g.leader!=="you")return;const old=
 
 // ---------- talking: a box that opens beside the person you clicked ----------
 const QUICK=["How are you holding up?","Who are you?","What do you need?","Come with me.","Can I join your group?","Heard any news?"];
-function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close.","No. Not now.",...QUICK.slice(0,3)];if(q==="hang")return["Yes, I'll sit with you.","No, not now.",...QUICK.slice(0,3)];return p.follow?QUICK.filter(x=>x!=="Come with me.").concat(["Wait here."]):QUICK}
+// small talk to get them going; it changes as the day goes on, and it's only a start: type anything
+const SMALLTALK=["What did you do before all this?","Where are you from?","What do you miss most?","What's on your mind?","Sleep at all last night?","Tell me about your family.","What scares you most?","What are you hoping for?","What's your favorite food?","How'd you make it this far?"];
+const KIDTALK=["Are you okay?","Where's your family?","What's your favorite animal?","Want to hear a joke?","Are you hungry?","What's your name?"];
+const TEENTALK=["You doing okay?","What grade were you in?","What do you miss most?","What music do you like?","How'd you make it this far?","Where's your family?"];
+function talkChips(p){const q=p.cv&&p.cv.q;if(q==="come")return["Yes. Stay close.","No. Not now.",...QUICK.slice(0,3)];if(q==="hang")return["Yes, I'll sit with you.","No, not now.",...QUICK.slice(0,3)];
+  const out=[];if(q)out.push("Yes.","No.");const R=srng(hashStr(p.id+"/"+Math.floor(S.t/30)));
+  out.push(!p.met?"Hi. Who are you?":p.age<13?"Hey, buddy. You okay?":"How are you holding up?");
+  if(S.flags.wake&&S.t-S.flags.wake<DAY*2)out.push("What did I miss?");
+  const pool=(p.age<13?KIDTALK:p.age<18?TEENTALK:SMALLTALK).filter(x=>!out.includes(x));for(let i=0;i<2&&pool.length;i++)out.push(pool.splice(Math.floor(R()*pool.length),1)[0]);
+  if(p.met&&p.age>=13)out.push(p.want?"What do you need?":"Need anything?");
+  if(p.follow)out.push("Wait here.");else if(p.age>=8&&p.met)out.push("Come with me.");
+  const g=p.group&&G(p.group);if(g&&g.leader===p.id&&S.player.group!==g.id&&p.met)out.push("Can I join your group?");
+  if(!(S.flags.wake&&S.t-S.flags.wake<DAY*2))out.push("Heard any news?");
+  return out.slice(0,8)}
 function openTalk(pid){const p=P(pid);if(!p||!p.alive)return;if(UI.panel&&UI.panel!=="inv")UI.panel=null;UI.talkTo=pid;UI.talkFresh=true;p.lastTalk=S.t;cancelWalk();
   const pl=S.player;W3.ang=Math.atan2(p.x-pl.x,p.z-pl.z);render();const box=$("talkbox");if(box&&matchMedia("(pointer:fine)").matches)box.focus({preventScroll:true})}
 function closeTalk(quiet){if(!UI.talkTo)return false;if(typeof talkAbort==="function")talkAbort();UI.talkTo=null;UI.draft="";if(!quiet)render();else{const el=$("talk");if(el){el.hidden=true;el.innerHTML=""}}return true}
