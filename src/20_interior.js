@@ -168,7 +168,7 @@ function buildInteriors(){const R=srng(4242);let dn=0;
     let ci=0;b.rooms.forEach((r,ri)=>{for(const f of r.f){const w=rectWorld(b,f.u0,f.v0,f.u1,f.v1);f.w=w;f.wrot=f.rot+b.fr.r;
       const cu=(f.u0+f.u1)/2,cv=(f.v0+f.v1)/2;const fu=Math.sin(f.rot),fv=Math.cos(f.rot);const dep=(Math.abs(fu)>.5?(f.u1-f.u0):(f.v1-f.v0))/2;
       if(f.c){const id=b.id+":"+(ci++);const use=toWorld(b,cu+fu*(dep+.45),cv+fv*(dep+.45));const ctr=toWorld(b,cu,cv);f.id=id;
-        CONTS[id]={id,k:f.c,b:b.id,f,x:ctr.x,z:ctr.z,ux:use.x,uz:use.z,room:ri,n:CONT[f.c]?.n||"Shelf"}}
+        CONTS[id]={id,k:f.c,b:b.id,f,x:ctr.x,z:ctr.z,ux:use.x,uz:use.z,room:ri,n:CONT[f.c]?.n||"Shelf"};b.cs.push(CONTS[id])}
       if(f.bed){const c=toWorld(b,cu,cv);b.beds.push({x:c.x,z:c.z,rot:f.wrot,room:ri})}}});
     // spots where people can stand around
     for(let i=0;i<80&&b.spots.length<14;i++){const ri=Math.floor(R()*b.rooms.length);const r=b.rooms[ri];const I=roomInner(r);const u=I.u0+.3+R()*Math.max(0,I.u1-I.u0-.6),v=I.v0+.3+R()*Math.max(0,I.v1-I.v0-.6);

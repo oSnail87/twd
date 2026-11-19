@@ -57,7 +57,7 @@ function syncFigs(){const pl=S.player;const keep=new Set();W3.zmap=new Map(S.zed
   for(const p of S.people){if(!p.alive||p.age<2)continue;const near=Math.abs(p.x-pl.x)<62&&Math.abs(p.z-pl.z)<62;if(!near)continue;keep.add(p.id);if(!FIGMAP.has(p.id))FIGMAP.set(p.id,figFor("npc",p))}
   for(const z of S.zeds){if(Math.abs(z.x-pl.x)>56||Math.abs(z.z-pl.z)>56)continue;keep.add(z.id);if(!FIGMAP.has(z.id))FIGMAP.set(z.id,figFor("zed",z))}
   keep.add("you");if(!FIGMAP.has("you"))FIGMAP.set("you",figFor("you",pl));FIGMAP.get("you").src=pl;
-  for(const [id,f] of FIGMAP)if(!keep.has(id)){const o=f.kind==="zed"?null:P(id);if(f.kind==="npc"&&o&&!o.alive&&o.status==="dead"&&dist(f.x,f.z,pl.x,pl.z)<45)FIG.corpses.push({f:{...f,lie:1,dead:true},t:150});FIGMAP.delete(id)}
+  for(const [id,f] of FIGMAP)if(!keep.has(id)){if(f.lbl){f.lbl.remove();f.lbl=null}const o=f.kind==="zed"?null:P(id);if(f.kind==="npc"&&o&&!o.alive&&o.status==="dead"&&dist(f.x,f.z,pl.x,pl.z)<45)FIG.corpses.push({f:{...f,lie:1,dead:true},t:150});FIGMAP.delete(id)}
   W3.followers=S.people.filter(isFollower);W3.fset=new Set(W3.followers.map(p=>p.id))}
 function isFollower(p){return p.alive&&p.follow&&(!p.group||p.group===S.player.group)}
 // ---------- per-frame posing ----------
@@ -96,5 +96,5 @@ function drawFigs(dt,ts){if(!_E){_E=new T3.Euler();_Q=new T3.Quaternion();_V=new
   FIG.corpses=FIG.corpses.filter(c=>{c.t-=dt;return c.t>0})}
 function addCorpse(src,kind){const f=figFor(kind,src);f.lk=kind==="zed"?zedLook(src):lookOf(src);f.dead=true;f.lie=1;f.x=src.x;f.z=src.z;const old=FIGMAP.get(src.id);if(old)f.ang=old.ang;FIG.corpses.push({f,t:kind==="zed"?70:150})}
 // which figure is under the mouse
-function pickFig(rc){const ms=["torsoM","torsoF","head","hipsM","hipsF","leg","arm"].map(k=>FIG.P[k]).filter(Boolean);const hits=rc.intersectObjects(ms,false);
-  for(const h of hits){const f=FIG.idx[h.object.userData.part]?.[h.instanceId];if(f&&!f.dead&&f.kind!=="you")return{f,d:h.distance}}return null}
+function pickFig(rc,ok){const ms=["torsoM","torsoF","head","hipsM","hipsF","leg","arm"].map(k=>FIG.P[k]).filter(Boolean);const hits=rc.intersectObjects(ms,false);
+  for(const h of hits){const f=FIG.idx[h.object.userData.part]?.[h.instanceId];if(f&&!f.dead&&f.kind!=="you"&&(!ok||ok(f)))return{f,d:h.distance}}return null}
