@@ -57,10 +57,10 @@ function packFor(p){const k={};const add=(i,n)=>{if(n>0&&ITEMS[i])k[i]=(k[i]||0)
   return k}
 
 function homePos(p,night){if(p.group&&G(p.group)?.home){const s=G(p.group).home;return sitePos(s,night)}const b=BMAP[p.home];if(b){if(night){const bd=bedFor(p,b);if(bd)return bd}return insidePos(b)}return randIn("town")}
-function bedFor(p,b){if(!b.beds.length)return null;const mates=S.people.filter(q=>q.alive&&q.home===b.id&&!q.group).map(q=>q.id).sort();let i=Math.max(0,mates.indexOf(p.id));if(p.partner&&mates.includes(p.partner))i=Math.min(i,mates.indexOf(p.partner));const bd=b.beds[i%b.beds.length];const off=(p.partner&&p.id>p.partner)?.35:-.2;return{x:bd.x+Math.cos(bd.rot)*off,z:bd.z-Math.sin(bd.rot)*off,bed:true}}
+function bedFor(p,b){if(!b.beds.length)return null;const mates=S.people.filter(q=>q.alive&&q.home===b.id&&!q.group).map(q=>q.id).sort();let i=Math.max(0,mates.indexOf(p.id));if(p.partner&&mates.includes(p.partner))i=Math.min(i,mates.indexOf(p.partner));const bd=b.beds[i%b.beds.length];const off=(p.partner&&p.id>p.partner)?.35:-.2;return{x:bd.x+Math.cos(bd.rot)*off,z:bd.z-Math.sin(bd.rot)*off,bed:true,rot:bd.rot}}
 // where a camp's people spend the night: inside the site's buildings if it has any
-function sitePos(site,night){const bs=BUILDINGS.filter(b=>b.site===site);if(bs.length&&(night||rf()<.35)){const b=pick(bs);if(night&&b.beds.length&&rf()<.5){const bd=pick(b.beds);return{x:bd.x+(rf()-.5)*.4,z:bd.z+(rf()-.5)*.4,bed:true}}return insidePos(b)}return randIn(site,3)}
-function placeTo(p,pos,instant){p.tx=pos.x;p.tz=pos.z;p.path=null;p.lie=!!pos.bed;p.loc=regionAt(pos.x,pos.z);if(instant||(S&&dist(p.x,p.z,S.player.x,S.player.z)>90&&dist(pos.x,pos.z,S.player.x,S.player.z)>90)){p.x=pos.x;p.z=pos.z}}
+function sitePos(site,night){const bs=BUILDINGS.filter(b=>b.site===site);if(bs.length&&(night||rf()<.35)){const b=pick(bs);if(night&&b.beds.length&&rf()<.5){const bd=pick(b.beds);return{x:bd.x+(rf()-.5)*.4,z:bd.z+(rf()-.5)*.4,bed:true,rot:bd.rot}}return insidePos(b)}return randIn(site,3)}
+function placeTo(p,pos,instant){p.tx=pos.x;p.tz=pos.z;p.path=null;p.lie=!!pos.bed;p.lieRot=pos.rot??null;p.loc=regionAt(pos.x,pos.z);if(instant||(S&&dist(p.x,p.z,S.player.x,S.player.z)>90&&dist(pos.x,pos.z,S.player.x,S.player.z)>90)){p.x=pos.x;p.z=pos.z}}
 
 function newWorld(c){
   NEXT=1;
@@ -188,7 +188,7 @@ function outbreakHour(){const d=dayOf(S.t),h=hourOf(S.t),t=S.t;const F=S.flags;
   const phase=d===1?(h>=10?1:0):d<=3?2:d===4?1:0;const cap=d<=4?100:110;
   if(phase&&S.zeds.length<cap)for(let i=0;i<phase*rnd(1,3);i++){const p=randIn(rf()<.85?"town":pick(["road","fields","school"]));spawnZed(p.x,p.z)}
   if(d>4&&S.zeds.length<85&&h%3===0){const p=randIn(pick(["town","town","road","woods","fields","hills"]));spawnZed(p.x,p.z)}
-  if(d===1&&h===20)news("The power flickers out across town. Gunshots on Main Street.","bad");
+  if(d===1&&h===20){S.flags.blackout=true}if(d===1&&h===20)news("The power flickers out across town. Gunshots on Main Street.","bad");
   if(d===2&&h===9)news("A Guard helicopter passes over town without slowing down.","");
   if(d===3&&h===12){news("Radio: an evacuation center is open at Ashby, forty miles north. Some families pack their cars.","big");for(const p of living().filter(p=>!p.group&&!p.follow&&!p.seed&&rf()<.25&&p.hh!=="you"))leave(p,"left for the Ashby evacuation center")}
   if(d===5&&h===8)news("The radio's gone to static. Ashby isn't answering anymore.","bad");
