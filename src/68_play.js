@@ -122,7 +122,7 @@ function playerMove(dt){const pl=S.player;const k=W3.keys;let mx=0,mz=0;
       if(st.pi>=W3.path.length){W3.path=null;W3.ptarget=null;if(W3.useOnArrive){const u=W3.useOnArrive;W3.useOnArrive=null;if(useReached(u,1.5))doUse(u)}}}}
   W3.moving=false;if(!(mx||mz))return;if(W3.task)cancelTask();
   const enc=weight()>maxW();const run=W3.run&&pl.energy>8&&!enc&&canRun();let spd=(run?5.4:3.2)*(enc?.6:1)*(pl.energy<10?.7:1)*(pl.hp<30?.75:1)*bodySpeed();
-  if(W3.run&&!canRun()&&performance.now()-(W3.runMsg||0)>6000){W3.runMsg=performance.now();toast("You can't run on a broken bone. Splint it.")}if(onFord(pl.x,pl.z))spd*=.45;
+  if(W3.run&&!canRun()&&performance.now()-(W3.runMsg||0)>6000){W3.runMsg=performance.now();toast("You can't run on a broken bone. Wrap it tight first (H).")}if(onFord(pl.x,pl.z))spd*=.45;
   // a door in front of you opens if it can
   const D=doorAt(pl.x+mx*.5,pl.z+mz*.5,.28);if(D&&!doorOpen(D)){if(!doorLocked(D)){D.open=true;D.auto=true;W3.autoDoors.add(D);doorSave(D)}else{const t=performance.now();if(t-(W3.lockMsg||0)>2500){W3.lockMsg=t;toast(lockedMsg(D))}if(W3.path){W3.path=null;W3.ptarget=null}}}
   const s=spd*dt;const moved=step(pl,mx*s,mz*s,.3,"pl");

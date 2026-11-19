@@ -152,7 +152,7 @@ function useInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;const
   else{toast(it.d||`You turn the ${it.n.toLowerCase()} over in your hands.`);return}
   save();render()}
 function canUse(id){const it=ITEMS[id];return!!(it.eat||it.drink||it.med||it.read||["cigarettes","radio","photo"].includes(id))}
-function useWord(id){const it=ITEMS[id];return it.eat?"Eat":it.drink?"Drink":it.med?{dress:"Dress a wound",pain:"Take two",abx:"Take a course",clean:"Clean a wound",stitch:"Stitch a wound",splint:"Splint a break"}[it.med]:it.read?"Read":id==="cigarettes"?"Smoke":id==="radio"?"Listen":id==="photo"?"Look at it":"Use"}
+function useWord(id){const it=ITEMS[id];return it.eat?"Eat":it.drink?"Drink":it.med?{dress:"Wrap a wound",pain:"Take two",abx:"Take a course",clean:"Wash a wound",stitch:"Stitch a cut",splint:"Bind a break"}[it.med]:it.read?"Read":id==="cigarettes"?"Smoke":id==="radio"?"Listen":id==="photo"?"Look at it":"Use"}
 function repairInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;if(!it.fix||!Object.entries(it.fix).every(([k,v])=>invHas(k,v)))return;for(const [k,v] of Object.entries(it.fix))invTake(k,v);
   const ws=atHome()&&siteHas(myGroup().home,"workshop");g.dur=Math.min(it.dur,g.dur+it.dur*(ws?.7:.45)+pl.sk.craft*2);act(20,{work:true});skillUp("craft",.06);journal(`You patch up your ${it.n.toLowerCase()}.`);save();render()}
 function takeAll(){const c=gridOf("open");if(!c)return;let n=0,left=0;for(const g of [...c.items]){if(!g.k&&!UI.open.cid.startsWith("pile"))continue;cRemove(c,g);if(pStore(g)){n++;g.k=1}else{c.items.push(g);left++}}
@@ -206,7 +206,7 @@ function openMenu(e,el){const src=srcOf(el);if(!src)return;const g=src.g;const i
   m.hidden=false;const W=innerWidth,H=innerHeight;m.style.left=Math.min(e.clientX,W-230)+"px";m.style.top=Math.min(e.clientY,H-m.offsetHeight-10)+"px"}
 function onInvAct(a,v,el,e){if(a==="takeall"){takeAll();return true}if(a==="closeopen"){closeOpen();return true}if(a!=="inv")return false;
   const [k,u]=v.split("|");closeMenu();const src=findInst(u);if(!src)return true;const g=src.g;const it=ITEMS[g.id];
-  switch(k){case"use":useInst(src);return true;case"cleanwith":{const w=woundFor("clean");if(w)openTreat("clean",w.id,g.id);return true}case"wear":equipInst(src);break;case"belt":equipInst(src,"side");break;case"unequip":unequip(src.slot);break;
+  switch(k){case"use":useInst(src);return true;case"cleanwith":{const w=woundFor("clean");if(w)doCare("wash",w,g.id);return true}case"wear":equipInst(src);break;case"belt":equipInst(src,"side");break;case"unequip":unequip(src.slot);break;
     case"take":quickMove(src,src.ref);break;case"give":quickMove(src,src.ref);break;case"split":splitInst(src);break;case"fix":repairInst(src);return true;
     case"drop":dropSrc(src);break;case"look":toast(`${it.n}. ${it.d||""} ${gearStats(g.id)?"("+gearStats(g.id)+")":""} ${it.uses?(it.uses-(g.used||0))+" of "+it.uses+" uses left.":""} ${it.w?it.w*g.n+" kg.":""}`.replace(/\s+/g," ").trim());return true}
   cleanPiles();save();render();return true}

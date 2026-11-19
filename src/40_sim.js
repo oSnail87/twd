@@ -178,19 +178,19 @@ function advance(mins,opt={}){let left=mins;const jump=mins>=5&&!S.jump;if(jump)
   try{while(left>0.0001){const toH=60-(S.t%60);const step=Math.min(left,toH);decay(step,opt);S.t+=step;left-=step;
     if(Math.abs(S.t%60)<1e-6||S.t%60>59.9999){S.t=Math.round(S.t);simHour()}
     if(S.player.hp<=0)return die();
-    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30||pl.bleeding>.25||painNow()>60)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":pl.bleeding>.25?"blood":"pain";break}}}
+    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30||pl.bleeding>.25||painNow()>90)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":pl.bleeding>.25?"blood":"pain";break}}}
   finally{if(jump)S.jump=false}
   checkPending()}
 function decay(m,opt){const pl=S.player,h=m/60;const sl=opt.sleep;if(pl.coma)return;
   pl.food=clamp(pl.food-h*(sl?1.5:2.6)*(pl.preg?1.3:1)*(pl.sick?1.3:1),0,100);
   pl.water=clamp(pl.water-h*(sl?2:3.8)*(pl.sick?1.5:1),0,100);
-  const pain=painNow();pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9)*(pain>50?.6:1):-(opt.work?5:3.2)*(pain>40?1.2:1)),0,100);
+  pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9):-(opt.work?5:3.2)),0,100);
   let comfort=temp()+clothesWarm()*2.2+(nearFire()?12:0)+(sl&&opt.safe?10:0);if(wxName()==="rain"&&!gearEq("outer"))comfort-=4;
   if(comfort>=12)pl.warmth=clamp(pl.warmth+h*6,0,100);else pl.warmth=clamp(pl.warmth-h*(12-comfort)*.7,0,100);
   const lost=bodyTick(h,opt);
   let dhp=0;if(pl.food<=0)dhp-=3;if(pl.water<=0)dhp-=5;if(pl.warmth<=0)dhp-=6;else if(pl.warmth<15)dhp-=1;if(pl.energy<=0)dhp-=1;if(pl.sick)dhp-=1.2;
   if(pl.bitten){const hrs=(S.t-pl.bitten)/60;if(hrs>20)dhp-=4;if(hrs>36)dhp-=12}
-  if(dhp>=0&&pl.food>35&&pl.water>35&&pl.warmth>35&&!pl.sick&&!pl.bitten&&pl.bleeding<.05)dhp=sl?3:1;
+  if(dhp>=0&&pl.food>35&&pl.water>35&&pl.warmth>35&&!pl.sick&&!pl.bitten&&pl.bleeding<.05)dhp=(sl?3:1)*(pl.food>60&&pl.water>60?1.6:1);
   pl.hp=clamp(pl.hp+dhp*h-lost,0,100);
   if(pl.sick&&infMax()<40&&rf()<h*.03){pl.sick=0;journal("The fever breaks. You feel human again.","good")}
   if(here()!=="town"||true)wearClothes(h)}

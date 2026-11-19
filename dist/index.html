@@ -173,20 +173,9 @@ button.tag:hover:not(:disabled){border-color:var(--ember)} button.tag:disabled{o
 .wstat{margin:0;padding-left:17px;color:#cfc9bb;font-size:13px;line-height:1.45}
 .wacts{gap:6px} .wacts .btn{padding:6px 10px}
 .hmsg{background:rgba(169,195,141,.1);border:1px solid rgba(169,195,141,.35);border-radius:5px;padding:6px 9px;font-size:13.5px}
+.hadvice{font-size:12.5px;color:var(--mute);margin:0;line-height:1.45}
 .sups{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .sup{display:inline-flex;align-items:center;gap:5px;font-size:12px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:2px 7px 2px 3px}
-.treat{display:flex;flex-direction:column;gap:9px}
-.treat h3{color:var(--ember)}
-#treatpad{width:100%;height:auto;display:block;background:#0e110f;border:1px solid var(--line2);border-radius:8px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair}
-#treatpad.wrap,#treatpad.splint.wrap{cursor:pointer} #treatpad.clean{cursor:grab}
-.tmeter{position:relative;height:16px;background:rgba(255,255,255,.06);border:1px solid var(--line2);border-radius:8px;overflow:hidden}
-.tmeter .zone{position:absolute;top:0;bottom:0;background:rgba(169,195,141,.5)}
-.tmeter .over{position:absolute;top:0;bottom:0;right:0;background:rgba(212,87,74,.4)}
-.tmeter i{position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;background:var(--fg);box-shadow:0 0 6px rgba(255,255,255,.6)}
-.tdots{display:flex;align-items:center;gap:6px;min-height:16px}
-.tdots span:not(.mono){width:12px;height:12px;border-radius:50%;border:1px solid var(--line2);background:rgba(255,255,255,.04)}
-.tdots .snug{background:var(--lichen)!important;border-color:var(--lichen)!important} .tdots .loose{background:#a08f4e!important} .tdots .tight{background:var(--blood)!important}
-.tinst{font-size:13.5px;color:#d9d3c4}
 .vbtn{background:none;border:0;padding:0;margin:0;text-align:left;color:inherit;border-radius:4px}
 .vbtn:hover .lbl{color:var(--fg)}
 button.cond{cursor:pointer;line-height:1.5} button.cond:hover{background:rgba(90,22,16,.75)}
@@ -404,16 +393,16 @@ const ITEMS={
   river_water:{n:"Bottle of river water",sn:"River",w:1,v:2,drink:35,after:"empty_bottle",sick:.25,sz:[1,2],ic:"bottle",cat:"drink",col:"#7a8a5a"},
   boiled_water:{n:"Bottle of boiled water",sn:"Boiled",w:1,v:4,drink:35,after:"empty_bottle",sz:[1,2],ic:"bottle",cat:"drink",col:"#8ab0c0"},
   whiskey:{n:"Bottle of whiskey",sn:"Whiskey",w:1,v:12,mood:10,drink:5,uses:3,sz:[1,2],ic:"whiskey",cat:"drink",d:"Drink it, or pour it on a wound. It works on both, in different ways."},
-  bandage:{n:"Bandage",sn:"Bandage",w:.1,v:6,med:"dress",sz:[1,1],st:3,ic:"bandage",cat:"med",d:"A clean roll of gauze. Wrap it snug over a wound to stop the bleeding and keep the dirt out."},
+  bandage:{n:"Bandage",sn:"Bandage",w:.1,v:6,med:"dress",sz:[1,1],st:3,ic:"bandage",cat:"med",d:"A clean roll of gauze. Wrap a wound with it to stop the bleeding and help it heal. Wrapped tight, it holds a broken bone too."},
   dirty_bandage:{n:"Bloody bandage",sn:"Bloody",w:.1,v:0,sz:[1,1],st:3,ic:"bandage",cat:"med",col:"#a86a58",d:"Used. Boil it over a fire and it's clean enough to use again."},
-  painkillers:{n:"Painkillers",sn:"Pills",w:.1,v:10,med:"pain",sz:[1,1],ic:"pills",cat:"med",d:"Two of these take the edge off for about six hours."},
-  antibiotics:{n:"Antibiotics",sn:"Abx",w:.1,v:25,med:"abx",sz:[1,1],ic:"pills",cat:"med",col:"#c8d0e0",d:"One course knocks down a fever and fights an infected wound. Worth more than a gun to some people."},
-  rubbing_alcohol:{n:"Rubbing alcohol",sn:"Alcohol",w:.3,v:8,uses:5,med:"clean",sz:[1,2],ic:"alcohol",cat:"med",d:"Stings like nothing else. Clean a wound with it so it doesn't turn."},
+  painkillers:{n:"Painkillers",sn:"Pills",w:.1,v:10,med:"pain",sz:[1,1],ic:"pills",cat:"med",d:"Two of these take the edge off. They don't fix anything."},
+  antibiotics:{n:"Antibiotics",sn:"Abx",w:.1,v:25,med:"abx",sz:[1,1],ic:"pills",cat:"med",col:"#c8d0e0",d:"One course cures a fever and an infected wound. Worth more than a gun to some people."},
+  rubbing_alcohol:{n:"Rubbing alcohol",sn:"Alcohol",w:.3,v:8,uses:5,med:"clean",sz:[1,2],ic:"alcohol",cat:"med",d:"Wash a wound with it so it doesn't turn. Stings like nothing else."},
   suture_kit:{n:"Suture kit",sn:"Sutures",w:.1,v:16,uses:4,med:"stitch",sz:[1,1],ic:"suture",cat:"med",d:"Curved needles and surgical thread in sterile packets. Enough to close a few cuts."},
   sewing_kit:{n:"Needle and thread",sn:"Sewing",w:.05,v:4,uses:3,med:"stitch",sz:[1,1],ic:"sewing",cat:"misc",d:"A sewing needle and a spool of thread. It'll close a cut if it has to. Clean the wound first."},
-  splint:{n:"Splint",sn:"Splint",w:.4,v:6,med:"splint",sz:[3,1],ic:"splint",cat:"med",d:"Two flat boards and some strapping. Holds a broken bone still while it knits."},
+  splint:{n:"Splint",sn:"Splint",w:.4,v:6,med:"splint",sz:[3,1],ic:"splint",cat:"med",d:"Two flat boards and some strapping. Holds a broken bone still while it knits. A bandage wrapped tight works too."},
   herbs:{n:"Yarrow and plantain",sn:"Herbs",w:.05,v:3,sz:[1,1],st:8,ic:"herbs",cat:"med"},
-  poultice:{n:"Herb poultice",sn:"Poultice",w:.1,v:6,med:"dress",sz:[1,1],st:3,ic:"bandage",cat:"med",col:"#7a9a5a",d:"Crushed yarrow and plantain in a cloth. Binds over a wound and draws the dirt out."},
+  poultice:{n:"Herb poultice",sn:"Poultice",w:.1,v:6,med:"dress",sz:[1,1],st:3,ic:"bandage",cat:"med",col:"#7a9a5a",d:"Crushed yarrow and plantain in a cloth. Wraps a wound and cleans it at the same time."},
   wood:{n:"Wood",sn:"Wood",w:1.5,v:1,sz:[3,1],st:4,ic:"wood",cat:"mat"},
   stone:{n:"Stone",sn:"Stone",w:2,v:1,sz:[1,1],st:3,ic:"stone",cat:"mat"},
   nails:{n:"Box of nails",sn:"Nails",w:.5,v:4,sz:[1,1],st:2,ic:"nails",cat:"mat"},
@@ -535,13 +524,13 @@ const LOOT={
   workbench:[["hammer",.25],["nails",.35,1,2],["duct_tape",.25],["scrap",.3,1,2],["rope",.15],["crowbar",.08],["gloves",.12],["flashlight",.1],["tool_belt",.06],["axe",.04]],
   toolshelf:[["nails",.3],["duct_tape",.25],["rope",.2],["scrap",.3],["wood",.2,1,2],["hammer",.1],["hatchet",.03],["work_pants",.05],["gloves",.1],["fishing_vest",.03]],
   sh_grocery:[["canned_food",.7,1,3],["canned_fruit",.5,1,2],["snacks",.6,1,2],["cereal",.45],["water_bottle",.55,1,3],["jerky",.2]],
-  sh_pharmacy:[["painkillers",.55,1,2],["bandage",.55,1,3],["rubbing_alcohol",.4],["suture_kit",.06],["splint",.06],["snacks",.25],["antibiotics",.08],["water_bottle",.2],["cigarettes",.15]],
+  sh_pharmacy:[["painkillers",.55,1,2],["bandage",.55,1,3],["rubbing_alcohol",.4],["splint",.06],["snacks",.25],["antibiotics",.08],["water_bottle",.2],["cigarettes",.15]],
   sh_hardware:[["nails",.6,1,2],["duct_tape",.5],["rope",.4],["hammer",.25],["crowbar",.18],["axe",.1],["machete",.08],["gloves",.3],["flashlight",.25],["work_pants",.15],["boots",.12],["tool_belt",.15],["scrap",.2]],
   sh_gas:[["snacks",.7,1,3],["water_bottle",.55,1,2],["cigarettes",.35],["lighter",.35],["duct_tape",.2],["jerky",.3],["canned_food",.2]],
   sh_storage:[["canned_food",.3,1,2],["water_bottle",.3],["cloth",.3,1,2],["scrap",.2],["nails",.15],["duct_tape",.1],["rope",.1],["empty_bottle",.2]],
   register:[["cigarettes",.4],["lighter",.3],["snacks",.3],["bat",.06]],
-  pharmacab:[["antibiotics",.75,1,3],["painkillers",.5,1,2],["bandage",.4,1,2],["rubbing_alcohol",.3],["suture_kit",.2]],
-  medcab:[["bandage",.6,1,3],["painkillers",.45],["antibiotics",.2],["rubbing_alcohol",.4],["suture_kit",.3],["splint",.25],["cloth",.3]],
+  pharmacab:[["antibiotics",.75,1,3],["painkillers",.5,1,2],["bandage",.5,1,3],["rubbing_alcohol",.3]],
+  medcab:[["bandage",.7,1,3],["painkillers",.45],["antibiotics",.25],["rubbing_alcohol",.4],["splint",.25],["cloth",.3]],
   dinercounter:[["snacks",.3],["kitchen_knife",.3],["lighter",.25],["cigarettes",.15],["water_bottle",.2]],
   dinerkitchen:[["canned_food",.55,1,3],["kitchen_knife",.4],["water_bottle",.3],["cereal",.2],["raw_meat",.1],["lighter",.2],["empty_bottle",.2]],
   barshelf:[["cards",.3],["whiskey",.65,1,2],["cigarettes",.4],["snacks",.3],["lighter",.3]],
@@ -1046,8 +1035,9 @@ function seedHome(b){const pl=S.player;pl.flags.homeSeeded=true;const add=(k,lis
 function contName(cid){if(cid.startsWith("pile")){const p=S.piles.find(q=>q.id===cid);return p&&p.n||"On the ground"}const C=CONTS[cid];return C?C.n:"Container"}
 function openContObj(cid){if(cid.startsWith("pile")){const p=S.piles.find(p=>p.id===cid);return p?{c:p.c,rev:1e9,pile:p}:null}const s=rollLoot(cid);return{c:s.c,rev:s.rev,st:s}}
 // ================= your body: where you're hurt, what each wound is doing, and what it needs =================
-// Twelve parts. A wound sits on one part at a named spot and keeps its own bleeding, dirt, infection, dressing and healing.
-// pl.hp is still your overall strength; wounds drain it (bleeding, fever) and slow you down (breaks, pain).
+// Twelve parts. A wound sits on one part at a named spot and keeps its own bleeding, infection and healing.
+// Looking after one is simple: wash it, wrap it, eat and drink, and take antibiotics if it turns.
+// pl.hp is still your overall strength; wounds drain it (bleeding, fever) and a broken leg slows you down.
 // pl.bleeding stays as the total of what's bleeding right now, so older code that reads it keeps working.
 
 const BODY={
@@ -1083,11 +1073,11 @@ const WOUND={
   bruise:{n:"Bruise",bleed:0,clot:0,pain:6,days:2,dirt:0,closed:true},
   fracture:{n:"Broken bone",bleed:0,clot:0,pain:30,days:9,dirt:0,closed:true},
   incision:{n:"Surgical incision",bleed:0,clot:0,pain:7,days:5,dirt:0}};
-// what you can clean, dress, stitch and splint with, best first: [item, how good, what to call it]
-const CLEANERS=[["rubbing_alcohol",1,"rubbing alcohol"],["whiskey",.9,"whiskey"],["boiled_water",.6,"boiled water"],["water_bottle",.45,"bottled water"]];
-const DRESSINGS=[["bandage",1,"a bandage"],["poultice",.9,"an herb poultice"],["cloth",.72,"a strip of cloth"]];
-const NEEDLES=[["suture_kit",1,"the suture kit"],["sewing_kit",.8,"a sewing needle"]];
-const SPLINTS=[["splint",1,"the splint"],["boards",.8,"a board and a strip of cloth"]];
+// what you can wash a wound with, and wrap it in, best first: [item, how good, what to call it]
+const CLEANERS=[["rubbing_alcohol",1,"rubbing alcohol"],["whiskey",.9,"whiskey"],["boiled_water",.8,"boiled water"],["water_bottle",.7,"bottled water"]];
+const DRESSINGS=[["bandage",1,"a bandage"],["poultice",.9,"an herb poultice"],["cloth",.75,"a strip of cloth"]];
+// a broken bone gets bound: a splint if you have one, otherwise wrapped tight
+const BINDS=[["splint",1,"the splint"],["bandage",.85,"a bandage"],["cloth",.7,"strips of cloth"]];
 
 function body(){const pl=S.player;if(!pl.body){pl.body={w:[],ache:0,pk:0,abx:0,nid:1};
     // an older save that only knew "bleeding": give it a real wound
@@ -1108,17 +1098,17 @@ function addWound(k,p,o={}){const B=body();const b=BODY[p];
   B.w.push(w);return w}
 function woundName(w){if(w.k!=="fracture")return WOUND[w.k].n;if(w.p==="chest")return"Cracked ribs";const b=BODY[w.p];return `Broken ${b.limb==="hand"?"fingers":b.limb}`}
 // how fast it's bleeding right now, after stitches and dressings
-function wBleed(w){if(!w.bl)return 0;let b=w.bl;if(w.st)b*=.08;if(w.band){const q=w.band.q*(w.band.d>.85?.55:1);b*=.62-.56*q}return b}
+function wBleed(w){if(!w.bl)return 0;let b=w.bl;if(w.st)b*=.08;if(w.band)b*=w.k==="deep"?.15:.08;return b}
 function bleedTotal(){let t=0;for(const w of wounds())t+=wBleed(w);return t}
-function wPain(w){const K=WOUND[w.k];let p=K.pain*w.sev*(1-w.heal/100*.65);if(w.k==="fracture"&&w.spl)p*=.45;if(w.band)p*=.85;if(w.inf>40)p+=8;return p}
-function painNow(){const B=body();let p=B.ache||0;for(const w of B.w)p+=wPain(w);if(B.pk>S.t)p*=.35;return clamp(p,0,100)}
+function wPain(w){const K=WOUND[w.k];let p=K.pain*w.sev*(1-w.heal/100*.65);if(w.spl||w.band)p*=.6;if(w.inf>40)p+=8;return p}
+function painNow(){const B=body();let p=B.ache||0;for(const w of B.w)p+=wPain(w);if(B.pk>S.t)p*=.5;return clamp(p,0,100)}
 function infMax(){let m=0;for(const w of wounds())m=Math.max(m,w.inf);return m}
 function broken(limb){return wounds().filter(w=>w.k==="fracture"&&BODY[w.p].limb===limb)}
 // what the hurts do to you
-function bodySpeed(){let m=1;for(const w of broken("leg"))m=Math.min(m,w.spl?.72:.5);for(const w of broken("foot"))m=Math.min(m,w.spl?.8:.62);const p=painNow();if(p>80)m*=.8;else if(p>60)m*=.9;return m}
+function bodySpeed(){let m=1;for(const w of broken("leg"))m=Math.min(m,w.spl?.72:.5);for(const w of broken("foot"))m=Math.min(m,w.spl?.8:.62);return m}
 function canRun(){return!wounds().some(w=>w.k==="fracture"&&!w.spl&&(BODY[w.p].limb==="leg"||BODY[w.p].limb==="foot"))}
 function armPower(){const n=broken("arm").length+broken("hand").length*.5;if(!n)return 1;const spl=[...broken("arm"),...broken("hand")].every(w=>w.spl);return n>=2?.4:spl?.8:.55}
-function aimPenalty(){return painNow()*.0012+(broken("arm").length||broken("hand").length?.08:0)}
+function aimPenalty(){return broken("arm").length||broken("hand").length?.08:0}
 
 // where a blow lands, and what the clothes there soak up
 function hitPart(){let r=rf()*BODY_KEYS.reduce((a,k)=>a+BODY[k].hit,0);for(const k of BODY_KEYS){r-=BODY[k].hit;if(r<0)return k}return"larm"}
@@ -1149,104 +1139,103 @@ function hitLine(w){const at=w.at;switch(w.k){
   default:return `Hit in the ${at}.`}}
 
 // ---------- the hours passing ----------
+// food and water do more for healing than anything else
+function feedFactor(){const pl=S.player;const m=Math.min(pl.food,pl.water);return m>=50?1.4:m>=25?1:.3}
+function washed(w){return(w.cl||0)>0||(w.dirt||0)<=.02}
 // returns how much health the bleeding took over this stretch
 function bodyTick(h,opt={}){const pl=S.player;const B=body();if(!B.w.length&&!B.ache){pl.bleeding=0;return 0}
-  const fed=pl.food>25&&pl.water>25;const g=myGroup();const camp=g&&g.home&&here()===g.home&&siteHas(g.home,"infirmary");const abx=B.abx>S.t;
+  const fed=feedFactor();const g=myGroup();const camp=g&&g.home&&here()===g.home&&siteHas(g.home,"infirmary");const abx=B.abx>S.t;
   let lost=0;const done=[];
-  for(const w of B.w){const K=WOUND[w.k];
-    // blood slows as it clots, faster under a dressing or stitches
-    if(w.bl>0)w.bl=Math.max(0,w.bl-K.clot*(w.band?2.2:1)*(w.st?4:1)*h);
+  for(const w of B.w){const K=WOUND[w.k];const open=!K.closed;
+    // bleeding slows by itself, and a wrap all but stops it
+    if(w.bl>0)w.bl=Math.max(0,w.bl-K.clot*(w.band||w.st?3:1)*h);
     const b=wBleed(w);lost+=b*6*h;
-    // a dressing soaks through; an open wound picks up dirt
-    if(w.band)w.band.d=Math.min(1,w.band.d+h*(.018+b*.3+(w.band.k==="rag"?.012:0)));
-    else if(!K.closed&&w.heal<85)w.dirt=Math.min(1,w.dirt+h*.008);
-    // infection: dirt in an open wound, or a filthy dressing; antibiotics push it back
-    if(!K.closed){if(abx)w.inf=Math.max(0,w.inf-3*h);else{const r=w.dirt*(w.k==="bite"?1.2:1)+(w.band&&w.band.d>.7?.35:0);if(r>.12)w.inf=Math.min(100,w.inf+r*3*h);else w.inf=Math.max(0,w.inf-1.4*h)}}
-    // healing
-    let rate=100/(K.days*24)*(fed?1:.3)*(opt.sleep?1.5:1)*(camp?1.4:1);
-    if(w.inf>40)rate=0;
-    if(w.k==="deep"&&!w.st)rate*=.3;
-    if((w.k==="cut"||w.k==="incision")&&w.st)rate*=1.5;
-    if(!K.closed)rate*=w.band?1.25:.85;
+    // a wound nobody washed can turn; a washed one stays clean; antibiotics clear it
+    if(open){if(abx)w.inf=Math.max(0,w.inf-6*h);else if(!washed(w))w.inf=Math.min(100,w.inf+w.dirt*(w.band?1.5:3)*(w.k==="bite"?1.2:1)*h);else w.inf=Math.max(0,w.inf-1.5*h)}
+    // healing: fed and watered, rested, wrapped
+    let rate=100/(K.days*24)*fed*(opt.sleep?1.5:1)*(camp?1.3:1);
+    if(w.inf>=40)rate=0;
+    if(open)rate*=w.band||w.st?1.3:.8;
+    if(w.k==="deep"&&!w.band&&!w.st)rate*=.4;
     if(w.k==="fracture"&&!w.spl){rate*=.3;if(w.heal>=60)rate=0}
     w.heal=Math.min(100,w.heal+rate*h);if(w.heal>=100)done.push(w)}
   for(const w of done)healed(w);
   B.ache=Math.max(0,(B.ache||0)-h*25);
   pl.bleeding=+bleedTotal().toFixed(2);
   // a wound that's gone bad brings a fever with it
-  if(!pl.sick&&!abx){const w=B.w.find(x=>x.inf>=55);if(w){pl.sick=1;journal(`The ${woundName(w).toLowerCase()} on your ${w.at} is hot, swollen and leaking. You're running a fever. It's infected.`,"bad");if(typeof toast==="function")toast("A wound has gone bad. You have a fever.")}}
+  if(!pl.sick&&!abx){const w=B.w.find(x=>x.inf>=55);if(w){pl.sick=1;journal(`The ${woundName(w).toLowerCase()} on your ${w.at} is hot, swollen and leaking. You're running a fever. It's infected. Antibiotics would fix it.`,"bad");if(typeof toast==="function")toast("A wound has gone bad. You have a fever.")}}
   return lost}
 function healed(w){const B=body();B.w=B.w.filter(x=>x!==w);
   const t={cut:`The cut on your ${w.at} has closed. It'll scar.`,deep:`The gash on your ${w.at} has finally closed. You'll carry the scar.`,incision:`The incision on your ${w.at} has healed to a pink line.`,
-    fracture:`Your ${w.p==="chest"?"ribs have":BODY[w.p].n+" has"} knit. ${w.spl?(w.cast?"You peel off what's left of the cast":w.splItem==="strap"?"You unwind the strapping":"You take the splint off")+" and test it. It holds.":"It's stiff, but it holds."}`,bite:`The bite on your ${w.at} has closed over.`}[w.k];
-  if(t)journal(t,"good");if(w.spl&&!w.cast&&w.splItem==="splint")invAdd("splint",1,true)}
+    fracture:`Your ${w.p==="chest"?"ribs have":BODY[w.p].n+" has"} knit. ${w.spl?(w.cast?"You peel off what's left of the cast":w.splItem==="strap"?"You unwind the strapping":w.splItem==="splint"?"You take the splint off":"You unwrap it")+" and test it. It holds.":"It's stiff, but it holds."}`,bite:`The bite on your ${w.at} has closed over.`}[w.k];
+  if(t)journal(t,"good")}
 
-// ---------- treating a wound ----------
-// q is how well you did it, 0 to 1, from the hands-on part on the health screen
+// ---------- looking after a wound: one click each ----------
 function usesLeft(id){const it=ITEMS[id];let n=0;for(const {c} of pConts())for(const g of c.items)if(g.id===id)n+=it.uses?Math.max(0,it.uses-(g.used||0))*g.n:g.n;return n}
 function useUp(id){const it=ITEMS[id];for(const {c} of pConts())for(const g of c.items){if(g.id!==id)continue;
     if(it.uses){g.used=(g.used||0)+1;if(g.used<it.uses)return true}
     g.n-=1;g.used=0;if(g.n<=0){cRemove(c,g);if(g.c)spill(g)}if(it.after)invAdd(it.after,1,true);return true}
   return false}
-function haveFor(list){return list.filter(([id])=>id==="boards"?invHas("wood")&&invHas("cloth"):usesLeft(id)>0)}
-function needsClean(w){return!WOUND[w.k].closed&&(w.dirt>.04||w.inf>0||!w.cl)}
-function canStitch(w){return(w.k==="cut"||w.k==="deep")&&!w.st}
-function cleanWound(w,item,q){const c=CLEANERS.find(x=>x[0]===item)||CLEANERS[3];const s=c[1]*clamp(q,0,1);
-  w.dirt=Math.max(0,w.dirt*(1-s)-(s>.8?.08:0));w.cl=Math.max(w.cl||0,s);if(w.inf<50)w.inf=Math.max(0,w.inf-28*s);
-  useUp(item);const B=body();B.ache=Math.min(70,(B.ache||0)+(item==="rubbing_alcohol"||item==="whiskey"?(B.pk>S.t?6:18):4));skillUp("medic",.05)}
-function dressWound(w,item,q){if(w.band)undress(w);const d=DRESSINGS.find(x=>x[0]===item)||DRESSINGS[2];
-  w.band={k:item==="cloth"?"rag":item,q:clamp(q*d[1],.1,1),d:item==="cloth"?.25:item==="poultice"?.08:0};
-  if(item==="poultice"){w.dirt=Math.max(0,w.dirt-.35);if(w.inf<50)w.inf=Math.max(0,w.inf-10)}
-  invTake(item,1);skillUp("medic",.05)}
-// a used bandage can be boiled clean; a soaked rag goes in the fire
-function undress(w){const b=w.band;if(!b)return;w.band=null;if(b.k==="bandage")invAdd("dirty_bandage",1,true)}
-function stitchWound(w,item,q){const B=body();w.st=clamp(q*(item==="suture_kit"?1:.85),.2,1);w.bl*=w.k==="deep"?.15:0;
-  if(item==="sewing_kit"&&!(w.cl>.7))w.dirt=Math.min(1,w.dirt+.25);
-  if(q<.5)w.sev=Math.min(2,w.sev+.15);
-  useUp(item);B.ache=Math.min(80,(B.ache||0)+(B.pk>S.t?8:24));skillUp("medic",.12)}
-function splintWound(w,how,q){w.spl=clamp(q,.3,1);w.splItem=how;if(how==="splint")invTake("splint",1);else{invTake("wood",1);invTake("cloth",1)}const B=body();B.ache=Math.min(80,(B.ache||0)+(B.pk>S.t?6:16));skillUp("medic",.08)}
-function takePainkillers(){const B=body();if(!invHas("painkillers"))return false;invTake("painkillers",1);B.pk=S.t+6*60;journal(painNow()>8?"You dry-swallow two pills. Twenty minutes later the edges soften.":"You take two painkillers.");return true}
-function takeAntibiotics(){const pl=S.player;const B=body();if(!invHas("antibiotics"))return false;invTake("antibiotics",1);B.abx=S.t+36*60;const bad=infMax();for(const w of B.w)w.inf=Math.max(0,w.inf-35);
-  if(pl.sick){pl.sick=0;journal(bad>=40?"You start the antibiotics. By evening the fever's down and the wound looks less angry.":"The antibiotics knock the fever down.","good")}else journal(bad>0?"You start a course of antibiotics. The redness around the wound should fade.":"You take the antibiotics. Nothing was infected, so all it does is use them up.");return true}
+function haveFor(list){return list.filter(([id])=>usesLeft(id)>0)}
+function needsWash(w){return!WOUND[w.k].closed&&!washed(w)}
+function needsWrap(w){if(w.k==="fracture")return!w.spl;return!WOUND[w.k].closed&&!w.band&&!w.st&&(w.k!=="scratch"||wBleed(w)>.05)}
+// wash it: clean water, or better, alcohol. A washed wound won't turn
+function washWound(w,item){const h=haveFor(CLEANERS);item=item&&h.some(x=>x[0]===item)?item:h[0]&&h[0][0];if(!item)return null;
+  w.cl=1;w.dirt=0;if(w.inf<40)w.inf=Math.max(0,w.inf-25);useUp(item);skillUp("medic",.05);
+  const B=body();if(item==="rubbing_alcohol"||item==="whiskey")B.ache=Math.min(60,(B.ache||0)+10);return item}
+// wrap it: stops the bleeding and helps it heal. On a broken bone, wrapping binds it still
+function wrapWound(w,item){const list=w.k==="fracture"?BINDS:DRESSINGS;const h=haveFor(list);item=item&&h.some(x=>x[0]===item)?item:h[0]&&h[0][0];if(!item)return null;
+  if(w.k==="fracture"){w.spl=1;w.splItem=item==="splint"?"splint":"wrap"}
+  else{w.band={k:item==="cloth"?"rag":item,q:1,d:0};if(item==="poultice"){w.cl=1;w.dirt=0}}
+  invTake(item,1);skillUp("medic",.05);return item}
+// an old needle and thread from before still closes a cut
+function stitchWound(w,item){if(!(w.k==="cut"||w.k==="deep")||w.st)return null;w.st=1;w.bl*=.1;useUp(item);skillUp("medic",.08);return item}
+function takePainkillers(){const pl=S.player;const B=body();if(!invHas("painkillers"))return false;invTake("painkillers",1);B.pk=S.t+6*60;B.ache=0;pl.hp=Math.min(100,pl.hp+4);journal("You take two painkillers. Twenty minutes later the edges soften.");return true}
+function takeAntibiotics(){const pl=S.player;const B=body();if(!invHas("antibiotics"))return false;invTake("antibiotics",1);B.abx=S.t+36*60;const bad=infMax();for(const w of B.w)w.inf=0;
+  if(pl.sick){pl.sick=0;journal(bad>=40?"You start the antibiotics. By evening the fever's down and the wound looks less angry.":"The antibiotics knock the fever down.","good")}else journal(bad>0?"You start a course of antibiotics. The redness around the wound fades.":"You take the antibiotics. Nothing was infected, so all they'll do is keep it that way for a day or so.");return true}
+// wash and wrap everything you can, in the order it matters
+function tendAll(){const done=new Map(),miss=new Set();let mins=0;const note=(w,v)=>{if(!done.has(w))done.set(w,[]);done.get(w).push(v)};
+  const W=wounds().slice().sort((a,b)=>wSeverity(b)-wSeverity(a)||wBleed(b)-wBleed(a));
+  for(const w of W)if(needsWrap(w)&&wBleed(w)>.25){if(wrapWound(w,null)){note(w,"wrapped");mins+=5}else miss.add("wrap")}
+  for(const w of W)if(needsWash(w)){if(washWound(w,null)){note(w,"washed");mins+=4}else miss.add("wash")}
+  for(const w of W)if(needsWrap(w)){const fr=w.k==="fracture";if(wrapWound(w,null)){note(w,fr?"bound":"wrapped");mins+=fr?10:5}else miss.add(fr?"bind":"wrap")}
+  // "washed and wrapped your forehead, and bound your right shin"
+  const did=[...done].map(([w,v])=>`${(v.includes("washed")?["washed",...v.filter(x=>x!=="washed")]:v).join(" and ")} your ${w.k==="fracture"?BODY[w.p].n:w.at}`);
+  return{did,miss:[...miss],mins}}
 
 // ---------- reading a wound ----------
 function bleedWord(b){return b>.6?"Bleeding heavily":b>.25?"Bleeding":b>.03?"Seeping blood":""}
-function wSeverity(w){if(w.k==="bite"||w.inf>=40)return 3;const b=wBleed(w);if(b>.3)return 3;if(w.k==="fracture")return w.spl?2:3;if(w.k==="deep")return w.st?2:3;if(b>.05||w.k==="cut"&&!w.band||w.inf>15)return 2;return 1}
+function wSeverity(w){if(w.k==="bite"||w.inf>=40)return 3;const b=wBleed(w);if(b>.3)return 3;if(w.k==="fracture")return w.spl?2:3;if(w.k==="deep")return w.band||w.st?2:3;if(b>.05||needsWrap(w)&&w.k!=="scratch"||needsWash(w)||w.inf>15)return 2;return 1}
 function partSeverity(p){let s=0;for(const w of wounds())if(w.p===p)s=Math.max(s,wSeverity(w));return s}
 // rough days left to heal if nothing changes
-function healEta(w){const K=WOUND[w.k];if(w.inf>40)return-1;let rate=100/(K.days*24);if(w.k==="deep"&&!w.st)rate*=.3;if((w.k==="cut"||w.k==="incision")&&w.st)rate*=1.5;if(!K.closed)rate*=w.band?1.25:.85;
+function healEta(w){const K=WOUND[w.k];if(w.inf>=40)return-1;let rate=100/(K.days*24)*feedFactor();if(!K.closed)rate*=w.band||w.st?1.3:.8;if(w.k==="deep"&&!w.band&&!w.st)rate*=.4;
   if(w.k==="fracture"&&!w.spl)return-2;return(100-w.heal)/rate/24}
 function woundStatus(w){const L=[];const K=WOUND[w.k];const b=wBleed(w);
-  const bw=bleedWord(b);if(bw)L.push(bw);else if(!K.closed&&w.bl>0)L.push("Barely bleeding");
-  if(w.k==="bite")L.push("There's no cure. A dressing only keeps it clean");
-  if(!K.closed){if(w.inf>=55)L.push("Infected: hot, swollen and leaking");else if(w.inf>=30)L.push("Red and angry around the edges. It's turning");else if(w.inf>=12)L.push("A little pink around the edges");
-    if(!w.band){if(w.dirt>.5)L.push("Dirty");else if(w.dirt>.15)L.push("Could be cleaner");else if(w.cl)L.push("Cleaned")}}
-  if(w.band){const k=w.band.k;const name=k==="rag"?"a cloth rag":k==="poultice"?"a poultice":"a bandage";
-    L.push(w.band.d>.7?`Wrapped in ${name}, soaked through. Change it`:w.band.d>.4?`Wrapped in ${name}, getting dirty`:`Wrapped in ${name}${w.band.q>.8?", snug":w.band.q<.5?", loosely":""}`)}
-  else if(!K.closed&&w.k!=="scratch"&&!(w.st&&w.heal>=80))L.push("Not dressed");
-  if(w.st)L.push(w.st>.75?"Stitched shut, neatly":"Stitched shut, roughly");
-  else if(w.k==="deep")L.push("Needs stitches to close");
-  if(w.k==="fracture")L.push(w.cast?"In a cast":w.splItem==="strap"?"Strapped":w.spl?"Splinted":"Not splinted. Every move grinds");
-  const eta=healEta(w);L.push(eta===-1?"Not healing while it's infected":eta===-2?"It won't heal right without a splint":w.heal<5&&S.t-w.born<120?"Fresh":eta<1?"Nearly healed":`About ${Math.round(eta)} day${Math.round(eta)===1?"":"s"} to heal`);
+  const bw=bleedWord(b);if(bw)L.push(bw);
+  if(w.k==="bite")L.push("There's no cure for a bite. Keeping it clean only buys time");
+  if(!K.closed){if(w.inf>=55)L.push("Infected. You need antibiotics");else if(w.inf>=25)L.push("Red and angry. It's turning. Antibiotics would stop it");else if(w.inf>=10)L.push("A little pink around the edges");
+    L.push(washed(w)?"Washed":"Not washed yet");
+    L.push(w.band?`Wrapped${w.band.k==="rag"?" in cloth":w.band.k==="poultice"?" in a poultice":""}`:w.st?"Stitched shut":needsWrap(w)?"Not wrapped":"Doesn't need wrapping")}
+  if(w.k==="fracture")L.push(w.cast?"In a cast":w.splItem==="strap"?"Strapped":w.spl?(w.splItem==="splint"?"Splinted":"Wrapped tight"):"Not bound. Wrap it to hold the bone still");
+  const eta=healEta(w);L.push(eta===-1?"Not healing while it's infected":eta===-2?"Barely healing until it's bound":w.heal<5&&S.t-w.born<120?"Fresh":eta<1?"Nearly healed":`About ${Math.round(eta)} day${Math.round(eta)===1?"":"s"} to heal`);
   return L}
-function bodySummary(){const pl=S.player;const W=wounds();const L=[];const b=bleedTotal();const pn=painNow();
+function bodySummary(){const pl=S.player;const W=wounds();const L=[];const b=bleedTotal();
   if(b>.03)L.push({t:`${bleedWord(b)||"Bleeding"} (about ${Math.max(1,Math.round(b*6))} health an hour)`,k:3});
   if(pl.bitten)L.push({t:"Bitten. No cure",k:3});
-  const im=infMax();if(im>=55||pl.sick&&im>=40)L.push({t:"Fever from an infected wound",k:3});else if(pl.sick)L.push({t:"Sick",k:2});else if(im>=30)L.push({t:"A wound is turning",k:2});
-  for(const w of W)if(w.k==="fracture")L.push({t:woundName(w)+(w.spl?"":", not splinted"),k:w.spl?2:3});
-  if(pn>60)L.push({t:body().pk>S.t?"In a lot of pain, even with pills":"In agony",k:3});else if(pn>30)L.push({t:"In pain",k:2});else if(pn>10)L.push({t:"Sore",k:1});
+  const im=infMax();if(im>=55||pl.sick&&im>=40)L.push({t:"Fever from an infected wound",k:3});else if(pl.sick)L.push({t:"Sick",k:2});else if(im>=25)L.push({t:"A wound is turning",k:2});
+  for(const w of W)if(w.k==="fracture")L.push({t:woundName(w)+(w.spl?"":", not bound"),k:w.spl?2:3});
   if(pl.food<15)L.push({t:"Starving",k:3});else if(pl.food<35)L.push({t:"Hungry",k:2});
   if(pl.water<15)L.push({t:"Parched",k:3});else if(pl.water<35)L.push({t:"Thirsty",k:2});
   if(pl.energy<15)L.push({t:"Exhausted",k:3});else if(pl.energy<35)L.push({t:"Tired",k:2});
   if(pl.warmth<15)L.push({t:"Freezing",k:3});else if(pl.warmth<35)L.push({t:"Cold",k:2});
   return L}
-// the wound most in need of a dressing right now
-function worstBleeder(){let best=null,bb=.03;for(const w of wounds()){const b=wBleed(w);if(w.band&&w.band.d<=.7&&w.band.q>=.6)continue;if(b>bb){bb=b;best=w}}return best}
+// the wound most in need of a wrap right now
+function worstBleeder(){let best=null,bb=.03;for(const w of wounds()){if(w.band||w.st)continue;const b=wBleed(w);if(b>bb){bb=b;best=w}}return best}
 // which wound a supply would go on, if you just reach for it
 function woundFor(k){const W=wounds();const by=f=>W.filter(f).sort((a,b)=>wSeverity(b)-wSeverity(a)||wBleed(b)-wBleed(a))[0]||null;
-  if(k==="wrap")return worstBleeder()||by(w=>!WOUND[w.k].closed&&(!w.band||w.band.d>.7)&&w.k!=="scratch")||by(w=>!WOUND[w.k].closed&&(!w.band||w.band.d>.7));
-  if(k==="clean")return W.filter(needsClean).sort((a,b)=>b.inf+b.dirt*50-a.inf-a.dirt*50)[0]||null;
-  if(k==="stitch")return by(w=>w.k==="deep"&&!w.st)||by(canStitch);
+  if(k==="wrap")return worstBleeder()||by(w=>needsWrap(w)&&w.k!=="fracture");
+  if(k==="clean")return by(needsWash);
+  if(k==="stitch")return by(w=>(w.k==="deep"||w.k==="cut")&&!w.st&&!w.band);
   if(k==="splint")return by(w=>w.k==="fracture"&&!w.spl);return null}
 
 // ================= state =================
@@ -1428,19 +1417,19 @@ function advance(mins,opt={}){let left=mins;const jump=mins>=5&&!S.jump;if(jump)
   try{while(left>0.0001){const toH=60-(S.t%60);const step=Math.min(left,toH);decay(step,opt);S.t+=step;left-=step;
     if(Math.abs(S.t%60)<1e-6||S.t%60>59.9999){S.t=Math.round(S.t);simHour()}
     if(S.player.hp<=0)return die();
-    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30||pl.bleeding>.25||painNow()>60)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":pl.bleeding>.25?"blood":"pain";break}}}
+    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30||pl.bleeding>.25||painNow()>90)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":pl.bleeding>.25?"blood":"pain";break}}}
   finally{if(jump)S.jump=false}
   checkPending()}
 function decay(m,opt){const pl=S.player,h=m/60;const sl=opt.sleep;if(pl.coma)return;
   pl.food=clamp(pl.food-h*(sl?1.5:2.6)*(pl.preg?1.3:1)*(pl.sick?1.3:1),0,100);
   pl.water=clamp(pl.water-h*(sl?2:3.8)*(pl.sick?1.5:1),0,100);
-  const pain=painNow();pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9)*(pain>50?.6:1):-(opt.work?5:3.2)*(pain>40?1.2:1)),0,100);
+  pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9):-(opt.work?5:3.2)),0,100);
   let comfort=temp()+clothesWarm()*2.2+(nearFire()?12:0)+(sl&&opt.safe?10:0);if(wxName()==="rain"&&!gearEq("outer"))comfort-=4;
   if(comfort>=12)pl.warmth=clamp(pl.warmth+h*6,0,100);else pl.warmth=clamp(pl.warmth-h*(12-comfort)*.7,0,100);
   const lost=bodyTick(h,opt);
   let dhp=0;if(pl.food<=0)dhp-=3;if(pl.water<=0)dhp-=5;if(pl.warmth<=0)dhp-=6;else if(pl.warmth<15)dhp-=1;if(pl.energy<=0)dhp-=1;if(pl.sick)dhp-=1.2;
   if(pl.bitten){const hrs=(S.t-pl.bitten)/60;if(hrs>20)dhp-=4;if(hrs>36)dhp-=12}
-  if(dhp>=0&&pl.food>35&&pl.water>35&&pl.warmth>35&&!pl.sick&&!pl.bitten&&pl.bleeding<.05)dhp=sl?3:1;
+  if(dhp>=0&&pl.food>35&&pl.water>35&&pl.warmth>35&&!pl.sick&&!pl.bitten&&pl.bleeding<.05)dhp=(sl?3:1)*(pl.food>60&&pl.water>60?1.6:1);
   pl.hp=clamp(pl.hp+dhp*h-lost,0,100);
   if(pl.sick&&infMax()<40&&rf()<h*.03){pl.sick=0;journal("The fever breaks. You feel human again.","good")}
   if(here()!=="town"||true)wearClothes(h)}
@@ -3516,7 +3505,7 @@ function playerMove(dt){const pl=S.player;const k=W3.keys;let mx=0,mz=0;
       if(st.pi>=W3.path.length){W3.path=null;W3.ptarget=null;if(W3.useOnArrive){const u=W3.useOnArrive;W3.useOnArrive=null;if(useReached(u,1.5))doUse(u)}}}}
   W3.moving=false;if(!(mx||mz))return;if(W3.task)cancelTask();
   const enc=weight()>maxW();const run=W3.run&&pl.energy>8&&!enc&&canRun();let spd=(run?5.4:3.2)*(enc?.6:1)*(pl.energy<10?.7:1)*(pl.hp<30?.75:1)*bodySpeed();
-  if(W3.run&&!canRun()&&performance.now()-(W3.runMsg||0)>6000){W3.runMsg=performance.now();toast("You can't run on a broken bone. Splint it.")}if(onFord(pl.x,pl.z))spd*=.45;
+  if(W3.run&&!canRun()&&performance.now()-(W3.runMsg||0)>6000){W3.runMsg=performance.now();toast("You can't run on a broken bone. Wrap it tight first (H).")}if(onFord(pl.x,pl.z))spd*=.45;
   // a door in front of you opens if it can
   const D=doorAt(pl.x+mx*.5,pl.z+mz*.5,.28);if(D&&!doorOpen(D)){if(!doorLocked(D)){D.open=true;D.auto=true;W3.autoDoors.add(D);doorSave(D)}else{const t=performance.now();if(t-(W3.lockMsg||0)>2500){W3.lockMsg=t;toast(lockedMsg(D))}if(W3.path){W3.path=null;W3.ptarget=null}}}
   const s=spd*dt;const moved=step(pl,mx*s,mz*s,.3,"pl");
@@ -3956,8 +3945,8 @@ function actionsHere(){const pl=S.player;const r=here();const A=[];const add=(id
   const food=bestFood(),drink=bestDrink();
   if(food&&pl.food<85)add("eat",`Eat ${(ITEMS[food].sn||ITEMS[food].n).toLowerCase()}`,`Food +${ITEMS[food].eat.food}`);
   if(drink&&pl.water<90)add("drink",`Drink ${(ITEMS[drink].sn||ITEMS[drink].n).toLowerCase()}`,`Water +${ITEMS[drink].drink}`);
-  {const w=worstBleeder();if(w&&haveFor(DRESSINGS).length)add("bandage","Bandage",`Your ${w.at}`,zn,true);
-   else if(wounds().some(w=>!w.band&&!WOUND[w.k].closed&&w.k!=="scratch"||w.band&&w.band.d>.7||w.k==="fracture"&&!w.spl))add("treat","Tend your wounds","Health screen")}
+  {const w=worstBleeder();if(w&&haveFor(DRESSINGS).length)add("bandage","Wrap it",`Your ${w.at} is bleeding`,zn,true);
+   else if(wounds().some(w=>needsWash(w)||needsWrap(w)))add("treat","Tend your wounds","Wash and wrap them")}
   if((pl.sick||infMax()>=30)&&invHas("antibiotics"))add("meds","Antibiotics",pl.sick?"Fights the fever":"Fights the infection");
   add("rest","Rest","1 hour",zedNear(6)?"Not with the dead this close":null);
   const s=sleepSafe();add("sleep","Sleep",s===2?"Safe here":s===1?"Mostly safe":"Risky out here",zedNear(14)?"Not with the dead this close":null);
@@ -3977,7 +3966,7 @@ function doAction(id){const pl=S.player;if(pl.alive===false)return;
     case"settle":settle();break;
     case"eat":useItem(bestFood());return;
     case"drink":useItem(bestDrink());return;
-    case"bandage":{const w=worstBleeder();if(w)openTreat("wrap",w.id);else openPanel("health");return}
+    case"bandage":{const w=worstBleeder();if(w)doCare("wrap",w);else openPanel("health");return}
     case"treat":openPanel("health");return;
     case"meds":takeAntibiotics();advance(2);break;
     case"rest":act(60,{sleep:true});journal("You sit and rest for an hour.");break;
@@ -4022,8 +4011,8 @@ function radioLine(){const d=dayOf(S.t);if(d<=2)return"The emergency broadcast r
   return pick(["Static. Then, for a moment, a woman's voice reading numbers. Then static.","Static. You crank it until your arm aches. Nothing.","A man's voice, very calm: \"...if you can hear this, you are not alone...\" Then nothing.","Somebody playing a guitar, badly, for about a minute. Then it's gone."])}
 
 // ---------- the side panel ----------
-function openPanel(k){if(UI.panel===k&&k!=="inv"){UI.panel=null}else{UI.panel=k}if(UI.panel!=="health")UI.treat=null;if(k!=="inv")UI.open=null;if(UI.talkTo&&UI.panel)closeTalk(true);render();if(UI.panel==="map")drawBigMap()}
-function closePanel(){if(!UI.panel)return false;UI.panel=null;UI.open=null;UI.treat=null;render();return true}
+function openPanel(k){if(UI.panel===k&&k!=="inv"){UI.panel=null}else{UI.panel=k}if(k!=="inv")UI.open=null;if(UI.talkTo&&UI.panel)closeTalk(true);render();if(UI.panel==="map")drawBigMap()}
+function closePanel(){if(!UI.panel)return false;UI.panel=null;UI.open=null;render();return true}
 function renderPanel(){const el=$("panel");if(!el)return;if(!UI.panel||S.player.alive===false){el.hidden=true;el.innerHTML="";return}
   const keep={};for(const x of el.querySelectorAll("[data-keep]"))keep[x.dataset.keep]=x.scrollTop;
   const name={inv:"Inventory",health:"Your body",craft:"Make things",group:"Group",people:"People",journal:"Journal",map:"Map"}[UI.panel];
@@ -4237,7 +4226,7 @@ function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small 
 <tr><td>Search</td><td>Click furniture, or stand next to it and press E. Things turn up as you look. Drag them into your pockets, bag or rig. R turns an item while you drag it.</td></tr>
 <tr><td>Inventory</td><td>Tab. Your clothes have pockets and your bag holds the most. Double-click to eat, drink, use or wear. Right-click for more.</td></tr>
 <tr><td>Fight</td><td>Space, or click one of the dead. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
-<tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, where it is and what it needs. Pick a wound to clean it, wrap a bandage on by hand, stitch it or splint it. Change dressings before they go bad, or the wound turns.</td></tr>
+<tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, and where. Wash a wound (water, alcohol or whiskey) so it doesn't turn, and wrap it (a bandage or a strip of cloth) to stop the bleeding. Wrap a broken bone tight to hold it still. If one turns, antibiotics cure it. Eat, drink and sleep: being fed and rested is what heals you.</td></tr>
 <tr><td>Light</td><td>F switches your flashlight on and off at night. The dead see it too.</td></tr>
 <tr><td>Panels</td><td>H your body, C make things, G your group, N people you know, J journal, M map, P pause, Esc closes things.</td></tr>
 <tr><td>Time</td><td>One real second is one minute. Long actions skip ahead. The speed buttons go up to 8x.</td></tr>
@@ -4305,17 +4294,16 @@ function onForm(f,form){const val=(form.querySelector("input")?.value||"").trim(
   if(f==="groupname"){const g=myGroup();if(val&&g){g.name=val;news(`${S.player.name}'s people call themselves ${val} now.`,"")}UI.modal=null;save();render();checkPending();return}}
 function onUiKey(k,e){const map={tab:"inv",i:"inv",h:"health",c:"craft",g:"group",n:"people",j:"journal",m:"map"};const pk=map[k];if(!pk)return;if(k==="tab")e.preventDefault();if(S.player.alive===false)return;if(UI.talkTo)closeTalk(true);
   if(pk==="inv"&&UI.panel==="inv"){closePanel();return}openPanel(pk)}
-function onEscape(){if(UI.drag&&typeof cancelDrag==="function"){cancelDrag();return true}if(UI.treat){UI.treat=null;render();return true}if(UI.menu&&typeof closeMenu==="function"){closeMenu();return true}if(UI.talkTo){closeTalk();return true}if(UI.panel){closePanel();return true}return false}
+function onEscape(){if(UI.drag&&typeof cancelDrag==="function"){cancelDrag();return true}if(UI.menu&&typeof closeMenu==="function"){closeMenu();return true}if(UI.talkTo){closeTalk();return true}if(UI.panel){closePanel();return true}return false}
 document.addEventListener("pointerdown",()=>{UI.pdown=true},true);document.addEventListener("pointerup",()=>{UI.pdown=false},true);document.addEventListener("pointercancel",()=>{UI.pdown=false},true);
 function uiTick(ts,dt){if(UI.talkTo)positionTalk(false);
   if(UI.hudDirty)hud();
   if(ts-(UI.lastR||0)>350){UI.lastR=ts;if(UI.dirty&&!UI.pdown&&!UI.drag&&!typing())render();else if(UI.dirty&&typing()&&UI.talkTo){renderBar();renderLog()}}
   if(ts-(UI.lastBar||0)>1000){UI.lastBar=ts;if(!UI.pdown&&!UI.drag){renderBar();renderLog()}}
   if(UI.panel==="map"&&ts-(UI.lastMap||0)>1000){UI.lastMap=ts;drawBigMap()}}
-// ================= the health screen: your body, every wound on it, and your own hands doing the work =================
-// H opens it. Click a part of the body to see what's wrong there. Every fix is done by hand:
-// wipe a wound clean, wrap a bandage (hold to pull it around, let go when it's snug), put stitches in one at a time,
-// line a splint up along the bone and strap it down. The world waits while you work, then the time it took passes.
+// ================= the health screen: your body, every wound on it, and what to do about each =================
+// H opens it. Click a part of the body to see what's wrong there. Looking after yourself is four things:
+// wash a wound, wrap it, eat and drink so you heal, and take antibiotics if one turns.
 
 // where each part sits on the drawing (viewBox 0 0 160 300). Parts are shapes, or thick lines for arms and legs.
 // The figure faces you, so its right side is on your left.
@@ -4365,161 +4353,61 @@ function bodySvg(sel){const order=["rleg","lleg","rfoot","lfoot","belly","chest"
 // ---------- the side: what's wrong, and what you can do about it ----------
 function agoWord(m){m=Math.max(0,m);if(m<50)return"just now";const h=Math.round(m/60);if(h<24)return `${h} hour${h>1?"s":""} ago`;const d=Math.round(m/1440);return `${d} day${d>1?"s":""} ago`}
 function supplyWord(list){const h=haveFor(list);return h.length?`With ${h[0][2]}`:""}
-function tbtn(k,w,t,sub,dis){return `<button class="btn${!dis&&k===nextFix(w)?" pri":""}" data-act="htreat" data-v="${k}|${w.id}"${dis?" disabled":""}>${esc(t)}<small>${esc(sub)}</small></button>`}
 // what this wound needs first
-function nextFix(w){const K=WOUND[w.k];if(w.k==="fracture")return w.spl?"":"splint";if(K.closed)return"";const b=wBleed(w);
-  if(b>.25&&!w.band)return"wrap";if(w.band&&w.band.d>.7)return"wrap";if(needsClean(w)&&(w.dirt>.15||w.inf>12))return"clean";if(w.k==="deep"&&!w.st)return"stitch";if(!w.band&&w.k!=="scratch"&&!(w.st&&w.heal>=80))return"wrap";return""}
-function woundActs(w,busy){const K=WOUND[w.k];const A=[];
-  if(needsClean(w)){const s=supplyWord(CLEANERS);A.push(tbtn("clean",w,"Clean it",busy||s||"Need alcohol, whiskey or clean water",busy||!s))}
-  if(!K.closed){const s=supplyWord(DRESSINGS);A.push(tbtn("wrap",w,w.band?"Change the dressing":"Bandage it",busy||s||"Need a bandage or a strip of cloth",busy||!s))}
-  if(canStitch(w)){const s=supplyWord(NEEDLES);A.push(tbtn("stitch",w,"Stitch it",busy||s||"Need a suture kit or needle and thread",busy||!s))}
-  if(w.k==="fracture"&&!w.spl){const s=supplyWord(SPLINTS);A.push(tbtn("splint",w,"Splint it",busy||s||"Need a splint, or wood and cloth",busy||!s))}
-  if(w.band)A.push(`<button class="btn" data-act="hundress" data-v="${w.id}"${busy?" disabled":""}>Take the dressing off<small>${w.band.k==="bandage"?"Keep it to boil clean":"Throw it away"}</small></button>`);
+function nextFix(w){if(needsWrap(w)&&wBleed(w)>.25)return"wrap";if(needsWash(w))return"wash";if(needsWrap(w))return"wrap";return""}
+function woundActs(w,busy){const A=[];const nf=nextFix(w);const b=(k,t,sub,dis)=>`<button class="btn${!dis&&k===nf?" pri":""}" data-act="hdo" data-v="${k}|${w.id}"${dis?" disabled":""}>${esc(t)}<small>${esc(sub)}</small></button>`;
+  if(needsWash(w)){const s=supplyWord(CLEANERS);A.push(b("wash","Wash it",busy||s||"Need water, alcohol or whiskey",busy||!s))}
+  if(needsWrap(w)){const fr=w.k==="fracture";const s=supplyWord(fr?BINDS:DRESSINGS);A.push(b("wrap",fr?"Wrap it tight":"Wrap it",busy||s||(fr?"Need a splint, a bandage or cloth":"Need a bandage or a strip of cloth"),busy||!s))}
   return A}
 function woundCard(w,showPart,busy){const A=woundActs(w,busy);
-  return `<div class="wcard s${wSeverity(w)}"><div class="row" style="justify-content:space-between;gap:6px"><b>${esc(woundName(w))}${showPart?` <span class="mute">· ${esc(w.at)}</span>`:""}</b><span class="mono mute">${esc(showPart?agoWord(S.t-w.born):w.at+" · "+agoWord(S.t-w.born))}</span></div>
+  return `<div class="wcard s${wSeverity(w)}"><div class="row" style="justify-content:space-between;gap:6px"><b>${esc(woundName(w))}${showPart?` <span class="mute">· ${esc(w.at)}</span>`:""}</b><span class="mono mute">${esc(showPart?agoWord(S.t-w.born):w.at)}</span></div>
    <ul class="wstat">${woundStatus(w).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${A.length?`<div class="row wacts">${A.join("")}</div>`:""}</div>`}
-function suppliesHtml(){const L=[["bandage","Bandages"],["poultice","Poultices"],["cloth","Cloth"],["rubbing_alcohol","Alcohol"],["whiskey","Whiskey"],["boiled_water","Boiled water"],["suture_kit","Sutures"],["sewing_kit","Needle"],["splint","Splints"],["painkillers","Painkillers"],["antibiotics","Antibiotics"],["dirty_bandage","Bloody bandages"]];
+function suppliesHtml(){const L=[["bandage","Bandages"],["poultice","Poultices"],["cloth","Cloth"],["splint","Splints"],["rubbing_alcohol","Alcohol"],["whiskey","Whiskey"],["boiled_water","Boiled water"],["water_bottle","Water"],["antibiotics","Antibiotics"],["painkillers","Painkillers"]];
   const have=L.map(([id,n])=>{const it=ITEMS[id];const c=it.uses?usesLeft(id):invCount(id);return c?`<span class="sup">${itemIcon(id,18)}${esc(n)} <b class="mono">${c}${it.uses?" use"+(c>1?"s":""):""}</b></span>`:""}).filter(Boolean);
-  return `<div><div class="lbl">What you have to work with</div><div class="sups">${have.length?have.join(""):'<span class="mute">Nothing. Pharmacies, bathroom cabinets and the hospital are where to look. Cloth works as a rag in a pinch.</span>'}</div></div>`}
-function medsHtml(busy){const B=body();const pn=painNow();const im=infMax();const pl=S.player;const L=[];
-  const pk=B.pk>S.t;if(pn>8||pk)L.push(`<button class="btn" data-act="hmed" data-v="pain"${!invHas("painkillers")||pk||busy?" disabled":""}>Take painkillers<small>${pk?`Working. Wears off in ${Math.max(1,Math.round((B.pk-S.t)/60))} h`:invHas("painkillers")?`Pain ${Math.round(pn)} of 100. Takes the edge off for 6 h`:"You don't have any"}</small></button>`);
-  const abx=B.abx>S.t;if(im>=12||pl.sick||abx)L.push(`<button class="btn" data-act="hmed" data-v="abx"${!invHas("antibiotics")||abx||busy?" disabled":""}>Take antibiotics<small>${abx?"A course is working":invHas("antibiotics")?(pl.sick?"Fights the fever and the infection":"Stops a wound from turning"):"You don't have any"}</small></button>`);
+  return `<div><div class="lbl">What you have to work with</div><div class="sups">${have.length?have.join(""):'<span class="mute">Nothing. Pharmacies, bathroom cabinets and the hospital are where to look. Any clean water washes a wound, and a strip of cloth wraps one.</span>'}</div></div>`}
+function medsHtml(busy){const B=body();const im=infMax();const pl=S.player;const L=[];
+  const abx=B.abx>S.t;if(im>=10||pl.sick||abx)L.push(`<button class="btn${pl.sick||im>=40?" pri":""}" data-act="hmed" data-v="abx"${!invHas("antibiotics")||abx||busy?" disabled":""}>Take antibiotics<small>${abx?"A course is working":invHas("antibiotics")?(pl.sick?"Cures the fever and the infection":"Stops the infection"):"You don't have any"}</small></button>`);
+  const pk=B.pk>S.t;if(wounds().length&&invHas("painkillers")&&!pk)L.push(`<button class="btn" data-act="hmed" data-v="pain"${busy?" disabled":""}>Take painkillers<small>Takes the edge off</small></button>`);
   return L.length?`<div class="row">${L.join("")}</div>`:""}
+// the one line that tells you how to get better
+function healAdvice(){const pl=S.player;const W=wounds();if(!W.length&&pl.hp>=95)return"";const ff=feedFactor();
+  const L=[];if(W.some(needsWash)||W.some(needsWrap))L.push("Wash and wrap what's open.");if(W.some(w=>w.inf>=25)||pl.sick)L.push("Take antibiotics for anything that's turned.");
+  L.push(ff<1?"Eat and drink: hungry, you barely heal at all.":ff<1.4?"Eat and drink well: being fed makes you heal much faster.":"You're fed and watered, so you're healing well.");L.push("Sleep heals fastest.");
+  return `<p class="hadvice mono">${esc(L.join(" "))}</p>`}
 function sideHtml(sel){const pl=S.player;const busy=zedNear(7)?"The dead are too close":"";const sum=bodySummary();
   const W=wounds().filter(w=>!sel||w.p===sel).sort((a,b)=>wSeverity(b)-wSeverity(a)||b.born-a.born);
   const msg=UI.hmsg&&S.t-UI.hmsg.t<30?`<p class="hmsg">${esc(UI.hmsg.x)}</p>`:"";
+  const todo=wounds().some(w=>needsWash(w)&&haveFor(CLEANERS).length||needsWrap(w)&&haveFor(w.k==="fracture"?BINDS:DRESSINGS).length);
   return `${msg}<div class="row" style="justify-content:space-between"><div><span class="lbl">Health</span> <b class="mono ${pl.hp<30?"neg":pl.hp<60?"warn":"pos"}">${Math.round(pl.hp)}</b><span class="mono mute"> / 100</span></div>${sel?`<button class="tag" data-act="hpart" data-v="">Show everything</button>`:""}</div>
    ${sum.length?`<div class="hsum">${sum.map(c=>`<span class="k${c.k}">${esc(c.t)}</span>`).join("")}</div>`:'<p class="pos">You feel all right. For now.</p>'}
+   ${healAdvice()}
    ${busy?`<p class="warn mono">The dead are too close to stop and tend wounds.</p>`:""}
+   ${todo&&!sel?`<div class="row"><button class="btn pri" data-act="htendall"${busy?" disabled":""}>Wash and wrap everything<small>Uses what you have, best first</small></button></div>`:""}
    <div class="lbl">${sel?esc(cap(BODY[sel].n)):"Where you're hurt"}</div>
    ${W.length?W.map(w=>woundCard(w,!sel,busy)).join(""):`<p class="mute">${sel?`Nothing wrong with your ${esc(BODY[sel].n)}.`:"Not a scratch on you. Click a part of the body to look closer."}</p>`}
    ${medsHtml(busy)}${suppliesHtml()}`}
-function healthHtml(){if(UI.treat&&!woundById(UI.treat.wid))UI.treat=null;const sel=UI.hsel&&BODY[UI.hsel]?UI.hsel:null;
-  return `<div class="hp-wrap"><div class="hp-body">${bodySvg(UI.treat?woundById(UI.treat.wid).p:sel)}<div class="mono mute small">Colors: <span style="color:${SEVC[1]}">minor</span> · <span style="color:${SEVC[2]}">needs care</span> · <span style="color:${SEVC[3]}">serious</span></div></div><div class="hp-side">${UI.treat?treatHtml():sideHtml(sel)}</div></div>`}
+function healthHtml(){const sel=UI.hsel&&BODY[UI.hsel]?UI.hsel:null;
+  return `<div class="hp-wrap"><div class="hp-body">${bodySvg(sel)}<div class="mono mute small">Colors: <span style="color:${SEVC[1]}">minor</span> · <span style="color:${SEVC[2]}">needs care</span> · <span style="color:${SEVC[3]}">serious</span></div></div><div class="hp-side">${sideHtml(sel)}</div></div>`}
+function healthAfterRender(){}
 
-// ---------- hands-on: the close-up and what your hands do ----------
-const TREAT_NAME={clean:"Cleaning",wrap:"Dressing",stitch:"Stitching",splint:"Splinting"};
-const TREAT_LIST={clean:CLEANERS,wrap:DRESSINGS,stitch:NEEDLES,splint:SPLINTS};
-function openTreat(k,wid,item){const w=woundById(wid);if(!w||S.player.alive===false)return;if(zedNear(7)){toast("Not with the dead this close.");return}
-  const have=haveFor(TREAT_LIST[k]);if(!have.length){toast({clean:"You've nothing to clean it with.",wrap:"You've nothing to dress it with. A strip of cloth would do.",stitch:"You need a needle and thread.",splint:"You need a splint, or some wood and cloth."}[k]);return}
-  if(UI.talkTo)closeTalk(true);UI.open=null;UI.panel="health";UI.hsel=w.p;
-  UI.treat={k,wid,item:item&&have.some(x=>x[0]===item)?item:have[0][0]};initTreat(UI.treat,w);render()}
-function initTreat(T,w){const pl=S.player;const sk=pl.sk.medic;T.msg="";T.done=0;
-  if(T.k==="wrap"||T.k==="splint"){T.need=T.k==="splint"?2:T.item==="cloth"?3:4;T.wraps=[];T.v=0;T.holding=false;T.z0=clamp(.6-sk*.014,.42,.6);T.z1=clamp(.8+sk*.012,.8,.92);T.rate=clamp(.95-sk*.025+(painNow()>50?.12:0),.62,1.1)}
-  if(T.k==="splint"){T.phase="place";T.sx=180+(rf()<.5?-1:1)*(30+rf()*26);T.sy=14+rf()*8;T.q1=0}
-  if(T.k==="clean"){const n=Math.round(5+w.dirt*6+(w.inf>20?3:0));T.specks=[];for(let i=0;i<n;i++){const a=rf()*6.283,r=16+rf()*38;T.specks.push({x:180+Math.cos(a)*r*1.6,y:100+Math.sin(a)*r*.62,r:2.2+rf()*2.8,a:1})}}
-  if(T.k==="stitch"){const n=w.k==="deep"?6:4;T.pts=[];for(let i=0;i<n;i++){const t=(i+.5)/n;const x=132+t*96,y=78+t*44,s=i%2?1:-1;T.pts.push({x:x+s*9,y:y-s*7,mx:x-s*9,my:y+s*7})}T.i=0;T.acc=[];T.miss=0;
-    T.amp=clamp(1.2+painNow()*.05+(pl.energy<30?2:0)-sk*.22,.4,5.5)}}
-function limbKind(p){return BODY[p].limb||(p==="neck"?"neck":p==="head"?"head":"torso")}
-// the close-up: a part of you, big, with the wound in the middle
-function closeShape(p){const k=limbKind(p);const H={arm:80,leg:100,hand:88,foot:74,neck:80}[k];
-  if(H)return{d:`<rect x="6" y="${100-H/2}" width="348" height="${H}" rx="${H/2}"/>`,top:100-H/2,bot:100+H/2};
-  if(k==="head")return{d:`<ellipse cx="180" cy="104" rx="130" ry="92"/>`,top:30,bot:170};
-  return{d:`<rect x="20" y="8" width="320" height="184" rx="34"/>`,top:40,bot:160}}
-function closeWound(w,T){const k=w.k;const st=w.st&&!(T&&T.k==="stitch");let s="";
-  if(k==="scratch")s=`<path d="M150 74l22 52M166 70l22 52M182 72l20 48" stroke="#b8392c" stroke-width="3" stroke-linecap="round"/><path d="M150 74l22 52M166 70l22 52M182 72l20 48" stroke="#ef7a66" stroke-width="1" stroke-linecap="round"/>`;
-  if(k==="cut"||k==="deep"||k==="incision"){const deep=k==="deep";s=k==="incision"?`<path d="M120 100h120" stroke="#b05a4a" stroke-width="4" stroke-linecap="round"/>`
-    :`<path d="M134 74Q180 96 226 126Q178 ${deep?112:104} 134 74z" fill="#5a0e0a" stroke="#8a1e16" stroke-width="${deep?3:1.5}"/><path d="M140 79Q180 98 220 121" stroke="#e05a48" stroke-width="${deep?3:1.6}" fill="none"/>${deep?`<ellipse cx="190" cy="128" rx="3" ry="6" fill="#7a140e"/><ellipse cx="206" cy="136" rx="2.4" ry="5" fill="#7a140e"/>`:""}`;
-    if(st)s+=k==="incision"?stitchTicks(124,100,236,100,8,7).replace('stroke-width=".8"','stroke-width="2"'):stitchTicks(138,77,222,124,k==="deep"?6:4,10).replace('stroke-width=".8"','stroke-width="2.2"')}
-  if(k==="bite")s=`<g fill="#7a140e" stroke="#c8402e" stroke-width="1.5">${[0,1,2,3,4,5,6].map(i=>{const a=Math.PI*(.15+i*.7/6);return `<ellipse cx="${(180-Math.cos(a)*44).toFixed(0)}" cy="${(88-Math.sin(a)*14).toFixed(0)}" rx="5" ry="7"/><ellipse cx="${(180-Math.cos(a)*40).toFixed(0)}" cy="${(114+Math.sin(a)*12).toFixed(0)}" rx="5" ry="7"/>`}).join("")}</g><ellipse cx="180" cy="101" rx="26" ry="8" fill="#5a0e0a" opacity=".55"/>`;
-  if(k==="bruise")s=`<ellipse cx="180" cy="100" rx="52" ry="30" fill="url(#tbruise)"/>`;
-  if(k==="fracture")s=`<ellipse cx="180" cy="100" rx="70" ry="32" fill="url(#tbruise)" opacity=".8"/><path d="M150 100l9-8 9 8 9-8 9 8 9-8 9 8" fill="none" stroke="#f6eed6" stroke-width="3" stroke-linejoin="round" opacity=".7"/>`;
-  if(w.inf>=30)s=`<ellipse cx="180" cy="100" rx="${w.inf>=55?76:60}" ry="${w.inf>=55?40:30}" fill="url(#tinf)"/>`+s;
-  if(w.dirt>.15&&!(T&&T.k==="clean"))s+=`<g fill="#4a3a26" opacity="${Math.min(.85,w.dirt).toFixed(2)}"><circle cx="152" cy="92" r="3"/><circle cx="214" cy="112" r="2.4"/><circle cx="198" cy="84" r="2"/><circle cx="166" cy="118" r="2.6"/></g>`;
-  return s}
-function wrapBand(i,need,top,bot,res,cur){const x=180+(i-(need-1)/2)*26;const l=res==="loose";const col=res==="tight"?"#f2dfd8":"#f4f0e6";const y0=top-3+(l?4:0),y1=bot+3-(l?2:0);
-  return `<path d="M${x-15} ${y0}L${x+11} ${y0}L${x+17} ${y1}L${x-9} ${y1}Z" fill="${col}" stroke="#a8a090" stroke-width="1" opacity="${l?.86:.97}"${cur?` id="tstrip"`:""}/><path d="M${x-10} ${y0+6}L${x+14} ${y1-6}M${x-4} ${y0+4}L${x+16} ${y1-14}" stroke="#d8d0be" stroke-width=".8"/>`}
-function treatPad(w,T){const C=closeShape(w.p);const pl=S.player;let over="";
-  if(T.k==="clean")over=T.specks.map((s,i)=>`<circle id="sp${i}" cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.r.toFixed(1)}" fill="#4a3a26" opacity="${Math.max(0,s.a).toFixed(2)}"/>`).join("");
-  if(T.k==="stitch"){const n=T.pts.length;for(let i=0;i<T.i;i++){const p=T.pts[i];over+=`<path d="M${p.x} ${p.y}L${p.mx} ${p.my}" stroke="#1a1814" stroke-width="2.4" stroke-linecap="round"/><circle cx="${p.x}" cy="${p.y}" r="1.8" fill="#1a1814"/><circle cx="${p.mx}" cy="${p.my}" r="1.8" fill="#1a1814"/>`}
-    for(let i=T.i+1;i<n;i++)over+=`<circle cx="${T.pts[i].x}" cy="${T.pts[i].y}" r="3" fill="none" stroke="#e4d8b8" stroke-width="1" stroke-dasharray="2 2" opacity=".55"/>`;
-    if(T.i<n){const p=T.pts[T.i];over+=`<g id="tdot" transform="translate(${p.x} ${p.y})"><circle r="7.5" fill="none" stroke="#e48a3f" stroke-width="2"/><circle r="2.2" fill="#e48a3f"/></g>`}}
-  if(T.k==="wrap"||T.k==="splint"&&T.phase==="wrap"){for(let i=0;i<T.wraps.length;i++)over+=wrapBand(i,T.need,C.top,C.bot,T.wraps[i]);
-    if(T.wraps.length<T.need){const x=180+(T.wraps.length-(T.need-1)/2)*26;over+=`<g id="troll" transform="translate(${x} ${C.top-16})"><circle r="11" fill="#f4f0e6" stroke="#8a8270" stroke-width="1.4"/><circle r="4" fill="#cfc6b0"/></g>`}}
-  if(T.k==="splint"){const ty=C.top-9;over=(T.phase==="place"?`<rect x="56" y="${ty-7}" width="248" height="14" rx="4" fill="none" stroke="#e48a3f" stroke-width="1.5" stroke-dasharray="6 4"/>`:"")+`<rect id="tsplint" x="${(T.sx-124).toFixed(1)}" y="${(T.sy-7).toFixed(1)}" width="248" height="14" rx="4" fill="#b0824e" stroke="#3a2a18" stroke-width="1.5" style="cursor:${T.phase==="place"?"grab":"default"}"/><rect x="${(T.sx-124).toFixed(1)}" y="${(T.sy+C.bot-C.top+11).toFixed(1)}" width="248" height="14" rx="4" fill="#b0824e" stroke="#3a2a18" stroke-width="1.5" opacity="${T.phase==="place"?0:1}"/>`+over}
-  const old=w.band&&T.k==="wrap"?"":w.band&&(T.k==="splint")?wrapBand(0,1,C.top,C.bot,"snug"):"";
-  return `<svg id="treatpad" viewBox="0 0 360 200" class="tpad ${T.k}${T.k==="splint"?" "+T.phase:""}" role="img" aria-label="${esc(TREAT_NAME[T.k]+" your "+w.at)}">
-   <defs><linearGradient id="tshade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".32"/></linearGradient>
-    <radialGradient id="tbruise"><stop offset="0" stop-color="#5a3a7a" stop-opacity=".75"/><stop offset=".6" stop-color="#7a4a6a" stop-opacity=".45"/><stop offset="1" stop-color="#8a6a4a" stop-opacity="0"/></radialGradient>
-    <radialGradient id="tinf"><stop offset="0" stop-color="#d84a3a" stop-opacity=".6"/><stop offset=".7" stop-color="#d0a03a" stop-opacity=".3"/><stop offset="1" stop-color="#d0a03a" stop-opacity="0"/></radialGradient></defs>
-   <g fill="${esc(pl.skin||"#c99873")}">${C.d}</g><g fill="url(#tshade)">${C.d}</g>${closeWound(w,T)}${old}${over}</svg>`}
-function treatHelp(T){const pl=S.player;
-  if(T.k==="clean")return"Drag across the wound to wipe away the dirt. Get all of it.";
-  if(T.k==="stitch")return T.i<T.pts.length?`Click the orange mark to push the needle through. Stitch ${T.i+1} of ${T.pts.length}.${T.amp>2.5?" Your hands won't keep still.":""}`:"";
-  if(T.k==="splint"&&T.phase==="place")return"Drag the board up onto the outline, along the bone.";
-  return `Hold the mouse button (or Space) to pull the ${T.k==="splint"?"strap":T.item==="cloth"?"cloth":"bandage"} around. Let go when the needle is in the green. ${T.k==="splint"?"Strap":"Wrap"} ${Math.min(T.wraps.length+1,T.need)} of ${T.need}.`}
-function treatHtml(){const T=UI.treat;const w=woundById(T.wid);const list=TREAT_LIST[T.k];const have=haveFor(list);const started=T.done||T.wraps&&T.wraps.length||T.i||T.k==="splint"&&T.phase!=="place"||T.k==="clean"&&T.specks.some(s=>s.a<1);
-  const meter=(T.k==="wrap"||T.k==="splint"&&T.phase==="wrap")?`<div class="tmeter" aria-hidden="true"><span class="zone" style="left:${(T.z0/1.2*100).toFixed(1)}%;width:${((T.z1-T.z0)/1.2*100).toFixed(1)}%"></span><span class="over" style="left:${(1/1.2*100).toFixed(1)}%"></span><i id="tneedle" style="left:${(Math.min(T.v,1.2)/1.2*100).toFixed(1)}%"></i></div><div class="tdots">${Array.from({length:T.need},(_,i)=>`<span class="${T.wraps[i]||""}"></span>`).join("")}<span class="mono mute">${esc(T.msg||"")}</span></div>`:T.msg?`<p class="mono warn">${esc(T.msg)}</p>`:"";
-  return `<div class="treat"><div class="row" style="justify-content:space-between"><h3>${esc(TREAT_NAME[T.k])} your ${esc(w.at)}</h3><button class="x" data-act="hcancel" aria-label="Stop (Esc)">×</button></div>
-   <div class="mute small">${esc(woundName(w))}. ${esc(woundStatus(w).slice(0,2).join(". "))}.${w.band&&T.k!=="splint"?" You unwrap the old dressing first.":""}</div>
-   ${have.length>1?`<div class="chips">${have.map(([id,q,n])=>`<button class="chip${T.item===id?" on":""}" data-act="hitem" data-v="${id}"${started?" disabled":""} aria-pressed="${T.item===id}">${id==="boards"?"":itemIcon(id,16)}${esc(cap(n.replace(/^(a|an|the) /,"")))}${ITEMS[id]&&ITEMS[id].uses?` <span class="mono mute">${usesLeft(id)}</span>`:""}</button>`).join("")}</div>`:""}
-   ${treatPad(w,T)}${meter}<p class="tinst">${esc(treatHelp(T))}</p>
-   <div class="row"><button class="btn" data-act="hquick">Just do it<small>An average job, no fuss</small></button>${T.k==="clean"?`<button class="btn" data-act="hcleandone">That'll do<small>Stop here</small></button>`:""}<button class="btn" data-act="hcancel">Stop<small>Nothing gets used up</small></button></div></div>`}
-
-// ---------- the doing ----------
-function svgPt(svg,e){const m=svg.getScreenCTM();if(!m)return{x:0,y:0};const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const r=pt.matrixTransform(m.inverse());return{x:r.x,y:r.y}}
-function wrapping(T){return T&&(T.k==="wrap"||T.k==="splint"&&T.phase==="wrap")}
-function wrapHold(on){const T=UI.treat;if(!wrapping(T)||T.wraps.length>=T.need)return;
-  if(on){if(T.holding)return;T.holding=true;T.v=0;T.msg="";healthLoop();return}
-  if(!T.holding)return;T.holding=false;const v=T.v;const r=v>1?"tight":v>=T.z0&&v<=T.z1?"snug":v>T.z1?"tight":"loose";
-  T.wraps.push(r);T.v=0;T.msg={snug:"Snug.",loose:"Too loose. It'll slip.",tight:"Too tight. Your fingers tingle."}[r];if(r==="tight")body().ache=Math.min(80,(body().ache||0)+3);
-  if(T.wraps.length>=T.need){const q=T.wraps.reduce((a,x)=>a+(x==="snug"?1:x==="tight"?.72:.42),0)/T.need;setTimeout(()=>{if(UI.treat===T)finishTreat(T.k==="splint"?(q+T.q1)/2:q)},380)}
-  render()}
-function healthLoop(){if(UI.hloop)return;UI.hloop=true;let last=performance.now();
-  const tick=now=>{const T=UI.treat;if(!T||UI.panel!=="health"||!S||S.player.alive===false){UI.hloop=false;return}const dt=Math.min(.05,(now-last)/1000);last=now;
-    if(T.holding){T.v+=T.rate*dt;if(T.v>1.15){T.v=1.2;wrapHold(false)}const n=$("tneedle");if(n)n.style.left=(Math.min(T.v,1.2)/1.2*100).toFixed(1)+"%";
-      const ro=$("troll");if(ro){const pad=$("treatpad");const C=closeShape(woundById(T.wid).p);const x=180+(T.wraps.length-(T.need-1)/2)*26;ro.setAttribute("transform",`translate(${(x+Math.sin(T.v*5)*4).toFixed(1)} ${(C.top-16+(C.bot-C.top+32)*Math.min(1,T.v/1.05)).toFixed(1)})`)}}
-    if(T.k==="stitch"&&T.i<T.pts.length){const p=T.pts[T.i];const t=now/1000;T.wx=Math.sin(t*2.3)*T.amp+Math.sin(t*5.1)*T.amp*.35;T.wy=Math.cos(t*1.7)*T.amp*.8;const d=$("tdot");if(d)d.setAttribute("transform",`translate(${(p.x+T.wx).toFixed(1)} ${(p.y+T.wy).toFixed(1)})`)}
-    requestAnimationFrame(tick)};
-  requestAnimationFrame(tick)}
-function healthAfterRender(){if(UI.treat)healthLoop()}
-function padDown(e){const T=UI.treat;const pad=e.target.closest("#treatpad");if(!T||!pad)return;e.preventDefault();const p=svgPt(pad,e);
-  if(wrapping(T)){wrapHold(true);return}
-  if(T.k==="clean"){T.scrub=true;T.lx=p.x;T.ly=p.y;scrubAt(p);return}
-  if(T.k==="stitch"){stitchAt(p);return}
-  if(T.k==="splint"&&T.phase==="place"&&e.target.id==="tsplint"){T.drag={dx:p.x-T.sx,dy:p.y-T.sy,x0:T.sx,y0:T.sy}}}
-function padMove(e){const T=UI.treat;if(!T)return;const pad=$("treatpad");if(!pad)return;
-  if(T.k==="clean"&&T.scrub){const p=svgPt(pad,e);if(Math.hypot(p.x-T.lx,p.y-T.ly)>2.5){T.lx=p.x;T.ly=p.y;scrubAt(p)}}
-  if(T.k==="splint"&&T.drag){const p=svgPt(pad,e);T.sx=clamp(p.x-T.drag.dx,40,320);T.sy=clamp(p.y-T.drag.dy,8,192);const s=$("tsplint");if(s){s.setAttribute("x",(T.sx-124).toFixed(1));s.setAttribute("y",(T.sy-7).toFixed(1))}}}
-function padUp(e){const T=UI.treat;if(!T)return;if(wrapping(T)&&T.holding){wrapHold(false);return}
-  if(T.k==="clean")T.scrub=false;
-  if(T.k==="splint"&&T.drag){const moved=Math.hypot(T.sx-T.drag.x0,T.sy-T.drag.y0)>4;T.drag=null;if(!moved){T.msg="Drag it into place along the outline.";render();return}const C=closeShape(woundById(T.wid).p);const ty=C.top-9;const d=Math.hypot(T.sx-180,T.sy-ty);
-    if(d<64){T.q1=clamp(1-d/50,.35,1);T.sx=180;T.sy=ty;T.phase="wrap";T.msg=T.q1>.8?"Lined up straight.":"Close enough. A little crooked.";render()}else{T.msg="Line it up with the outline, along the bone.";render()}}}
-function scrubAt(p){const T=UI.treat;let left=0;for(let i=0;i<T.specks.length;i++){const s=T.specks[i];if(s.a>0&&Math.hypot(s.x-p.x,s.y-p.y)<s.r+13){s.a-=.22;const el=$("sp"+i);if(el)el.setAttribute("opacity",Math.max(0,s.a).toFixed(2))}if(s.a>0)left++}
-  if(!left&&!T.done){T.done=1;setTimeout(()=>{if(UI.treat===T)finishTreat(1)},250)}}
-function stitchAt(p){const T=UI.treat;if(T.i>=T.pts.length)return;const t=T.pts[T.i];const d=Math.hypot(p.x-(t.x+(T.wx||0)),p.y-(t.y+(T.wy||0)));
-  if(d>16){T.miss++;T.msg="The needle slips. Try again.";body().ache=Math.min(80,(body().ache||0)+2);render();return}
-  T.acc.push(clamp(1-d/12,0,1));T.i++;T.msg=d<5?"Clean through.":d<10?"A little off.":"Ragged, but it holds.";
-  if(T.i>=T.pts.length){const q=clamp(T.acc.reduce((a,b)=>a+b,0)/T.acc.length-T.miss*.04,.15,1);T.done=1;render();setTimeout(()=>{if(UI.treat===T)finishTreat(q)},350);return}
-  render()}
-document.addEventListener("pointerdown",e=>{if(UI.treat&&e.button===0)padDown(e)});
-document.addEventListener("pointermove",e=>{if(UI.treat)padMove(e)});
-document.addEventListener("pointerup",e=>{if(UI.treat)padUp(e)});
-document.addEventListener("pointercancel",e=>{if(UI.treat)padUp(e)});
-addEventListener("keydown",e=>{const T=UI.treat;if(!T||!S||UI.panel!=="health"||UI.modal||typing())return;if(e.key===" "||e.key==="Enter"){if(!wrapping(T))return;e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)wrapHold(true)}},true);
-addEventListener("keyup",e=>{const T=UI.treat;if(!T||!(e.key===" "||e.key==="Enter"))return;if(T.holding){e.preventDefault();e.stopImmediatePropagation();wrapHold(false)}},true);
-
-// the work is done: change the body, let the time pass, say what happened
-function finishTreat(q){const T=UI.treat;if(!T)return;UI.treat=null;const w=woundById(T.wid);if(!w||S.player.alive===false){render();return}
-  const where=w.at,name=woundName(w).toLowerCase();let mins=4,msg="";
-  if(T.k==="clean"){if(w.band)undress(w);cleanWound(w,T.item,q);mins=4;const harsh=T.item==="rubbing_alcohol"||T.item==="whiskey";
-    msg=q>.85?`You clean the ${name} on your ${where}. ${harsh?"It stings like fire, then settles.":"It's as clean as water gets it."}`:`You clean the ${name} on your ${where} as best you can. Some of the dirt is still in it.`}
-  if(T.k==="wrap"){const had=!!w.band;dressWound(w,T.item,q);mins=T.item==="cloth"?3:4;const b=wBleed(w);
-    msg=`You ${had?"change the dressing on":T.item==="cloth"?"tie a strip of cloth around":T.item==="poultice"?"bind a poultice over":"wrap a bandage around"} your ${where}${q>.8?". It's snug":q<.5?". It's loose, but it'll do":""}.${b>.25?" Blood is still coming through.":w.bl>.03?" The bleeding slows to nothing.":""}`}
-  if(T.k==="stitch"){if(w.band)undress(w);stitchWound(w,T.item,q);mins=6+T.pts.length*2;
-    msg=`You put ${numWord(T.pts.length)} stitches in your ${where}. ${q>.75?"Neat work.":q>.5?"Not pretty, but it's closed.":"It's ugly and it hurts, but it's closed."} Dress it to keep it clean.`}
-  if(T.k==="splint"){splintWound(w,T.item,q);mins=10;msg=`You strap ${T.item==="splint"?"the splint":"a board"} along your ${BODY[w.p].n}. ${q>.7?"The bone holds still.":"It's not perfect, but it holds."}`}
+// ---------- doing it: one click, a few minutes pass ----------
+function doCare(k,w,item){if(!w||S.player.alive===false)return;if(zedNear(7)){toast("Not with the dead this close.");return}
+  const where=w.at,name=woundName(w).toLowerCase();let it=null,mins=4,msg="";
+  if(k==="wash"){it=washWound(w,item);if(!it){toast("You've nothing to wash it with. Even a bottle of water would do.");return}
+    const harsh=it==="rubbing_alcohol"||it==="whiskey";msg=`You wash the ${name} on your ${where} with ${CLEANERS.find(x=>x[0]===it)[2]}. ${harsh?"It stings like fire, then settles.":"It's clean now."}`}
+  if(k==="wrap"){const fr=w.k==="fracture";it=wrapWound(w,item);if(!it){toast(fr?"You need something to bind it with: a splint, a bandage, or cloth.":"You've nothing to wrap it with. A strip of cloth would do.");return}
+    mins=fr?10:5;msg=fr?`You ${it==="splint"?"strap the splint along":"wrap your "+BODY[w.p].n+" tight with "+BINDS.find(x=>x[0]===it)[2]+", holding"} your ${fr&&it==="splint"?BODY[w.p].n:"the bone still"}. It holds.`
+      :`You wrap ${DRESSINGS.find(x=>x[0]===it)[2]} around the ${name} on your ${where}.${w.bl>.03?" The bleeding slows to nothing.":""}`}
+  if(k==="stitch"){it=stitchWound(w,item);if(!it){toast("Nothing here needs stitches.");return}mins=12;msg=`You sew the ${name} on your ${where} shut. Not pretty, but it's closed.`}
   journal(msg,"good");UI.hmsg={t:S.t+mins,x:msg};act(mins);save();render()}
 function onHealthAct(a,v,el,e){if(!S)return false;
   switch(a){
-    case"hpart":UI.treat=null;UI.hsel=v&&UI.hsel!==v?v:null;render();return true;
-    case"htreat":{const [k,id]=v.split("|");openTreat(k,+id);return true}
-    case"hitem":{const T=UI.treat;if(T){const w=woundById(T.wid);T.item=v;initTreat(T,w)}render();return true}
-    case"hcancel":UI.treat=null;render();return true;
-    case"hquick":{const T=UI.treat;if(!T)return true;finishTreat(clamp(.58+S.player.sk.medic*.025,.58,.85)*(T.k==="splint"?.95:1));return true}
-    case"hcleandone":{const T=UI.treat;if(!T)return true;const f=T.specks.reduce((a,s)=>a+(1-Math.max(0,s.a)),0)/T.specks.length;finishTreat(Math.max(.15,f));return true}
-    case"hundress":{const w=woundById(+v);if(!w||!w.band)return true;const k=w.band.k;undress(w);advance(1);const t=`You unwrap the ${k==="rag"?"rag":k==="poultice"?"poultice":"bandage"} from your ${w.at}.`;journal(t);UI.hmsg={t:S.t,x:t};save();render();return true}
+    case"hpart":UI.hsel=v&&UI.hsel!==v?v:null;render();return true;
+    case"hdo":{const [k,id]=v.split("|");doCare(k,woundById(+id));return true}
+    case"htendall":{if(zedNear(7)){toast("Not with the dead this close.");return true}const r=tendAll();
+      const list=r.did.length>1?r.did.slice(0,-1).join(", ")+(r.did.length>2?",":"")+" and "+r.did[r.did.length-1]:r.did[0];
+      const msg=r.did.length?`You ${list}.${r.miss.length?` You ran out of what you'd need to ${r.miss.join(" or ")} the rest.`:""}`:`You don't have what you need to ${r.miss.join(" or ")||"do any more"}.`;
+      journal(msg,r.did.length?"good":"");UI.hmsg={t:S.t+r.mins,x:msg};if(r.mins)act(r.mins);save();render();return true}
     case"hmed":{const ok=v==="pain"?takePainkillers():takeAntibiotics();if(ok){advance(2);UI.hmsg={t:S.t,x:S.journal[0].x}}save();render();return true}
   }
   return false}
@@ -4528,8 +4416,8 @@ function useMed(id){const it=ITEMS[id];
   if(it.med==="pain"){if(takePainkillers()){advance(2);save();render()}return}
   if(it.med==="abx"){if(takeAntibiotics()){advance(2);save();render()}return}
   const k={dress:"wrap",clean:"clean",stitch:"stitch",splint:"splint"}[it.med];const w=woundFor(k);
-  if(!w){toast({wrap:"Nothing needs a dressing right now.",clean:"Nothing needs cleaning right now.",stitch:"Nothing needs stitches right now.",splint:"Nothing's broken. Keep it that way."}[k]);return}
-  openTreat(k,w.id,id)}
+  if(!w){toast({wrap:"Nothing needs wrapping right now.",clean:"Nothing needs washing right now.",stitch:"Nothing needs stitches right now.",splint:"Nothing's broken. Keep it that way."}[k]);return}
+  doCare(k==="clean"?"wash":k==="stitch"?"stitch":"wrap",w,id)}
 
 // ================= the inventory screen: grids, dragging, searching furniture =================
 // ---------- item pictures, drawn as small vector icons on a 10-units-per-cell grid ----------
@@ -4684,7 +4572,7 @@ function useInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;const
   else{toast(it.d||`You turn the ${it.n.toLowerCase()} over in your hands.`);return}
   save();render()}
 function canUse(id){const it=ITEMS[id];return!!(it.eat||it.drink||it.med||it.read||["cigarettes","radio","photo"].includes(id))}
-function useWord(id){const it=ITEMS[id];return it.eat?"Eat":it.drink?"Drink":it.med?{dress:"Dress a wound",pain:"Take two",abx:"Take a course",clean:"Clean a wound",stitch:"Stitch a wound",splint:"Splint a break"}[it.med]:it.read?"Read":id==="cigarettes"?"Smoke":id==="radio"?"Listen":id==="photo"?"Look at it":"Use"}
+function useWord(id){const it=ITEMS[id];return it.eat?"Eat":it.drink?"Drink":it.med?{dress:"Wrap a wound",pain:"Take two",abx:"Take a course",clean:"Wash a wound",stitch:"Stitch a cut",splint:"Bind a break"}[it.med]:it.read?"Read":id==="cigarettes"?"Smoke":id==="radio"?"Listen":id==="photo"?"Look at it":"Use"}
 function repairInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;if(!it.fix||!Object.entries(it.fix).every(([k,v])=>invHas(k,v)))return;for(const [k,v] of Object.entries(it.fix))invTake(k,v);
   const ws=atHome()&&siteHas(myGroup().home,"workshop");g.dur=Math.min(it.dur,g.dur+it.dur*(ws?.7:.45)+pl.sk.craft*2);act(20,{work:true});skillUp("craft",.06);journal(`You patch up your ${it.n.toLowerCase()}.`);save();render()}
 function takeAll(){const c=gridOf("open");if(!c)return;let n=0,left=0;for(const g of [...c.items]){if(!g.k&&!UI.open.cid.startsWith("pile"))continue;cRemove(c,g);if(pStore(g)){n++;g.k=1}else{c.items.push(g);left++}}
@@ -4738,7 +4626,7 @@ function openMenu(e,el){const src=srcOf(el);if(!src)return;const g=src.g;const i
   m.hidden=false;const W=innerWidth,H=innerHeight;m.style.left=Math.min(e.clientX,W-230)+"px";m.style.top=Math.min(e.clientY,H-m.offsetHeight-10)+"px"}
 function onInvAct(a,v,el,e){if(a==="takeall"){takeAll();return true}if(a==="closeopen"){closeOpen();return true}if(a!=="inv")return false;
   const [k,u]=v.split("|");closeMenu();const src=findInst(u);if(!src)return true;const g=src.g;const it=ITEMS[g.id];
-  switch(k){case"use":useInst(src);return true;case"cleanwith":{const w=woundFor("clean");if(w)openTreat("clean",w.id,g.id);return true}case"wear":equipInst(src);break;case"belt":equipInst(src,"side");break;case"unequip":unequip(src.slot);break;
+  switch(k){case"use":useInst(src);return true;case"cleanwith":{const w=woundFor("clean");if(w)doCare("wash",w,g.id);return true}case"wear":equipInst(src);break;case"belt":equipInst(src,"side");break;case"unequip":unequip(src.slot);break;
     case"take":quickMove(src,src.ref);break;case"give":quickMove(src,src.ref);break;case"split":splitInst(src);break;case"fix":repairInst(src);return true;
     case"drop":dropSrc(src);break;case"look":toast(`${it.n}. ${it.d||""} ${gearStats(g.id)?"("+gearStats(g.id)+")":""} ${it.uses?(it.uses-(g.used||0))+" of "+it.uses+" uses left.":""} ${it.w?it.w*g.n+" kg.":""}`.replace(/\s+/g," ").trim());return true}
   cleanPiles();save();render();return true}

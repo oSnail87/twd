@@ -67,8 +67,8 @@ function actionsHere(){const pl=S.player;const r=here();const A=[];const add=(id
   const food=bestFood(),drink=bestDrink();
   if(food&&pl.food<85)add("eat",`Eat ${(ITEMS[food].sn||ITEMS[food].n).toLowerCase()}`,`Food +${ITEMS[food].eat.food}`);
   if(drink&&pl.water<90)add("drink",`Drink ${(ITEMS[drink].sn||ITEMS[drink].n).toLowerCase()}`,`Water +${ITEMS[drink].drink}`);
-  {const w=worstBleeder();if(w&&haveFor(DRESSINGS).length)add("bandage","Bandage",`Your ${w.at}`,zn,true);
-   else if(wounds().some(w=>!w.band&&!WOUND[w.k].closed&&w.k!=="scratch"||w.band&&w.band.d>.7||w.k==="fracture"&&!w.spl))add("treat","Tend your wounds","Health screen")}
+  {const w=worstBleeder();if(w&&haveFor(DRESSINGS).length)add("bandage","Wrap it",`Your ${w.at} is bleeding`,zn,true);
+   else if(wounds().some(w=>needsWash(w)||needsWrap(w)))add("treat","Tend your wounds","Wash and wrap them")}
   if((pl.sick||infMax()>=30)&&invHas("antibiotics"))add("meds","Antibiotics",pl.sick?"Fights the fever":"Fights the infection");
   add("rest","Rest","1 hour",zedNear(6)?"Not with the dead this close":null);
   const s=sleepSafe();add("sleep","Sleep",s===2?"Safe here":s===1?"Mostly safe":"Risky out here",zedNear(14)?"Not with the dead this close":null);
@@ -88,7 +88,7 @@ function doAction(id){const pl=S.player;if(pl.alive===false)return;
     case"settle":settle();break;
     case"eat":useItem(bestFood());return;
     case"drink":useItem(bestDrink());return;
-    case"bandage":{const w=worstBleeder();if(w)openTreat("wrap",w.id);else openPanel("health");return}
+    case"bandage":{const w=worstBleeder();if(w)doCare("wrap",w);else openPanel("health");return}
     case"treat":openPanel("health");return;
     case"meds":takeAntibiotics();advance(2);break;
     case"rest":act(60,{sleep:true});journal("You sit and rest for an hour.");break;
@@ -133,8 +133,8 @@ function radioLine(){const d=dayOf(S.t);if(d<=2)return"The emergency broadcast r
   return pick(["Static. Then, for a moment, a woman's voice reading numbers. Then static.","Static. You crank it until your arm aches. Nothing.","A man's voice, very calm: \"...if you can hear this, you are not alone...\" Then nothing.","Somebody playing a guitar, badly, for about a minute. Then it's gone."])}
 
 // ---------- the side panel ----------
-function openPanel(k){if(UI.panel===k&&k!=="inv"){UI.panel=null}else{UI.panel=k}if(UI.panel!=="health")UI.treat=null;if(k!=="inv")UI.open=null;if(UI.talkTo&&UI.panel)closeTalk(true);render();if(UI.panel==="map")drawBigMap()}
-function closePanel(){if(!UI.panel)return false;UI.panel=null;UI.open=null;UI.treat=null;render();return true}
+function openPanel(k){if(UI.panel===k&&k!=="inv"){UI.panel=null}else{UI.panel=k}if(k!=="inv")UI.open=null;if(UI.talkTo&&UI.panel)closeTalk(true);render();if(UI.panel==="map")drawBigMap()}
+function closePanel(){if(!UI.panel)return false;UI.panel=null;UI.open=null;render();return true}
 function renderPanel(){const el=$("panel");if(!el)return;if(!UI.panel||S.player.alive===false){el.hidden=true;el.innerHTML="";return}
   const keep={};for(const x of el.querySelectorAll("[data-keep]"))keep[x.dataset.keep]=x.scrollTop;
   const name={inv:"Inventory",health:"Your body",craft:"Make things",group:"Group",people:"People",journal:"Journal",map:"Map"}[UI.panel];
@@ -348,7 +348,7 @@ function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small 
 <tr><td>Search</td><td>Click furniture, or stand next to it and press E. Things turn up as you look. Drag them into your pockets, bag or rig. R turns an item while you drag it.</td></tr>
 <tr><td>Inventory</td><td>Tab. Your clothes have pockets and your bag holds the most. Double-click to eat, drink, use or wear. Right-click for more.</td></tr>
 <tr><td>Fight</td><td>Space, or click one of the dead. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
-<tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, where it is and what it needs. Pick a wound to clean it, wrap a bandage on by hand, stitch it or splint it. Change dressings before they go bad, or the wound turns.</td></tr>
+<tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, and where. Wash a wound (water, alcohol or whiskey) so it doesn't turn, and wrap it (a bandage or a strip of cloth) to stop the bleeding. Wrap a broken bone tight to hold it still. If one turns, antibiotics cure it. Eat, drink and sleep: being fed and rested is what heals you.</td></tr>
 <tr><td>Light</td><td>F switches your flashlight on and off at night. The dead see it too.</td></tr>
 <tr><td>Panels</td><td>H your body, C make things, G your group, N people you know, J journal, M map, P pause, Esc closes things.</td></tr>
 <tr><td>Time</td><td>One real second is one minute. Long actions skip ahead. The speed buttons go up to 8x.</td></tr>
@@ -416,7 +416,7 @@ function onForm(f,form){const val=(form.querySelector("input")?.value||"").trim(
   if(f==="groupname"){const g=myGroup();if(val&&g){g.name=val;news(`${S.player.name}'s people call themselves ${val} now.`,"")}UI.modal=null;save();render();checkPending();return}}
 function onUiKey(k,e){const map={tab:"inv",i:"inv",h:"health",c:"craft",g:"group",n:"people",j:"journal",m:"map"};const pk=map[k];if(!pk)return;if(k==="tab")e.preventDefault();if(S.player.alive===false)return;if(UI.talkTo)closeTalk(true);
   if(pk==="inv"&&UI.panel==="inv"){closePanel();return}openPanel(pk)}
-function onEscape(){if(UI.drag&&typeof cancelDrag==="function"){cancelDrag();return true}if(UI.treat){UI.treat=null;render();return true}if(UI.menu&&typeof closeMenu==="function"){closeMenu();return true}if(UI.talkTo){closeTalk();return true}if(UI.panel){closePanel();return true}return false}
+function onEscape(){if(UI.drag&&typeof cancelDrag==="function"){cancelDrag();return true}if(UI.menu&&typeof closeMenu==="function"){closeMenu();return true}if(UI.talkTo){closeTalk();return true}if(UI.panel){closePanel();return true}return false}
 document.addEventListener("pointerdown",()=>{UI.pdown=true},true);document.addEventListener("pointerup",()=>{UI.pdown=false},true);document.addEventListener("pointercancel",()=>{UI.pdown=false},true);
 function uiTick(ts,dt){if(UI.talkTo)positionTalk(false);
   if(UI.hudDirty)hud();
