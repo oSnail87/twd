@@ -32,14 +32,19 @@ function clockHtml(){const pl=S.player;const inB=bldAt(pl.x,pl.z);const r=roomAt
   ${zc?`<div class="warn mono">${zc===1?"One of the dead is":zc+" of the dead are"} close.</div>`:""}${UI.paused?'<div class="warn mono">Paused</div>':W3.pausedNow&&UI.talkTo?'<div class="mute mono">Time stops while you talk</div>':""}`}
 function vitalsHtml(){const pl=S.player;const v=(n,val,k)=>`<div class="vital ${val<25?"low":val<50?"mid":""}" title="${n} ${Math.round(val)}"><span class="lbl">${n}</span><div class="bar"><i style="width:${Math.round(clamp(val,0,100))}%"></i></div></div>`;
   const w=weight(),m=maxW();
-  return v("Health",pl.hp)+v("Food",pl.food)+v("Water",pl.water)+v("Warmth",pl.warmth)+v("Energy",pl.energy)+
+  return `<button class="vbtn" data-act="panel" data-v="health" title="Your body (H)" aria-label="Your body: health ${Math.round(pl.hp)}">${v("Health",pl.hp)}</button>`+v("Food",pl.food)+v("Water",pl.water)+v("Warmth",pl.warmth)+v("Energy",pl.energy)+
   `<div class="load mono ${w>m?"neg":"mute"}">${w.toFixed(1)} / ${m.toFixed(0)} kg${lightOn()?" · light on":""}</div>${condsHtml()}`}
-function condsHtml(){const pl=S.player;const c=[];if(pl.bleeding)c.push("Bleeding");if(pl.sick)c.push("Sick");if(pl.bitten)c.push("Bitten");if(pl.preg)c.push("Pregnant");if(weight()>maxW())c.push("Overloaded");return c.length?`<div class="conds">${c.map(x=>`<span class="cond">${x}</span>`).join("")}</div>`:""}
+function condsHtml(){const pl=S.player;const c=[];const b=bleedTotal();if(b>.03)c.push(b>.6?"Bleeding badly":"Bleeding");if(pl.bitten)c.push("Bitten");
+  const im=infMax();if(pl.sick)c.push(im>=40?"Infected":"Sick");else if(im>=30)c.push("Wound turning");
+  for(const w of wounds())if(w.k==="fracture"&&!c.includes(woundName(w)))c.push(woundName(w));
+  const pn=painNow();if(pn>60)c.push("Agony");else if(pn>30)c.push("In pain");
+  if(pl.preg)c.push("Pregnant");if(weight()>maxW())c.push("Overloaded");
+  return c.length?`<div class="conds">${c.map(x=>`<button class="cond" data-act="panel" data-v="health" title="See where you're hurt (H)">${esc(x)}</button>`).join("")}</div>`:""}
 function ctrlsHtml(){return `<button data-act="speed" data-v="pause" class="${UI.paused?"on":""}" aria-pressed="${UI.paused}" title="Pause (P)">${UI.paused?"▶":"❚❚"}</button>${[1,2,4,8].map(s=>`<button data-act="speed" data-v="${s}" class="${UI.speed===s&&!UI.paused?"on":""}" aria-label="Speed ${s}x">${s}x</button>`).join("")}<button data-act="zoom" data-v="out" aria-label="Zoom out">−</button><button data-act="zoom" data-v="in" aria-label="Zoom in">+</button><button data-act="help" aria-label="How to play">?</button>`}
 function renderLog(){const el=$("log");if(!el)return;const now=S.t;const L=S.journal.slice(0,4).filter(j=>now-j.t<180);el.innerHTML=L.reverse().map(j=>`<div class="entry ${j.k}">${esc(j.x)}</div>`).join("")}
 
 // ---------- the bar along the bottom: what you can do here, and your panels ----------
-const PANELS=[["inv","Inventory","Tab"],["craft","Make","C"],["group","Group","G"],["people","People","N"],["journal","Journal","J"],["map","Map","M"]];
+const PANELS=[["inv","Inventory","Tab"],["health","Health","H"],["craft","Make","C"],["group","Group","G"],["people","People","N"],["journal","Journal","J"],["map","Map","M"]];
 function renderBar(){const el=$("bar");if(!el)return;if(S.player.alive===false){el.innerHTML="";return}const A=actionsHere();const asks=S.people.filter(q=>q.alive&&q.met&&q.want).length;
   el.innerHTML=`<div class="acts">${A.map(a=>`<button class="act${a.pri?" pri":""}" data-act="do" data-v="${a.id}"${a.dis?" disabled":""} title="${esc(a.dis||a.s||"")}">${esc(a.t)}<small>${esc(a.dis||a.s||"")}</small></button>`).join("")}</div>
   <div class="tabs">${PANELS.map(([k,n,key])=>`<button class="tab${UI.panel===k?" on":""}" data-act="panel" data-v="${k}" aria-pressed="${UI.panel===k}">${n}${k==="people"&&asks?` <span class="warn">${asks}</span>`:""}<small>${key}</small></button>`).join("")}</div>`}
@@ -62,8 +67,9 @@ function actionsHere(){const pl=S.player;const r=here();const A=[];const add=(id
   const food=bestFood(),drink=bestDrink();
   if(food&&pl.food<85)add("eat",`Eat ${(ITEMS[food].sn||ITEMS[food].n).toLowerCase()}`,`Food +${ITEMS[food].eat.food}`);
   if(drink&&pl.water<90)add("drink",`Drink ${(ITEMS[drink].sn||ITEMS[drink].n).toLowerCase()}`,`Water +${ITEMS[drink].drink}`);
-  if((pl.bleeding||pl.hp<75)&&invHas("bandage"))add("bandage","Bandage",pl.bleeding?"Stops bleeding":"Health +15");
-  if(pl.sick&&invHas("antibiotics"))add("meds","Antibiotics","Cures sickness");
+  {const w=worstBleeder();if(w&&haveFor(DRESSINGS).length)add("bandage","Bandage",`Your ${w.at}`,zn,true);
+   else if(wounds().some(w=>!w.band&&!WOUND[w.k].closed&&w.k!=="scratch"||w.band&&w.band.d>.7||w.k==="fracture"&&!w.spl))add("treat","Tend your wounds","Health screen")}
+  if((pl.sick||infMax()>=30)&&invHas("antibiotics"))add("meds","Antibiotics",pl.sick?"Fights the fever":"Fights the infection");
   add("rest","Rest","1 hour",zedNear(6)?"Not with the dead this close":null);
   const s=sleepSafe();add("sleep","Sleep",s===2?"Safe here":s===1?"Mostly safe":"Risky out here",zedNear(14)?"Not with the dead this close":null);
   if(nearPeople(10).filter(p=>p.age>=6&&!isFollower(p)).length>=2)add("listen","Listen in","Hear what they say");
@@ -82,8 +88,9 @@ function doAction(id){const pl=S.player;if(pl.alive===false)return;
     case"settle":settle();break;
     case"eat":useItem(bestFood());return;
     case"drink":useItem(bestDrink());return;
-    case"bandage":useItem("bandage");return;
-    case"meds":useItem("antibiotics");return;
+    case"bandage":{const w=worstBleeder();if(w)openTreat("wrap",w.id);else openPanel("health");return}
+    case"treat":openPanel("health");return;
+    case"meds":takeAntibiotics();advance(2);break;
     case"rest":act(60,{sleep:true});journal("You sit and rest for an hour.");break;
     case"sleep":sleep();break;
     case"listen":listenIn();return;
@@ -104,7 +111,7 @@ function sleep(){const pl=S.player;if(zedNear(14)){toast("Not with the dead this
   S.woke=null;advance(mins,{sleep:true,safe:safe>0});if(pl.alive===false)return;afterJump(mins);
   let visit=false;if(safe<2&&rf()<(safe===1?.1:.38)+Math.min(.3,zedsIn(here())/60)){visit=true;const n=rnd(1,safe===1?1:3);for(let i=0;i<n;i++){const a=rf()*6.28,d=rnd(6,10);const x=pl.x+Math.cos(a)*d,z=pl.z+Math.sin(a)*d;if(free(x,z,.4,"zed")){spawnZed(x,z);const zz=S.zeds[S.zeds.length-1];zz.st="hunt";zz.tx=pl.x;zz.tz=pl.z}}}
   const P2=pl.partner&&P(pl.partner);if(P2&&P2.alive&&dist(P2.x,P2.z,pl.x,pl.z)<10){P2.aff=clamp(P2.aff+2,-100,100);if(rf()<.25)mem(P2,`Fell asleep next to ${pl.name}. First good sleep in days.`,3)}
-  const txt=visit?"Something wakes you: shuffling, close by. The dead found you in the dark.":S.woke?`You wake early. ${{thirst:"Your mouth is dry as sand.",hunger:"Your stomach won't let you sleep.",cold:"You're shaking with cold.",pain:"The pain wakes you."}[S.woke]}`:h>=8&&h<19?"You nap for a few hours.":safe===2?"You sleep. Actually sleep. For a few hours you forget.":safe===1?"You sleep behind a shut door, waking at every sound.":"You sleep badly in the open, one ear awake all night.";
+  const txt=visit?"Something wakes you: shuffling, close by. The dead found you in the dark.":S.woke?`You wake early. ${{thirst:"Your mouth is dry as sand.",hunger:"Your stomach won't let you sleep.",cold:"You're shaking with cold.",pain:"The pain wakes you.",blood:"You wake up sticky and light-headed. You're still bleeding."}[S.woke]}`:h>=8&&h<19?"You nap for a few hours.":safe===2?"You sleep. Actually sleep. For a few hours you forget.":safe===1?"You sleep behind a shut door, waking at every sound.":"You sleep badly in the open, one ear awake all night.";
   journal(txt,visit?"bad":"");if(visit)toast("The dead found you while you slept.")}
 function chores(){const g=myGroup();const pl=S.player;act(120,{work:true});g.stock.food+=.8;g.stock.wood+=.6;g.stock.water+=.5;const ms=shuffle(members(g.id).filter(p=>p.age>=12)).slice(0,3);
   for(const p of ms){p.trust=clamp(p.trust+2,-100,100);p.aff=clamp(p.aff+1,-100,100);p.met=true;if(rf()<.4)mem(p,`${pl.name} pitched in with the work today.`,2)}skillUp("survive",.05);
@@ -126,27 +133,27 @@ function radioLine(){const d=dayOf(S.t);if(d<=2)return"The emergency broadcast r
   return pick(["Static. Then, for a moment, a woman's voice reading numbers. Then static.","Static. You crank it until your arm aches. Nothing.","A man's voice, very calm: \"...if you can hear this, you are not alone...\" Then nothing.","Somebody playing a guitar, badly, for about a minute. Then it's gone."])}
 
 // ---------- the side panel ----------
-function openPanel(k){if(UI.panel===k&&k!=="inv"){UI.panel=null}else{UI.panel=k}if(k!=="inv")UI.open=null;if(UI.talkTo&&UI.panel)closeTalk(true);render();if(UI.panel==="map")drawBigMap()}
-function closePanel(){if(!UI.panel)return false;UI.panel=null;UI.open=null;render();return true}
+function openPanel(k){if(UI.panel===k&&k!=="inv"){UI.panel=null}else{UI.panel=k}if(UI.panel!=="health")UI.treat=null;if(k!=="inv")UI.open=null;if(UI.talkTo&&UI.panel)closeTalk(true);render();if(UI.panel==="map")drawBigMap()}
+function closePanel(){if(!UI.panel)return false;UI.panel=null;UI.open=null;UI.treat=null;render();return true}
 function renderPanel(){const el=$("panel");if(!el)return;if(!UI.panel||S.player.alive===false){el.hidden=true;el.innerHTML="";return}
   const keep={};for(const x of el.querySelectorAll("[data-keep]"))keep[x.dataset.keep]=x.scrollTop;
-  const name={inv:"Inventory",craft:"Make things",group:"Group",people:"People",journal:"Journal",map:"Map"}[UI.panel];
-  const body=UI.panel==="inv"?(typeof invPanelHtml==="function"?invPanelHtml():""):UI.panel==="craft"?craftHtml():UI.panel==="group"?groupHtml():UI.panel==="people"?peopleHtml():UI.panel==="journal"?journalHtml():mapHtml();
+  const name={inv:"Inventory",health:"Your body",craft:"Make things",group:"Group",people:"People",journal:"Journal",map:"Map"}[UI.panel];
+  const body=UI.panel==="inv"?(typeof invPanelHtml==="function"?invPanelHtml():""):UI.panel==="health"?(typeof healthHtml==="function"?healthHtml():""):UI.panel==="craft"?craftHtml():UI.panel==="group"?groupHtml():UI.panel==="people"?peopleHtml():UI.panel==="journal"?journalHtml():mapHtml();
   el.hidden=false;el.className="panel p-"+UI.panel;W3.panelW=0;el.innerHTML=`<header><h2>${name}</h2><button class="x" data-act="closepanel" aria-label="Close">×</button></header><div class="pbody" data-keep="pbody">${body}</div>`;
   for(const x of el.querySelectorAll("[data-keep]"))if(keep[x.dataset.keep]!=null)x.scrollTop=keep[x.dataset.keep];
-  W3.panelW=el.offsetWidth+14;if(UI.panel==="map")drawBigMap();if(UI.panel==="inv"&&typeof invAfterRender==="function")invAfterRender()}
+  W3.panelW=el.offsetWidth+14;if(UI.panel==="map")drawBigMap();if(UI.panel==="inv"&&typeof invAfterRender==="function")invAfterRender();if(UI.panel==="health"&&typeof healthAfterRender==="function")healthAfterRender()}
 
 // making things
 function canCraft(r){for(const [k,v] of Object.entries(r.need))if(!invHas(k,v))return`Missing ${ITEMS[k].n.toLowerCase()}`;if(r.tool&&!hasTool(r.tool))return`Needs a ${r.tool}`;if(r.at==="fire"&&!nearFire())return"Needs a fire";return true}
-function craft(id){const r=RECIPES.find(x=>x.id===id);if(!r||canCraft(r)!==true)return;for(const [k,v] of Object.entries(r.need))invTake(k,v);act(r.h*60,{work:true});invAdd(r.id);skillUp("craft",.1);journal(`You make: ${ITEMS[r.id].n.toLowerCase()}.`,"good");save();render()}
+function craft(id){const r=RECIPES.find(x=>(x.key||x.id)===id);if(!r||canCraft(r)!==true)return;for(const [k,v] of Object.entries(r.need))invTake(k,v);act(r.h*60,{work:true});invAdd(r.id);skillUp("craft",.1);journal(r.key==="boil_bandage"?"You boil the bandage in a can over the fire and hang it to dry. Clean enough.":`You make: ${ITEMS[r.id].n.toLowerCase()}.`,"good");save();render()}
 function gearStats(id){const it=ITEMS[id];const s=[];if(it.dmg)s.push(`damage ${it.dmg}`);if(it.gun)s.push("loud");if(it.reach)s.push("long reach");if(it.warm)s.push(`warmth ${it.warm}`);if(it.armor)s.push(`armor ${it.armor}`);if(it.grid)s.push(`holds ${it.grid[0]}×${it.grid[1]}`);return s.join(" · ")}
 function craftHtml(){const fire=nearFire();return `<p class="mute">Making things takes time. Some recipes need a tool or a fire.${fire?' <span class="pos">There\'s a fire here.</span>':""}</p><div class="cards">${RECIPES.map(r=>{const it=ITEMS[r.id];const ok=canCraft(r);
-  return `<div class="card"><div class="row">${typeof itemIcon==="function"?itemIcon(r.id,32):""}<b>${esc(it.n)}</b></div><div class="mono mute">${Object.entries(r.need).map(([k,v])=>`${esc(ITEMS[k].n)} ×${v}`).join(", ")}${r.tool?` · a ${r.tool}`:""}${r.at?" · a fire":""} · ${r.h<1?Math.round(r.h*60)+" min":r.h+" h"}</div>${gearStats(r.id)?`<div class="mono mute">${gearStats(r.id)}</div>`:""}<button class="btn${ok===true?" pri":""}" data-act="craft" data-v="${r.id}"${ok===true?"":" disabled"}>Make it<small>${ok===true?"Ready":esc(ok)}</small></button></div>`}).join("")}</div>`}
+  return `<div class="card"><div class="row">${typeof itemIcon==="function"?itemIcon(r.id,32):""}<b>${esc(r.verb||it.n)}</b></div><div class="mono mute">${Object.entries(r.need).map(([k,v])=>`${esc(ITEMS[k].n)} ×${v}`).join(", ")}${r.tool?` · a ${r.tool}`:""}${r.at?" · a fire":""} · ${r.h<1?Math.round(r.h*60)+" min":r.h+" h"}</div>${gearStats(r.id)?`<div class="mono mute">${gearStats(r.id)}</div>`:""}<button class="btn${ok===true?" pri":""}" data-act="craft" data-v="${r.key||r.id}"${ok===true?"":" disabled"}>Make it<small>${ok===true?"Ready":esc(ok)}</small></button></div>`}).join("")}</div>`}
 
 // journal and the map
-function journalHtml(){const tip=dayOf(S.t)===1&&hourOf(S.t)<12?`<div class="card"><b>Getting started</b><div class="mute">Walk with WASD or by clicking the ground. Click a person to talk. Press E to open doors and search furniture, Space to fight. Tab opens your inventory. One real second is one minute here, and time stops while you talk.</div></div>`:"";
+function journalHtml(){const F=S.flags;const tip=(F.wake?S.t-F.wake<300:dayOf(S.t)===1&&hourOf(S.t)<12)?`<div class="card"><b>Getting started</b><div class="mute">Walk with WASD or by clicking the ground. Click a person to talk. Press E to open doors and search furniture, Space to fight. Tab opens your inventory. One real second is one minute here, and time stops while you talk.</div></div>`:"";
   return `${tip}<div class="lbl">What's happened to you</div><div class="journal">${S.journal.map(j=>`<div class="entry ${j.k}"><div class="mono">${stamp(j.t)}</div>${esc(j.x)}</div>`).join("")}</div>
-  <div class="lbl" style="margin-top:14px">Around Limon</div><div class="journal">${S.news.slice(0,60).map(n=>`<div class="entry ${n.k}"><div class="mono">${stamp(n.t)}</div>${esc(n.x)}</div>`).join("")}</div>`}
+  <div class="lbl" style="margin-top:14px">Around Limon</div><div class="journal">${(()=>{const L=S.news.filter(n=>!F.wake||n.t>=F.wake).slice(0,60);return L.length?L.map(n=>`<div class="entry ${n.k}"><div class="mono">${stamp(n.t)}</div>${esc(n.x)}</div>`).join(""):`<div class="entry mute">You slept through the first week. Whatever happened in Limon, you'll have to hear it from someone.</div>`})()}</div>`}
 function mapHtml(){const gs=Object.values(S.groups).filter(o=>!o.dead&&groupSize(o.id)>0);
   return `<p class="mono mute">Click the map to walk there. Orange is you and your house, green is people with you, red is the dead nearby.</p><canvas id="bigmap" data-act="mapclick" role="img" aria-label="Map of Limon"></canvas>
   <div class="cards">${gs.map(o=>`<div class="card"><b><span class="dot" style="background:${o.color}"></span> ${esc(o.name)}</b><div class="mono mute">${o.home?esc(PLACES[o.home].n):"on the move"} · ${groupSize(o.id)} people</div></div>`).join("")}${freeSites().length?`<div class="card"><b>Unclaimed camps</b><div class="mute">${freeSites().map(k=>esc(PLACES[k].n)).join(", ")}</div></div>`:""}</div>`}
@@ -163,27 +170,30 @@ function peopleListHtml(){const pl=S.player;const f=UI.peopleFilter;const q=UI.p
   let ps=S.people.filter(p=>p.met||pl.fam[p.id]);
   if(f==="group")ps=pl.group?S.people.filter(p=>p.alive&&p.group===pl.group):[];
   if(f==="family")ps=S.people.filter(p=>pl.fam[p.id]||p.partner==="you");
-  if(f==="known")ps=ps.filter(p=>p.alive);
-  if(f==="lost")ps=ps.filter(p=>!p.alive);
+  const alive=p=>p.alive||!pKnown(p);
+  if(f==="known")ps=ps.filter(alive);
+  if(f==="lost")ps=ps.filter(p=>!alive(p));
   if(q)ps=ps.filter(p=>fullName(p).toLowerCase().includes(q));
   ps.sort((a,b)=>feel(b)-feel(a));
   if(!ps.length)return `<p class="mute">${f==="group"&&!pl.group?"You're not in a group.":f==="lost"?"You haven't lost anyone you know. Yet.":"Nobody here yet. Go and meet people."}</p>`;
-  return `<table><thead><tr><th>Name</th><th>Feels</th><th>Where</th></tr></thead><tbody>${ps.slice(0,90).map(p=>`<tr class="click" data-act="person" data-v="${p.id}"><td>${esc(fullName(p))} <span class="mute mono">${p.age}</span>${pl.fam[p.id]?` <span class="tag">${esc(pl.fam[p.id])}</span>`:""}${p.partner==="you"?' <span class="tag">partner</span>':""}${p.want&&p.alive&&p.met?' <span class="tag warn">asked you</span>':""}<div class="mute small">${p.group&&G(p.group)?esc(G(p.group).name):""}</div></td><td class="${p.alive?(feel(p)>20?"pos":feel(p)<-10?"neg":"mute"):"mute"}">${p.alive?tierWord(tier(p)):esc(p.status==="turned"?"turned":p.status==="left"?"left town":"dead")}</td><td class="mute">${p.alive?esc(isFollower(p)?"with you":whereShort(p)):""}</td></tr>`).join("")}</tbody></table>`}
+  return `<table><thead><tr><th>Name</th><th>Feels</th><th>Where</th></tr></thead><tbody>${ps.slice(0,90).map(p=>`<tr class="click" data-act="person" data-v="${p.id}"><td>${esc(fullName(p))} <span class="mute mono">${p.age}</span>${pl.fam[p.id]?` <span class="tag">${esc(pl.fam[p.id])}</span>`:""}${p.partner==="you"&&pl.fam[p.id]!=="partner"?' <span class="tag">partner</span>':""}${p.want&&p.alive&&p.met?' <span class="tag warn">asked you</span>':""}<div class="mute small">${pKnown(p)&&p.group&&G(p.group)?esc(G(p.group).name):""}</div></td><td class="${alive(p)?(feel(p)>20?"pos":feel(p)<-10?"neg":"mute"):"mute"}">${alive(p)?tierWord(tier(p)):esc(p.status==="turned"?"turned":p.status==="left"?"left town":"dead")}</td><td class="mute">${!pKnown(p)?"not seen since you woke":p.alive?esc(isFollower(p)?"with you":whereShort(p)):""}</td></tr>`).join("")}</tbody></table>`}
 function whereShort(p){const b=bldAt(p.x,p.z);return b?b.n:PLACES[regionAt(p.x,p.z)]?.n||""}
-function profileHtml(p){const pl=S.player;const g=p.group?G(p.group):null;const fam=famList(p).filter(([q])=>q.id!=="you");const mems=p.mem.filter(m=>m.a==="you").slice(-5).reverse();const open=feel(p)>25||p.fam.you;
+function profileHtml(p){const pl=S.player;const kn=pKnown(p);const g=kn&&p.group?G(p.group):null;const fam=famList(p).filter(([q])=>q.id!=="you");const mems=p.mem.filter(m=>m.a==="you"&&(kn||m.d<=1)).slice(-5).reverse();const open=feel(p)>25||p.fam.you;
+  const sees=p.alive&&kn&&(isFollower(p)||(p.pseen||-1e9)>=S.t-10);const needs=[(p.hunger??80)<30&&"hungry",(p.thirst??80)<30&&"thirsty",(p.rest??80)<25&&"worn out",(p.fear||0)>60&&"scared",(p.health??100)<50&&"hurt"].filter(Boolean);
   const meter=(n,v)=>`<div class="meter"><span>${n}</span><div class="track"><i style="left:${v<0?50+v/2:50}%;width:${Math.abs(v)/2}%;background:${v<0?"var(--blood)":"var(--lichen)"}"></i></div><span>${Math.round(v)}</span></div>`;
-  return `<div class="card profile"><div class="row" style="justify-content:space-between"><div><h3>${esc(fullName(p))}</h3><div class="mono mute">${p.age} · ${esc(JOBS[p.job]?.n||"")}${g?` · ${esc(g.name)}${p.role?" ("+esc(ROLES[p.role].n.toLowerCase())+")":""}`:""}${p.alive?"":" · "+esc(p.status==="turned"?"turned":p.status==="left"?"left town":"dead")}</div></div><button class="x" data-act="person" data-v="" aria-label="Close profile">×</button></div>
+  return `<div class="card profile"><div class="row" style="justify-content:space-between"><div><h3>${esc(fullName(p))}</h3><div class="mono mute">${p.age} · ${esc(JOBS[p.job]?.n||"")}${g?` · ${esc(g.name)}${p.role?" ("+esc(ROLES[p.role].n.toLowerCase())+")":""}`:""}${!kn?" · not seen since you woke":p.alive?"":" · "+esc(p.status==="turned"?"turned":p.status==="left"?"left town":"dead")}</div></div><button class="x" data-act="person" data-v="" aria-label="Close profile">×</button></div>
    <div class="mute">${esc(cap(p.look||""))}. ${esc(cap(traitWords(p.tr).join(", ")))}.${p.style!=="kid"&&STYLES[p.style]?" Talks "+esc(STYLES[p.style])+".":""}</div>
-   ${p.alive?meter("Trust",p.trust)+meter("Warmth",p.aff):""}
+   ${p.alive||!kn?meter("Trust",p.trust)+meter("Warmth",p.aff):""}
    ${open||p.told?.who?`<div><span class="lbl">From</span> ${esc(p.facts.from)}${open?` · <span class="lbl">Misses</span> ${esc(p.facts.likes)}`:""}</div>`:""}
    ${open?`<div><span class="lbl">Afraid of</span> ${esc(p.facts.fear)} · <span class="lbl">Hopes for</span> ${esc(p.facts.hope)}</div>`:""}
    ${p.told?.secret?`<div><span class="lbl">Told you</span> "${esc(p.facts.secret)}"</div>`:""}
+   ${sees?`<div><span class="lbl">Right now</span> ${esc(cap(p.act||"around"))}${needs.length?` · <span class="warn">${esc(needs.join(", "))}</span>`:""}</div>`:""}
    ${p.partner?`<div><span class="lbl">With</span> ${p.partner==="you"?"you":esc(P(p.partner)?.name||"someone")}</div>`:""}
    ${fam.length?`<div><span class="lbl">Family</span> ${fam.map(([q,r])=>`${esc(r)} ${esc(q.name)}${q.alive?"":" ("+(q.status==="turned"?"turned":q.status==="left"?"gone":"dead")+")"}`).join(", ")}</div>`:""}
    ${p.want&&p.alive&&p.met?`<div class="warn"><span class="lbl">Asked you</span> ${esc(wantSummary(p))}</div>`:""}
    ${mems.length?`<div><div class="lbl">What they remember about you</div>${mems.map(m=>`<div class="entry ${m.v>0?"good":m.v<0?"bad":""}"><div class="mono">Day ${m.d}</div>${esc(m.x)}</div>`).join("")}</div>`:""}
    ${p.alive&&orphan(p)&&p.met?`<button class="btn" data-act="adopt" data-v="${p.id}">Take in ${esc(p.name)}<small>${esc(p.name)} has nobody left</small></button>`:""}
-   ${p.alive&&!isFollower(p)?`<button class="btn" data-act="walkto" data-v="${p.id}">Go to ${esc(p.met?p.name:"them")}<small>${esc(whereShort(p))}</small></button>`:""}</div>`}
+   ${p.alive&&kn&&!isFollower(p)?`<button class="btn" data-act="walkto" data-v="${p.id}">Go to ${esc(p.met?p.name:"them")}<small>${esc(whereShort(p))}</small></button>`:""}</div>`}
 
 // your group
 function groupHtml(){const pl=S.player;const g=myGroup();if(!g)return noGroupHtml();
@@ -309,14 +319,15 @@ function modalHtml(){const m=UI.modal;if(!m)return"";const wrap=(inner,label,cls
   if(m.type==="event"){const ev=EVENTS[m.id];const text=typeof ev.text==="function"?ev.text(m.data):ev.text;
     if(ev.input)return wrap(`<h2>${esc(ev.title)}</h2><p>${esc(text)}</p><form class="row" data-form="${ev.input}"><input id="minput" maxlength="30" placeholder="A name" required aria-label="Name"><button class="btn pri" type="submit">That's the name</button></form>`,ev.title);
     return wrap(`<h2>${esc(ev.title)}</h2><p>${esc(text)}</p><div class="choices">${ev.choices.map((c,i)=>`<button class="btn" data-act="choose" data-v="${i}">${esc(c.t)}</button>`).join("")}</div>`,ev.title)}
-  if(m.type==="result")return wrap(`<h2>${esc(m.title)}</h2><p>${esc(m.text)}</p><div class="row"><button class="btn pri" data-act="closemodal">Continue</button></div>`,m.title);
+  if(m.type==="wake")return wrap(wakeHtml(),"Awake","wide waking");
+  if(m.type==="result")return wrap(`<h2>${esc(m.title)}</h2>${m.note?`<div class="hnote">${String(m.text).split(/\n\n+/).map(x=>`<p>${esc(x).replace(/\n/g,"<br>")}</p>`).join("")}</div>`:`<p>${esc(m.text)}</p>`}<div class="row"><button class="btn pri" data-act="closemodal">Continue</button></div>`,m.title);
   if(m.type==="help")return wrap(helpHtml(),"How to play","wide");
   if(m.type==="name_group")return wrap(`<h2>Name your people</h2><p>Every group out here goes by something. What do you call yours?</p><form class="row" data-form="groupname"><input id="minput" maxlength="32" placeholder="${esc(myGroup()?.name||"")}" required aria-label="Group name"><button class="btn pri" type="submit">That's us</button></form>`,"Name your group");
   if(m.type==="trade")return P(m.pid)?wrap(tradeHtml(),"Trade","wide"):"";
-  if(m.type==="confirmNew")return wrap(`<h2>Start over?</h2><p>This life ends here and someone new wakes up on day one. Your current game is erased.</p><div class="row"><button class="btn pri" data-act="newgame">Start a new life</button><button class="btn" data-act="closemodal">Keep playing</button></div>`,"Start over");
+  if(m.type==="confirmNew")return wrap(`<h2>Start over?</h2><p>This life ends here and someone new wakes up in Limon. Your current game is erased.</p><div class="row"><button class="btn pri" data-act="newgame">Start a new life</button><button class="btn" data-act="closemodal">Keep playing</button></div>`,"Start over");
   if(m.type==="dead")return wrap(deadHtml(),"The end");
   return""}
-function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small town where everyone has a life of their own. Today the dead start walking. Survive, and decide who you want to be to the people around you.</p>
+function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small town where everyone has a life of their own. ${S&&S.flags.wake?"A week ago the dead started walking, and you slept through it. Everyone else has had seven days to choose sides.":"Today the dead start walking."} Survive, and decide who you want to be to the people around you.</p>
 <table><tbody>
 <tr><td>Walk</td><td>WASD or the arrow keys, or click the ground. Hold Shift to run, which is loud. Walking into a door opens it.</td></tr>
 <tr><td>Talk</td><td>Click a person. A box opens beside them: type anything. Time stops while you talk. They remember what you say and do.</td></tr>
@@ -324,8 +335,9 @@ function helpHtml(){return `<h2>How to play</h2><p>You're one person in a small 
 <tr><td>Search</td><td>Click furniture, or stand next to it and press E. Things turn up as you look. Drag them into your pockets, bag or rig. R turns an item while you drag it.</td></tr>
 <tr><td>Inventory</td><td>Tab. Your clothes have pockets and your bag holds the most. Double-click to eat, drink, use or wear. Right-click for more.</td></tr>
 <tr><td>Fight</td><td>Space, or click one of the dead. Weapons wear out and guns draw a crowd. A bite can't be cured.</td></tr>
+<tr><td>Wounds</td><td>H shows your body: every cut, bite, bruise and break, where it is and what it needs. Pick a wound to clean it, wrap a bandage on by hand, stitch it or splint it. Change dressings before they go bad, or the wound turns.</td></tr>
 <tr><td>Light</td><td>F switches your flashlight on and off at night. The dead see it too.</td></tr>
-<tr><td>Panels</td><td>C make things, G your group, N people you know, J journal, M map, P pause, Esc closes things.</td></tr>
+<tr><td>Panels</td><td>H your body, C make things, G your group, N people you know, J journal, M map, P pause, Esc closes things.</td></tr>
 <tr><td>Time</td><td>One real second is one minute. Long actions skip ahead. The speed buttons go up to 8x.</td></tr>
 </tbody></table><p class="mute">The game saves itself in this browser.${typeof aiHelpText==="function"?" "+esc(aiHelpText()):""}</p>
 <div class="row"><button class="btn pri" data-act="closemodal">Back to it</button><button class="btn" data-act="confirmnew">Start over</button></div>`}
@@ -348,6 +360,7 @@ function onAct(a,v,el,e){const pl=S&&S.player;
   if(!S)return;
   if(typeof onInvAct==="function"&&onInvAct(a,v,el,e))return;
   if(typeof onBondAct==="function"&&onBondAct(a,v,el,e))return;
+  if(typeof onHealthAct==="function"&&onHealthAct(a,v,el,e))return;
   switch(a){
     case"speed":if(v==="pause")UI.paused=!UI.paused;else{UI.speed=+v;UI.paused=false}hud();return;
     case"zoom":W3.zoom=clamp(W3.zoom*(v==="in"?1.2:1/1.2),.55,2.6);return;
@@ -375,6 +388,7 @@ function onAct(a,v,el,e){const pl=S&&S.player;
     case"adopt":adopt(v);save();render();return;
     case"choose":choose(+v);return;
     case"closemodal":UI.modal=null;render();checkPending();return;
+    case"wakeup":UI.modal=UI.modal&&UI.modal.then==="help"?{type:"help"}:null;render();return;
     case"aitoggle":AI.on=!AI.on;try{localStorage.setItem("twd.ai",AI.on?"1":"0")}catch(err){}toast(AI.on?"Claude writes what people say again.":"People use their built-in lines now, with no Claude usage.");renderTalk();return;
     case"tq":{const [side,k,d]=v.split("|");const m=UI.modal;if(!m||m.type!=="trade")return;const max=side==="give"?(tradables()[k]||0):(P(m.pid).pack[k]||0);m[side][k]=clamp((m[side][k]||0)+(+d),0,max);if(!m[side][k])delete m[side][k];render();return}
     case"dotrade":doTrade();return;
@@ -387,9 +401,9 @@ function onForm(f,form){const val=(form.querySelector("input")?.value||"").trim(
   if(typeof onCreateForm==="function"&&onCreateForm(f,form))return;
   if(f==="childname"){const m=UI.modal;const c=m&&m.data?P(m.data.child):null;if(val&&c){c.name=val;journal(`You name ${c.sex==="F"?"her":"him"} ${val}.`,"big")}UI.modal=null;save();render();checkPending();return}
   if(f==="groupname"){const g=myGroup();if(val&&g){g.name=val;news(`${S.player.name}'s people call themselves ${val} now.`,"")}UI.modal=null;save();render();checkPending();return}}
-function onUiKey(k,e){const map={tab:"inv",i:"inv",c:"craft",g:"group",n:"people",j:"journal",m:"map"};const pk=map[k];if(!pk)return;if(k==="tab")e.preventDefault();if(S.player.alive===false)return;if(UI.talkTo)closeTalk(true);
+function onUiKey(k,e){const map={tab:"inv",i:"inv",h:"health",c:"craft",g:"group",n:"people",j:"journal",m:"map"};const pk=map[k];if(!pk)return;if(k==="tab")e.preventDefault();if(S.player.alive===false)return;if(UI.talkTo)closeTalk(true);
   if(pk==="inv"&&UI.panel==="inv"){closePanel();return}openPanel(pk)}
-function onEscape(){if(UI.drag&&typeof cancelDrag==="function"){cancelDrag();return true}if(UI.menu&&typeof closeMenu==="function"){closeMenu();return true}if(UI.talkTo){closeTalk();return true}if(UI.panel){closePanel();return true}return false}
+function onEscape(){if(UI.drag&&typeof cancelDrag==="function"){cancelDrag();return true}if(UI.treat){UI.treat=null;render();return true}if(UI.menu&&typeof closeMenu==="function"){closeMenu();return true}if(UI.talkTo){closeTalk();return true}if(UI.panel){closePanel();return true}return false}
 document.addEventListener("pointerdown",()=>{UI.pdown=true},true);document.addEventListener("pointerup",()=>{UI.pdown=false},true);document.addEventListener("pointercancel",()=>{UI.pdown=false},true);
 function uiTick(ts,dt){if(UI.talkTo)positionTalk(false);
   if(UI.hudDirty)hud();

@@ -1,8 +1,16 @@
 # TWD (working title)
 
-An original zombie-outbreak survival game about people. You wake up in the small town of Limon on the first morning of the outbreak. About seventy townspeople have their own families, memories and opinions, and they make their own choices: they form camps, trade, feud, fall in love, split apart and raid each other whether or not you're there.
+An original zombie-outbreak survival game about people. You wake up in the small town of Limon, either in a hospital bed a week into the outbreak or at home on its first morning. About seventy townspeople have their own families, memories and opinions, and they make their own choices: they form camps, trade, feud, fall in love, split apart and raid each other whether or not you're there.
 
 The whole game is one HTML page (three.js for the world view). It runs as a claude.ai Artifact, or by opening `dist/index.html` in a browser.
+
+## What's in v4
+
+- A new start: you were in a coma at Limon Hospital when it began. The town lives its first week without you (the same simulation, run fast while a short "while you were asleep" sequence plays), and you wake on day 8 behind a door your nurse locked from the hall, with her note, your things in a bag and one of the dead in the waiting room. Whoever you lived with leaves a note at home saying where they went, if they could. The people screen only shows what you've seen since you woke. The old day-one start is still there.
+- A body health screen (H): every cut, bite, bruise and break sits on a part of a drawn body, with what it's doing and what it needs. Wounds bleed, get dirty, get infected and heal over days. Broken legs slow you and stop you running, broken arms weaken your swing, pain and fever wear you down.
+- Hands-on treatment on that screen: wipe a wound clean, stitch it mark by mark, wrap a bandage by holding and letting go in the green, drag a splint into place and strap it. How well you do it decides how well it works. Dressings soak through and need changing; bloody bandages can be boiled clean.
+- Townspeople run on needs (food, water, rest, fear, company) and make plans to meet them: stock up, scavenge, fetch water, hide, look for family, join or found groups. The dead attack them too.
+- More pull when you talk to people once things go bad, and relationships that can turn into something more (always fade-to-black).
 
 ## What's in v3
 
@@ -20,14 +28,17 @@ The whole game is one HTML page (three.js for the world view). It runs as a clau
   - `10_base.js`: helpers, the map, places, buildings and items.
   - `20_interior.js`: rooms, furniture, doors, collision and paths.
   - `30_inventory.js`: the grid inventory model and loot.
+  - `35_body.js`: wounds, bleeding, infection, healing and treatment.
   - `40_sim.js`: the world state, people, groups and the hourly simulation.
+  - `45_mind.js`: what each person needs and plans to do about it. `52_bond.js`: following, invitations and relationships.
+  - `48_coma.js`: the coma start: the week you sleep through, waking up, and the notes left for you.
   - `50_talk.js`: conversations, decided by rules. `55_ai.js` has Claude write the words.
   - `60_world.js` and `65_figs.js`: the 3D town, buildings, and the jointed figures.
   - `68_play.js`: moving, doors, the dead, fighting, the camera and light.
-  - `70_ui.js` and `80_inv_ui.js`: the screen, panels, talking, and the inventory screen.
+  - `70_ui.js` and `80_inv_ui.js`: the screen, panels, talking, and the inventory screen. `75_health.js`: the body screen and hands-on treatment.
   - `90_boot.js`: character creation and start-up.
 - `build.sh` concatenates them into `dist/index.html` and syntax-checks the script.
-- `tests/` holds Playwright scripts used to play-test the build headlessly.
+- `tests/` holds the checks: `sim.js`, `body.js` and `coma.js` run the simulation with no screen; `play.js`, `health.js` and `coma_ui.js` play the built page in headless Chromium and save screenshots.
 
 ## Versions
 

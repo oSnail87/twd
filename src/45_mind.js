@@ -119,7 +119,7 @@ function pickBest(p,O){let b=null;const cur=p.plan&&p.plan.until>S.t?p.plan.k:nu
 function famMissing(p,c){let best=null;const pl=S.player;
   for(const [id,rel] of Object.entries(p.fam)){
     if(id==="you"){if(p.follow||pl.alive===false||!["partner","sibling","little sibling","kid","son","parent","mom or dad","guardian"].includes(rel))continue;
-      if(pl.coma?c.alarm&&c.d===1&&!S.flags.triedYou:p.heard&&dist(p.x,p.z,pl.x,pl.z)>8){const u=pl.coma?50:60;if(!best||u>best.u)best={q:pl,u}}continue}
+      if(pl.coma?c.alarm&&c.d===1&&!S.flags.triedYou&&p.age>=14:p.heard&&dist(p.x,p.z,pl.x,pl.z)>8){const u=pl.coma?50:60;if(!best||u>best.u)best={q:pl,u}}continue}
     const q=P(id);if(!q||!q.alive||q.group&&q.group===p.group||isFollower(q)||dist(q.x,q.z,p.x,p.z)<7)continue;
     if(q.home===p.home&&!q.group&&atHomeB(q)&&!atHomeB(p)&&q.age>=13)continue;
     if(q.home===p.home&&!q.group&&atHomeB(q)&&atHomeB(p))continue;

@@ -64,7 +64,7 @@ function cleanPiles(){S.piles=S.piles.filter(p=>p.c.items.length)}
 function contState(cid){let s=S.cont[cid];if(!s){const C=CONTS[cid];const T=CONT[C.k]||{g:[4,3]};s=S.cont[cid]={c:{g:[...T.g],items:[]},rolled:false,rev:0,lock:!!T.locked}}return s}
 function isShop(b){return b&&!["house","farmhouse","trailer","cabin"].includes(b.type)}
 function rollLoot(cid){const s=contState(cid);if(s.rolled)return s;s.rolled=true;const C=CONTS[cid];const pl=S.player;const day=dayOf(S.t);const b=C.b?BMAP[C.b]:null;
-  const shop=isShop(b)||!b;const picked=C.b===pl.home?0:Math.min(.85,(day-1)*(shop?.07:.035)+(S.flags.clinic&&shop?.06:0));
+  const shop=isShop(b)||!b;const picked=C.b===pl.home?0:Math.min(.7,(day-1)*(shop?.04:.02)+(S.flags.clinic&&shop?.06:0));
   const mult=(1-picked)*(1+pl.sk.scavenge*.05);
   for(const [id,ch,mn=1,mx=1] of (LOOT[C.k]||[])){if(!ITEMS[id])continue;if(rf()<ch*mult)cAdd(s.c,id,rnd(mn,mx),true)}
   if(C.b===pl.home&&!pl.flags.homeSeeded)seedHome(b);
@@ -72,5 +72,5 @@ function rollLoot(cid){const s=contState(cid);if(s.rolled)return s;s.rolled=true
 // your own house has a few things you'd know were there
 function seedHome(b){const pl=S.player;pl.flags.homeSeeded=true;const add=(k,list)=>{const c=Object.values(CONTS).find(c=>c.b===b.id&&c.k===k);if(!c)return;const s=contState(c.id);const fresh=!s.rolled;s.rolled=true;for(const [id,n] of list)cAdd(s.c,id,n);if(fresh)for(const [id,ch,mn=1,mx=1] of (LOOT[k]||[]))if(rf()<ch)cAdd(s.c,id,rnd(mn,mx),true);s.c.items.sort((a,c)=>a.y-c.y||a.x-c.x)};
   add("closet",[["backpack",1],["tshirt",1]]);add("cupboard",[["canned_food",2],["kitchen_knife",1],["water_bottle",1]]);add("fridge",[["water_bottle",2]]);add("nightstand",[["flashlight",1]]);add("medicine",[["bandage",2]])}
-function contName(cid){if(cid.startsWith("pile"))return"On the ground";const C=CONTS[cid];return C?C.n:"Container"}
+function contName(cid){if(cid.startsWith("pile")){const p=S.piles.find(q=>q.id===cid);return p&&p.n||"On the ground"}const C=CONTS[cid];return C?C.n:"Container"}
 function openContObj(cid){if(cid.startsWith("pile")){const p=S.piles.find(p=>p.id===cid);return p?{c:p.c,rev:1e9,pile:p}:null}const s=rollLoot(cid);return{c:s.c,rev:s.rev,st:s}}

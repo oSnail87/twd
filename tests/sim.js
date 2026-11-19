@@ -1,7 +1,7 @@
 // Run the town for several days with no screen, to catch crashes in people, the dead, doors and paths.
 // node tests/sim.js [days]
 const fs=require('fs'),vm=require('vm'),path=require('path');
-const parts=['10_base.js','20_interior.js','30_inventory.js','40_sim.js','45_mind.js','50_talk.js','52_bond.js','55_ai.js','60_world.js','65_figs.js','68_play.js','70_ui.js','80_inv_ui.js'];
+const parts=['10_base.js','20_interior.js','30_inventory.js','35_body.js','40_sim.js','45_mind.js','48_coma.js','50_talk.js','52_bond.js','55_ai.js','60_world.js','65_figs.js','68_play.js','70_ui.js','75_health.js','80_inv_ui.js'];
 const src=parts.map(p=>fs.readFileSync(path.join(__dirname,'../src',p),'utf8')).join('\n').replace(/^<script>/m,'');
 const ctx={console,Math,JSON,Date,setTimeout,clearTimeout,document:{getElementById:()=>null,addEventListener(){},createElement:()=>({})},window:{},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},addEventListener(){},matchMedia:()=>({matches:false}),performance:{now:()=>Date.now()}};
 ctx.globalThis=ctx;vm.createContext(ctx);vm.runInContext(src+'\n;globalThis.__x=(e)=>eval(e);',ctx);const X=ctx.__x;

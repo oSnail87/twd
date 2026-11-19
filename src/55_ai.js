@@ -44,12 +44,13 @@ Background: ${sentence(p.facts.bio)} ${pz.hook?sentence(/^[A-Z]/.test(pz.hook)?p
 ${secret}
 Family: ${famWords(p)}.${p.partner&&p.partner!=="you"?` Partner: ${P(p.partner)?.name||"someone"}.`:""}
 ${g?`Group: ${g.name}${g.leader===p.id?" (they lead it)":g.leader==="you"?` (led by ${pn})`:` (led by ${P(g.leader)?.name||"someone"})`}${p.role?", job: "+ROLES[p.role]?.n:""}.`:"Not in any group."}
-Right now: ${p.act||"around"}${b?` inside ${b.n}`:` at ${PLACES[regionAt(p.x,p.z)]?.n||"town"}`}. Health ${Math.round(p.health)}/100${p.hunger<30?", hungry":""}${p.mood<30?", miserable":p.mood>75?", in decent spirits":""}.${p.bitten?" They were bitten and are hiding it from everyone.":""}
+Right now: ${p.act||"around"}${b?` inside ${b.n}`:` at ${PLACES[regionAt(p.x,p.z)]?.n||"town"}`}. Health ${Math.round(p.health)}/100${p.hunger<30?", hungry":""}${(p.thirst??80)<30?", thirsty":""}${(p.rest??80)<25?", exhausted":""}${(p.fear||0)>60?", frightened":""}${p.mood<30?", miserable":p.mood>75?", in decent spirits":""}.${p.bitten?" They were bitten and are hiding it from everyone.":""}
 ${memOther?"Weighing on them:\n"+memOther:""}
 
 THE PERSON TALKING TO THEM
 ${pl.name}, ${pl.age}${pl.bg?", used to be a "+pl.bg.toLowerCase():""}, pronouns ${pl.pron}. ${rel}${p.met?`${p.name} ${feelWords(tier(p),pn)} (trust ${Math.round(p.trust)}, warmth ${Math.round(p.aff)}, from -100 to 100).`:`${p.name} has never met ${pn}.`}
-What they remember about ${pn}:
+${S.flags.wake?`${pn} lay in a coma at Limon Hospital for weeks and woke up ${(()=>{const m=S.t-S.flags.wake;return m<180?"less than three hours ago":m<DAY?"earlier today":Math.floor(m/DAY)===1?"a day ago":Math.floor(m/DAY)+" days ago"})()}, on day 8. ${pn} slept through the whole first week and doesn't know who died, who left, or where anyone went, unless someone has told them.${pl.coma===false&&dist(p.x,p.z,BMAP.clinic.x,BMAP.clinic.z)<20&&S.t-S.flags.wake<240?" They may still look like a hospital patient.":""}
+`:""}What they remember about ${pn}:
 ${memYou}
 
 THE WORLD

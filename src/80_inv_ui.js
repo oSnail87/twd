@@ -56,6 +56,13 @@ function icoBody(it,W,H){const c=it.col||ICOL[it.cat]||"#999";const dk="#1a1814"
     case"backpack":return R(3,4,W-6,H-6,c,2.4)+R(5,H/2,W-10,H/2-4,"rgba(0,0,0,.18)",1.6)+L(`M${W/2-3} 4c0-2 1.4-2.6 3-2.6s3 .6 3 2.6`,1,dk);
     case"duffel":return R(2.5,6,W-5,H-9,c,4)+L(`M${W/2-5} 6c0-3 2-4 5-4s5 1 5 4`,1.2,dk)+L(`M5 ${H/2+1.6}H${W-5}`,.6,"rgba(255,255,255,.3)");
     case"belt":return R(1.6,cy-1.4,W-3.2,2.8,c,.6)+R(cx-2,cy-2.6,4,5.2,"rgba(0,0,0,.25)",.6)+R(2.6,cy-3.4,3.4,4,"#6a5a3a",.4)+R(W-6,cy-3.4,3.4,4,"#6a5a3a",.4);
+    case"cards":return R(cx-3.6,cy-3.2,5,6.6,"#f4f0e8",.6,`transform="rotate(-12 ${cx} ${cy})"`)+R(cx-1.4,cy-3.2,5,6.6,"#f4f0e8",.6,`transform="rotate(10 ${cx} ${cy})"`)+C(cx+1.2,cy,1,"#c83a32");
+    case"ivpole":return L(`M4 ${cy}H${W-7}`,1.4,"#b8bcc0")+L(`M${W-7} ${cy-3.6}v7.2`,1,"#9aa0a4")+R(W-6.4,cy-2,3.4,4,"rgba(200,224,236,.75)",.8)+C(3.2,cy-2.4,1.3,"#2a2a2a")+C(3.2,cy+2.4,1.3,"#2a2a2a");
+    case"pbag":return Pa(`M${cx-6} 5l1-1.6h10l1 1.6v11.6c0 .8-.6 1.4-1.4 1.4H${cx-4.6}c-.8 0-1.4-.6-1.4-1.4z`,"#e8e8e0")+L(`M${cx-5} 5.6c2 1.4 8 1.4 10 0`,.6,"#8a8a80")+L(`M${cx-2.4} 10h4.8`,.6,"#3a4a8a");
+    case"alcohol":return Pa(`M${cx-1.4} 2h2.8v2.6c1.4.6 2 1.6 2 2.8v10.2c0 .6-.4 1-1 1h-4.8c-.6 0-1-.4-1-1V7.4c0-1.2.6-2.2 2-2.8z`,"#dfe9ee")+R(cx-1.6,1,3.2,1.6,"#f4f4f0",.4)+R(cx-2.6,9,5.2,5,"#3a6a9a",.3)+L(`M${cx} 10v3M${cx-1.4} 11.5h2.8`,.7,"#fff");
+    case"suture":return R(cx-3.6,cy-3,7.2,6,"#eef0ec",.8)+L(`M${cx-2} ${cy+1}a2 2 0 0 1 4 0`,.7,"#6a6e74")+L(`M${cx+2} ${cy+1}c1 1.4-.6 2-2 1.2`,.4,"#3a5a8a")+R(cx-3.6,cy-3,7.2,1.4,"#5a8aaa",.4);
+    case"sewing":return R(cx-2.4,cy-3.2,4.8,6.4,"#c8a06a",.5)+R(cx-1.9,cy-2.2,3.8,4.4,"#c83a32",.3)+L(`M${cx+3} ${cy-3.6}l-1.6 7.2`,.6,"#b8bcc0");
+    case"splint":return R(2,cy-3,W-4,2.2,"#c8a06a",.6)+R(2,cy+.8,W-4,2.2,"#c8a06a",.6)+R(8,cy-3.8,2.6,7.6,"#3a3530",.4)+R(W-10.6,cy-3.8,2.6,7.6,"#3a3530",.4);
     default:return R(2,2,W-4,H-4,c,1.4)}}
 function itemSvg(id,r,px){const it=ITEMS[id];const [a,b]=it.sz;const W=a*10,H=b*10;const body=icoBody(it,W,H);
   if(!r)return `<svg class="ico" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"${px?` width="${px}" height="${px}"`:""} aria-hidden="true">${body}</svg>`;
@@ -136,7 +143,7 @@ function useInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;const
   const leave=(aid)=>{const e=mkInst(aid);e.k=1;if(src.c&&g.n<=0&&cFits(src.c,...isz(e),g.x,g.y,null)){cPut(src.c,e,g.x,g.y,g.r)}else if(stash(e)==="ground")toast(`You set the ${ITEMS[aid].n.toLowerCase()} down.`)};
   if(it.eat){consume();pl.food=clamp(pl.food+it.eat.food,0,100);if(it.eat.water)pl.water=clamp(pl.water+it.eat.water,0,100);if(it.eat.sick&&rf()<it.eat.sick){pl.sick=1;journal("Your stomach turns. You shouldn't have eaten that raw.","bad")}else journal(`You eat the ${it.n.toLowerCase()}.`);advance(5)}
   else if(it.drink){consume();pl.water=clamp(pl.water+it.drink,0,100);if(it.after)leave(it.after);if(id==="whiskey"){pl.warmth=clamp(pl.warmth+10,0,100);pl.energy=clamp(pl.energy-3,0,100);journal("The whiskey burns all the way down. For a while, things are softer.")}else if(it.sick&&rf()<it.sick){pl.sick=1;journal("You drink the river water. Hours later your gut cramps. You're sick.","bad")}else journal(`You drink the ${it.n.toLowerCase()}.`);advance(3)}
-  else if(it.heal||it.stopBleed||it.cure){consume();if(it.heal)pl.hp=clamp(pl.hp+it.heal+pl.sk.medic,0,100);if(it.stopBleed&&pl.bleeding){pl.bleeding=0;journal("You bind the wound tight. The bleeding stops.","good")}if(it.cure){if(pl.sick){pl.sick=0;journal("The antibiotics knock the fever down.","good")}else journal("You take the antibiotics. You weren't sick, so all it does is waste them.")}else if(!it.stopBleed)journal(`You use the ${it.n.toLowerCase()}.`);skillUp("medic",.05);advance(5)}
+  else if(it.med){useMed(id);return}
   else if(id==="cigarettes"){consume();pl.energy=clamp(pl.energy+4,0,100);journal("You smoke one. Your hands stop shaking for a while.")}
   else if(id==="radio"){advance(10);journal(radioLine());toast(radioLine())}
   else if(id==="photo"){const t=pick(["You look at the photo for a long time. Everyone in it is smiling. You can't remember what was funny.","The photo is creased from your pocket. You smooth it out and put it back.","You don't look at the photo. You just hold it."]);journal(t);toast(t)}
@@ -144,8 +151,8 @@ function useInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;const
   else if(it.slot){equipInst(src)}
   else{toast(it.d||`You turn the ${it.n.toLowerCase()} over in your hands.`);return}
   save();render()}
-function canUse(id){const it=ITEMS[id];return!!(it.eat||it.drink||it.heal||it.stopBleed||it.cure||it.read||["cigarettes","radio","photo"].includes(id))}
-function useWord(id){const it=ITEMS[id];return it.eat?"Eat":it.drink?"Drink":it.heal||it.stopBleed||it.cure?"Use":it.read?"Read":id==="cigarettes"?"Smoke":id==="radio"?"Listen":id==="photo"?"Look at it":"Use"}
+function canUse(id){const it=ITEMS[id];return!!(it.eat||it.drink||it.med||it.read||["cigarettes","radio","photo"].includes(id))}
+function useWord(id){const it=ITEMS[id];return it.eat?"Eat":it.drink?"Drink":it.med?{dress:"Dress a wound",pain:"Take two",abx:"Take a course",clean:"Clean a wound",stitch:"Stitch a wound",splint:"Splint a break"}[it.med]:it.read?"Read":id==="cigarettes"?"Smoke":id==="radio"?"Listen":id==="photo"?"Look at it":"Use"}
 function repairInst(src){const g=src.g;const it=ITEMS[g.id];const pl=S.player;if(!it.fix||!Object.entries(it.fix).every(([k,v])=>invHas(k,v)))return;for(const [k,v] of Object.entries(it.fix))invTake(k,v);
   const ws=atHome()&&siteHas(myGroup().home,"workshop");g.dur=Math.min(it.dur,g.dur+it.dur*(ws?.7:.45)+pl.sk.craft*2);act(20,{work:true});skillUp("craft",.06);journal(`You patch up your ${it.n.toLowerCase()}.`);save();render()}
 function takeAll(){const c=gridOf("open");if(!c)return;let n=0,left=0;for(const g of [...c.items]){if(!g.k&&!UI.open.cid.startsWith("pile"))continue;cRemove(c,g);if(pStore(g)){n++;g.k=1}else{c.items.push(g);left++}}
@@ -185,6 +192,7 @@ function rotateDrag(){const D=UI.drag;if(!D)return false;const s=ITEMS[D.src.g.i
 function closeMenu(){const m=document.getElementById("ctx");if(m){m.hidden=true;m.innerHTML=""}UI.menu=null}
 function openMenu(e,el){const src=srcOf(el);if(!src)return;const g=src.g;const it=ITEMS[g.id];const ref=src.ref||(src.slot?"slot":"");UI.menu={u:g.u};const opts=[];
   if(canUse(g.id))opts.push(["use",useWord(g.id)]);
+  if(g.id==="whiskey"&&woundFor("clean"))opts.push(["cleanwith","Pour it on a wound"]);
   if(it.slot&&!src.slot)opts.push(["wear",it.slot==="weapon"?"Hold it":it.slot==="back"||it.slot==="rig"?"Put it on":"Wear it"]);
   if(it.slot==="weapon"&&it.side&&src.slot!=="side"&&!src.slot)opts.push(["belt","Put it on your belt"]);
   if(src.slot)opts.push(["unequip",it.slot==="weapon"?"Put it away":"Take it off"]);
@@ -198,9 +206,9 @@ function openMenu(e,el){const src=srcOf(el);if(!src)return;const g=src.g;const i
   m.hidden=false;const W=innerWidth,H=innerHeight;m.style.left=Math.min(e.clientX,W-230)+"px";m.style.top=Math.min(e.clientY,H-m.offsetHeight-10)+"px"}
 function onInvAct(a,v,el,e){if(a==="takeall"){takeAll();return true}if(a==="closeopen"){closeOpen();return true}if(a!=="inv")return false;
   const [k,u]=v.split("|");closeMenu();const src=findInst(u);if(!src)return true;const g=src.g;const it=ITEMS[g.id];
-  switch(k){case"use":useInst(src);return true;case"wear":equipInst(src);break;case"belt":equipInst(src,"side");break;case"unequip":unequip(src.slot);break;
+  switch(k){case"use":useInst(src);return true;case"cleanwith":{const w=woundFor("clean");if(w)openTreat("clean",w.id,g.id);return true}case"wear":equipInst(src);break;case"belt":equipInst(src,"side");break;case"unequip":unequip(src.slot);break;
     case"take":quickMove(src,src.ref);break;case"give":quickMove(src,src.ref);break;case"split":splitInst(src);break;case"fix":repairInst(src);return true;
-    case"drop":dropSrc(src);break;case"look":toast(`${it.n}. ${it.d||""} ${gearStats(g.id)?"("+gearStats(g.id)+")":""} ${it.w?it.w*g.n+" kg.":""}`.replace(/\s+/g," ").trim());return true}
+    case"drop":dropSrc(src);break;case"look":toast(`${it.n}. ${it.d||""} ${gearStats(g.id)?"("+gearStats(g.id)+")":""} ${it.uses?(it.uses-(g.used||0))+" of "+it.uses+" uses left.":""} ${it.w?it.w*g.n+" kg.":""}`.replace(/\s+/g," ").trim());return true}
   cleanPiles();save();render();return true}
 // pointer wiring for the panel
 document.addEventListener("pointerdown",e=>{if(!S||UI.create)return;const m=document.getElementById("ctx");if(m&&!m.hidden&&!e.target.closest("#ctx"))closeMenu();

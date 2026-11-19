@@ -6,7 +6,7 @@ const shot=(pg,n)=>pg.screenshot({path:path.join(OUT,n+'.png')});
 (async()=>{const {b,pg,errs}=await open({viewport:{width:1280,height:760}});
   await shot(pg,'01_create');
   await pg.fill('[data-c=first]','Dana');await pg.fill('[data-c=last]','Reyes');
-  await pg.click('[data-v="traits|Tough"]');await pg.click('[data-v="traits|Handy"]');await pg.click('[data-v="household|sibling"]');
+  await pg.click('[data-v="traits|Tough"]');await pg.click('[data-v="traits|Handy"]');await pg.click('[data-v="household|sibling"]');await pg.click('[data-v="start|home"]');
   await pg.click('[data-act=begin]');await pg.waitForTimeout(300);await shot(pg,'02_help');
   await pg.click('[data-act=closemodal]');await pg.waitForTimeout(1200);await shot(pg,'03_home');
   // search the wardrobe

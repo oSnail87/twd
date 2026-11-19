@@ -2,7 +2,7 @@
 // ================= state =================
 let S=null;
 const UI={panel:null,talkTo:null,draft:"",modal:null,buildSel:null,tileSel:null,trade:null,peopleQ:"",peopleFilter:"known",peopleSel:null,create:null,speed:1,paused:false,open:null,drag:null};
-const SAVE_KEY="twd.save.v3";
+const SAVE_KEY="twd.save.v4";const OLD_SAVE_KEY="twd.save.v3";
 let PMAP={};
 function P(id){return id==="you"?S.player:PMAP[id]}
 function reindex(){PMAP={};for(const p of S.people)PMAP[p.id]=p}
@@ -71,7 +71,7 @@ function armFor(p){if(p.age<16||!p.pack)return;const j=p.job,r=rf();let w=null;
   if(w)p.pack[w]=1}
 function newWorld(c){
   NEXT=1;
-  S={v:3,t:7*60,people:[],groups:{},zeds:[],cont:{},piles:[],doors:{},sites:{},news:[],journal:[],pending:[],flags:{},wx:{},nextG:1,nextU:1,stats:{kills:0},player:null};
+  S={v:4,t:7*60,people:[],groups:{},zeds:[],cont:{},piles:[],doors:{},sites:{},news:[],journal:[],pending:[],flags:{},wx:{},nextG:1,nextU:1,stats:{kills:0},player:null};
   for(const k of Object.keys(PLACES))if(PLACES[k].site)S.sites[k]={grid:Array(PLACES[k].site.gw*PLACES[k].site.gh).fill(null),build:[]};
   S.sites.farm.grid[2*10+4]={b:"firepit",by:"start"};
   // seeded characters
@@ -92,6 +92,7 @@ function newWorld(c){
   const hank=P_({name:"Hank",sur:"Briggs",sex:"M",age:40,job:"quarry",home:coleH,hh:"bri",style:"dry",tr:{kind:.5,brave:.6,ambit:.3,temper:.5,social:.3,curious:.3,honest:.6,faith:.3}});
   famLink(cole,hank,"brother","brother",55);
   const nadia=P_({name:"Nadia",sur:"Ferris",sex:"F",age:45,job:"doctor",home:freeHouse(),hh:"fer",style:"formal",tr:{kind:.7,brave:.6,ambit:.5,temper:.3,social:.4,curious:.9,honest:.7,faith:.2},seed:"nadia",bio:"Town doctor. Treated the first patient at the clinic. She saw what it did before anyone else."});
+  const marisol=P_({name:"Marisol",sur:"Duarte",sex:"F",age:34,job:"nurse",home:freeHouse(),hh:"dua",style:"plain",tr:{kind:.9,brave:.55,ambit:.35,temper:.2,social:.6,curious:.5,honest:.7,faith:.5},seed:"marisol",bio:"Night nurse at Limon Hospital. Talked to her coma patients every shift, in case they could hear."});
   // generic households
   const types=["couple","family","family","single","single","single","roommates","elders","parent","family","couple","single"];
   let hh=0;
@@ -115,8 +116,11 @@ function newWorld(c){
   if(c.traits.includes("Charming"))pl.sk.speak+=2;if(c.traits.includes("Tough"))pl.sk.fight+=1;if(c.traits.includes("Handy"))pl.sk.craft+=1;if(c.traits.includes("Resourceful"))pl.sk.scavenge+=1;if(c.traits.includes("Kind"))pl.sk.medic+=1;if(c.traits.includes("Outdoorsy"))pl.sk.survive+=1;
   S.player=pl;
   const hb=BMAP[pl.home];const bd0=bedPos(hb,0);const sp0=insidePos(hb,bd0?bd0.room:null);pl.x=sp0.x;pl.z=sp0.z;
-  for(const s of SLOTS)pl.eq[s]=null;equipNew(c.age>40?"flannel":"hoodie");equipNew("jeans");equipNew("sneakers");
-  invAdd("photo",1,true);invAdd("snacks",1,true);invAdd("water_bottle",1,true);
+  const coma=c.start==="coma";
+  for(const s of SLOTS)pl.eq[s]=null;
+  if(coma){pl.coma=true;pl.comaCause=COMA_CAUSES[c.cause]?c.cause:"crash";const cb=BMAP.clinic;const sp=insidePos(cb,1);pl.x=sp.x;pl.z=sp.z;equipNew("gown");
+    mem(marisol,`${c.name} has been my patient on the ward for three weeks, since ${COMA_CAUSES[pl.comaCause].since}. I talk to them every shift, in case they can hear.`,4,"you");marisol.met=true;marisol.trust+=15;marisol.aff+=20}
+  else{equipNew(c.age>40?"flannel":"hoodie");equipNew("jeans");equipNew("sneakers");invAdd("photo",1,true);invAdd("snacks",1,true);invAdd("water_bottle",1,true)}
   // who's home with you
   const hhKind=c.household;
   if(hhKind!=="alone"){let o={home:pl.home,hh:"you"};let rel="roommate",back="roommate";
@@ -125,16 +129,24 @@ function newWorld(c){
     if(hhKind==="child"){o={...o,age:rnd(6,12),job:"kid",style:"kid",sur:c.name.split(" ")[1]||""};rel=o.age<13?"kid":"son";back="parent"}
     if(hhKind==="parent"){o={...o,age:clamp(c.age+rnd(24,32),55,85),job:"retiree"};rel="mom or dad";back="kid"}
     if(hhKind==="roommate"){o={...o,age:clamp(c.age+rnd(-3,4),18,60),job:pick(["student","clerk","bartender","attendant","unemployed"])}}
-    const q=P_(o);q.style=q.age<13?"kid":q.style;q.fam.you=back;pl.fam[q.id]=rel;q.trust=hhKind==="roommate"?35:60;q.aff=hhKind==="roommate"?30:75;q.met=true;q.follow=true;
+    const q=P_(o);q.style=q.age<13?"kid":q.style;q.fam.you=back;pl.fam[q.id]=rel;q.trust=hhKind==="roommate"?35:60;q.aff=hhKind==="roommate"?30:75;q.met=true;q.follow=!coma;
     if(hhKind==="partner"){q.partner="you";pl.partner=q.id}
     if(hhKind==="child"){q.parents=["you"];pl.kids.push(q.id)}
     mem(q,hhKind==="roommate"?`Shared a house with ${c.name} on Birch Street before it all happened.`:`Family. ${c.name} is the person I trust most in the world.`,5);
-    reindex();const qp=insidePos(hb);q.x=qp.x;q.z=qp.z;q.tx=q.x;q.tz=q.z}
+    if(coma)mem(q,hhKind==="roommate"?`${c.name} has been in a coma at the hospital for weeks. I water their plants and don't know what else to do.`:`${c.name} has been in a coma at Limon Hospital for three weeks. I sit with them every evening and talk, in case they can hear me.`,6,"you");
+    reindex();const qp=insidePos(hb);q.x=qp.x;q.z=qp.z;q.tx=q.x;q.tz=q.z;
+    // a kid can't stay in a house alone: the neighbors took them in
+    if(coma&&q.age<13){const fams=ppl.filter(p=>p.age>=25&&p.age<70&&p.home&&p.hh&&!p.seed&&BMAP[p.home]&&HOMES.includes(BMAP[p.home].type)&&p.home!==pl.home).sort((a,b)=>dist(BMAP[a.home].x,BMAP[a.home].z,hb.x,hb.z)-dist(BMAP[b.home].x,BMAP[b.home].z,hb.x,hb.z));const host=fams.find(p=>p.kids.length)||fams[0];
+      if(host){q.home=host.home;q.hh=host.hh;const hp=insidePos(BMAP[host.home]);q.x=hp.x;q.z=hp.z;q.tx=q.x;q.tz=q.z;q.carer=host.id;relSet(q,host,45);
+        mem(q,`I'm staying with ${host.name} ${host.sur} down the street while ${c.name.split(" ")[0]} is in the hospital.`,3,host.id);mem(host,`We're looking after ${q.name} while ${c.name} is in the hospital. Poor kid.`,3,q.id);
+        for(const h of ppl.filter(p=>p.hh===host.hh&&p.age>=16))relSet(q,h,Math.max(relGet(q,h),35))}}}
   // neighbors know you a little
-  for(const p of ppl)if(p.home&&BMAP[p.home]&&dist(BMAP[p.home].x,BMAP[p.home].z,hb.x,hb.z)<20&&p.id!==pl.home){p.met=true;p.trust+=rnd(0,15);p.aff+=rnd(-5,15);mem(p,`${c.name} lives a few houses down.`,0)}
+  for(const p of ppl)if(p.home&&BMAP[p.home]&&dist(BMAP[p.home].x,BMAP[p.home].z,hb.x,hb.z)<20&&p.id!==pl.home){p.met=true;p.trust+=rnd(0,15);p.aff+=rnd(-5,15);mem(p,`${c.name} lives a few houses down.`,0);
+    if(coma&&p.age>=12&&!p.fam.you)mem(p,`${c.name} from up the street has been in a coma at the hospital since ${COMA_CAUSES[pl.comaCause].since}. We signed a card.`,1,"you")}
   for(const p of ppl){if(p.hh==="you"){p.pack=packFor(p);armFor(p);continue}const pos=homePos(p);p.x=pos.x;p.z=pos.z;p.tx=p.x;p.tz=p.z;p.loc=regionAt(p.x,p.z);p.pack=packFor(p);armFor(p)}
   rollWeather();
   news("Morning in Limon. The radio says there's 'an unusual flu' going around in the city. Nobody's worried yet.","");
+  if(coma)return;
   journal(`Day 1. You wake up in your house in Limon. It's an ordinary Tuesday, as far as anyone knows.`,"big");
   queueEvent("morning","any",S.t+600,{});S.pending[S.pending.length-1].at=9*60+30;
 }
@@ -157,26 +169,26 @@ function advance(mins,opt={}){let left=mins;const jump=mins>=5&&!S.jump;if(jump)
   try{while(left>0.0001){const toH=60-(S.t%60);const step=Math.min(left,toH);decay(step,opt);S.t+=step;left-=step;
     if(Math.abs(S.t%60)<1e-6||S.t%60>59.9999){S.t=Math.round(S.t);simHour()}
     if(S.player.hp<=0)return die();
-    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":"pain";break}}}
+    const pl=S.player;if(opt.sleep&&(pl.water<6||pl.food<6||pl.warmth<15||pl.hp<30||pl.bleeding>.25||painNow()>60)){S.woke=pl.water<6?"thirst":pl.food<6?"hunger":pl.warmth<15?"cold":pl.bleeding>.25?"blood":"pain";break}}}
   finally{if(jump)S.jump=false}
   checkPending()}
 function decay(m,opt){const pl=S.player,h=m/60;const sl=opt.sleep;if(pl.coma)return;
   pl.food=clamp(pl.food-h*(sl?1.5:2.6)*(pl.preg?1.3:1)*(pl.sick?1.3:1),0,100);
   pl.water=clamp(pl.water-h*(sl?2:3.8)*(pl.sick?1.5:1),0,100);
-  pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9):-(opt.work?5:3.2)),0,100);
+  const pain=painNow();pl.energy=clamp(pl.energy+h*(sl?(opt.safe?13:9)*(pain>50?.6:1):-(opt.work?5:3.2)*(pain>40?1.2:1)),0,100);
   let comfort=temp()+clothesWarm()*2.2+(nearFire()?12:0)+(sl&&opt.safe?10:0);if(wxName()==="rain"&&!gearEq("outer"))comfort-=4;
   if(comfort>=12)pl.warmth=clamp(pl.warmth+h*6,0,100);else pl.warmth=clamp(pl.warmth-h*(12-comfort)*.7,0,100);
-  let dhp=0;if(pl.food<=0)dhp-=3;if(pl.water<=0)dhp-=5;if(pl.warmth<=0)dhp-=6;else if(pl.warmth<15)dhp-=1;if(pl.energy<=0)dhp-=1;if(pl.sick)dhp-=1.2;if(pl.bleeding)dhp-=pl.bleeding*4;
+  const lost=bodyTick(h,opt);
+  let dhp=0;if(pl.food<=0)dhp-=3;if(pl.water<=0)dhp-=5;if(pl.warmth<=0)dhp-=6;else if(pl.warmth<15)dhp-=1;if(pl.energy<=0)dhp-=1;if(pl.sick)dhp-=1.2;
   if(pl.bitten){const hrs=(S.t-pl.bitten)/60;if(hrs>20)dhp-=4;if(hrs>36)dhp-=12}
-  if(dhp>=0&&pl.food>35&&pl.water>35&&pl.warmth>35&&!pl.sick&&!pl.bitten)dhp=sl?3:1;
-  pl.hp=clamp(pl.hp+dhp*h,0,100);
-  if(pl.sick&&rf()<h*.03){pl.sick=0;journal("The fever breaks. You feel human again.","good")}
-  if(pl.bleeding&&rf()<h*.25)pl.bleeding=0;
+  if(dhp>=0&&pl.food>35&&pl.water>35&&pl.warmth>35&&!pl.sick&&!pl.bitten&&pl.bleeding<.05)dhp=sl?3:1;
+  pl.hp=clamp(pl.hp+dhp*h-lost,0,100);
+  if(pl.sick&&infMax()<40&&rf()<h*.03){pl.sick=0;journal("The fever breaks. You feel human again.","good")}
   if(here()!=="town"||true)wearClothes(h)}
 
 // ================= hourly sim =================
 function zedsIn(region){let n=0;for(const z of S.zeds)if(z.r===region)n++;return n}
-function spawnZed(x,z,o={}){const r=regionAt(x,z);S.zeds.push({id:"z"+(NEXT++),x,z,hp:o.hp||14,r,name:o.name||null,pid:o.pid||null,st:"idle",tx:x,tz:z});}
+function spawnZed(x,z,o={}){const r=regionAt(x,z);const zd={id:"z"+(NEXT++),x,z,hp:o.hp||14,r,name:o.name||null,pid:o.pid||null,st:"idle",tx:x,tz:z};S.zeds.push(zd);return zd}
 function turnPerson(p){p.alive=false;p.status="turned";p.loc="gone";p.why="turned";const g=p.group?G(p.group):null;const atCamp=g&&g.home&&regionAt(p.x,p.z)===g.home&&!(S.player.group===g.id&&atHome());
   if(!atCamp)spawnZed(p.x,p.z,{name:fullName(p),pid:p.id});const how=atCamp?pick(["Someone had to put them down.","It took three people to hold the door.","Nobody saw the bite until it was too late."]):g?"They never made it back to camp.":"";
   if(atCamp&&how.startsWith("Nobody")&&rf()<.4){const v=pick(members(g.id).filter(q=>q!==p&&q.age>=12));if(v)hurt(v,rnd(10,30),"was hurt when "+p.name+" turned")}

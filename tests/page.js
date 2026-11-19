@@ -11,7 +11,8 @@ module.exports=async function open(o={}){
   const three=process.env.THREE_JS||path.join(ROOT,'node_modules/three/build/three.min.js');
   await pg.route('**/three.min.js',r=>r.fulfill({path:three,contentType:'application/javascript'}));
   await pg.route('**/fonts.googleapis.com/**',r=>r.abort());await pg.route('**/fonts.gstatic.com/**',r=>r.abort());
-  if(o.save)await pg.addInitScript(s=>{localStorage.setItem('twd.save.v3',s)},o.save);
+  if(o.save)await pg.addInitScript(s=>{localStorage.setItem('twd.save.v4',s)},o.save);
+  if(o.oldSave)await pg.addInitScript(s=>{localStorage.setItem('twd.save.v3',s)},o.oldSave);
   const html=fs.readFileSync(path.join(ROOT,'dist/index.html'),'utf8');const out=path.join(ROOT,'tests/.page.html');
   fs.writeFileSync(out,'<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"></head><body>'+html+'</body></html>');
   await pg.goto('file://'+out);await pg.waitForTimeout(o.wait||1500);

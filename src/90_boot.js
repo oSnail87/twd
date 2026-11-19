@@ -1,6 +1,6 @@
 
 // ================= who you are: the person you wake up as =================
-function defaultChar(){return{first:"",last:"",pron:"they/them",age:28,sex:"F",build:"average",hairStyle:"hLong",hair:"brown",beard:false,skin:"#c99873",mark:"",bg:"Nurse",traits:[],household:"alone",story:""}}
+function defaultChar(){return{first:"",last:"",pron:"they/them",age:28,sex:"F",build:"average",hairStyle:"hLong",hair:"brown",beard:false,skin:"#c99873",mark:"",bg:"Nurse",traits:[],household:"alone",story:"",start:"coma",cause:"crash"}}
 const BGS={"Nurse":"Medicine","Mechanic":"Making and building","Sheriff's deputy":"Fighting, talking","Line cook":"Survival, talking, making","Teacher":"Talking","Farmhand":"Survival, building","Construction worker":"Building, fighting","College student":"Scavenging, talking","Between jobs":"Scavenging"};
 const TRAITS={Charming:"People warm to you faster",Tough:"Better in a fight",Handy:"Better at making and fixing",Resourceful:"Find more when you search",Kind:"Better at patching people up",Outdoorsy:"Better at foraging, hunting and fishing"};
 const HOUSEHOLDS={alone:"You live alone",sibling:"Your younger brother or sister",partner:"Your partner",child:"Your kid, 6 to 12",parent:"Your mom or dad",roommate:"A roommate you barely know"};
@@ -41,14 +41,18 @@ function dollSvg(c){const F=c.sex==="F";const sk=c.skin||SKINS[3];const hc=HAIRC
   </g></svg>`}
 
 function renderCreate(){const root=$("create");if(!root)return;const c=UI.create||(UI.create=defaultChar());const g=$("game");if(g)g.classList.add("creating");root.hidden=false;
+  if(UI.loading){const L=UI.loading;root.innerHTML=`<div class="cpanel cload" role="status" aria-live="polite"><div><div class="lbl">While you were asleep</div><h1>TWD</h1><div class="town">Limon · the first week</div></div>
+    <p class="lede" id="cload-line">${esc(SLEEP_DAYS[L.day-1])}</p><div class="cbar" aria-hidden="true"><i id="cload-bar" style="width:${Math.round(L.p*100)}%"></i></div><div class="row"><span class="mono mute" id="cload-day">Day ${L.day} of 7</span><button class="btn" data-act="sleepskip">Skip ahead</button></div></div>`;startTitle();return}
+  const coma=c.start==="coma";
   const on=(k,v)=>k==="traits"?c.traits.includes(v):String(c[k])===String(v);
   const pk=(k,v,label,sub)=>`<button class="pick${on(k,v)?" on":""}" data-act="cpick" data-v="${k}|${esc(v)}" aria-pressed="${on(k,v)}">${esc(label||v)}${sub?`<br><span class="mono mute" style="font-size:10.5px">${esc(sub)}</span>`:""}</button>`;
   const sw=(k,v,col,label)=>`<button class="pick sw${on(k,v)?" on":""}" data-act="cpick" data-v="${k}|${esc(v)}" aria-label="${esc(label)}" aria-pressed="${on(k,v)}" title="${esc(label)}" style="background:${col}"></button>`;
   const ae=document.activeElement;const fk=ae&&root.contains(ae)?(ae.dataset.c?{c:ae.dataset.c}:ae.dataset.act?{a:ae.dataset.act,v:ae.dataset.v||""}:null):null;
   const old=root.querySelector(".cpanel");const sc=old?old.scrollTop:0;
   root.innerHTML=`<div class="cpanel">
-   <div><div class="lbl">An original survival story</div><h1>TWD</h1><div class="town">Limon · day one</div></div>
-   <p class="lede">It's an ordinary Tuesday morning in Limon. By tonight the dead will be walking. Everyone in this town has a name, a past, people they love and things they hide, and they'll make their own choices. So will you.</p>
+   <div><div class="lbl">An original survival story</div><h1>TWD</h1><div class="town">Limon · ${coma?"day eight":"day one"}</div></div>
+   ${UI.oldSave?`<p class="mono mute" role="note">This version rebuilt the town, so your last game can't carry over. It's a fresh start.</p>`:""}
+   <p class="lede">${coma?"Three weeks ago something put you in a bed at Limon Hospital, and you haven't woken up since. While you slept, the dead started walking. You open your eyes a week into it. Everyone in this town has a name, a past, people they love and things they hide, and they've been making their own choices without you.":"It's an ordinary Tuesday morning in Limon. By tonight the dead will be walking. Everyone in this town has a name, a past, people they love and things they hide, and they'll make their own choices. So will you."}</p>
    <div class="ctop"><div class="csec" style="border:0;padding:0">
      <div class="fgrid">
       <label class="field"><span class="lbl">First name</span><input data-c="first" value="${esc(c.first)}" maxlength="20" autocomplete="off"></label>
@@ -75,12 +79,14 @@ function renderCreate(){const root=$("create");if(!root)return;const c=UI.create
     <div class="field"><span class="lbl">Before all this</span><div class="pickset">${Object.entries(BGS).map(([k,s])=>pk("bg",k,k,s)).join("")}</div></div>
     <div class="field"><span class="lbl">Two things about you (${c.traits.length} of 2)</span><div class="pickset">${Object.entries(TRAITS).map(([k,s])=>pk("traits",k,k,s)).join("")}</div></div>
    </div>
-   <div class="csec"><div class="lbl" style="color:var(--ember)">This morning</div>
-    <div class="field"><span class="lbl">At home with you</span><div class="pickset">${Object.entries(HOUSEHOLDS).map(([k,s])=>pk("household",k,cap(k),s)).join("")}</div></div>
+   <div class="csec"><div class="lbl" style="color:var(--ember)">How it starts</div>
+    <div class="field"><span class="lbl">Where you open your eyes</span><div class="pickset">${pk("start","coma","In a hospital bed","Out of a coma, a week after it began")}${pk("start","home","At home","Day one, the morning it all starts")}</div></div>
+    ${coma?`<div class="field"><span class="lbl">What put you there</span><div class="pickset">${Object.entries(COMA_CAUSES).map(([k,C])=>pk("cause",k,C.n,C.sub)).join("")}</div></div>`:""}
+    <div class="field"><span class="lbl">${coma?"Who you live with":"At home with you"}</span><div class="pickset">${Object.entries(HOUSEHOLDS).map(([k,s])=>pk("household",k,cap(k),s)).join("")}</div></div>
     <label class="field"><span class="lbl">Your story, if you want one</span><textarea data-c="story" rows="3" maxlength="400" placeholder="Who were you before? Who are you looking for?">${esc(c.story)}</textarea></label>
    </div>
    ${UI.cerr?`<p class="neg mono" role="alert">${esc(UI.cerr)}</p>`:""}
-   <div class="cgo"><button class="btn pri" data-act="begin">Wake up<small>Day 1, 7:00 in the morning</small></button>${S?'<button class="btn" data-act="cancelnew">Back to my game</button>':""}</div>
+   <div class="cgo"><button class="btn pri" data-act="begin">Wake up<small>${coma?"Day 8, early morning":"Day 1, 7:00 in the morning"}</small></button>${S?'<button class="btn" data-act="cancelnew">Back to my game</button>':""}</div>
    <p class="mono mute cnote" id="cai">${esc(typeof aiHelpText==="function"?aiHelpText():"")}</p>
   </div>`;
   const np=root.querySelector(".cpanel");if(np)np.scrollTop=sc;
@@ -95,19 +101,32 @@ function onCreateAct(a,v,el,e){
     else c[k]=val;
     UI.cerr="";renderCreate();return true}
   if(a==="begin"){begin();return true}
+  if(a==="sleepskip"){if(UI.loading)UI.loading.skip=true;return true}
   if(a==="cancelnew"){if(S){UI.create=null;render()}return true}
   return false}
 
-function begin(){const c=UI.create;if(!c)return;const first=c.first.trim(),last=c.last.trim();
+function begin(){const c=UI.create;if(!c||UI.loading)return;const first=c.first.trim(),last=c.last.trim();
   if(!first){UI.cerr="Give yourself a name.";renderCreate();return}
   if(c.traits.length<2){UI.cerr="Pick two things about you.";renderCreate();return}
   UI.cerr="";const age=clamp(parseInt(c.age)||28,16,60);
   const hairLook=c.hairStyle==="none"?"a shaved head":`${HAIRW[c.hairStyle]||"short"} ${c.hair} hair`;
   const look=`${BUILDW[c.build]||"average build"}, ${hairLook}${c.sex==="M"&&c.beard?", a beard":""}`;
-  newWorld({name:(first+" "+last).trim(),pron:c.pron,sex:c.sex,age,look,mark:c.mark.trim(),bg:c.bg,traits:[...c.traits],story:c.story.trim(),household:c.household,hair:c.hair,skin:c.skin,hairStyle:c.hairStyle,beard:c.beard,build:c.build});
+  const coma=c.start==="coma";
+  newWorld({name:(first+" "+last).trim(),pron:c.pron,sex:c.sex,age,look,mark:c.mark.trim(),bg:c.bg,traits:[...c.traits],story:c.story.trim(),household:c.household,hair:c.hair,skin:c.skin,hairStyle:c.hairStyle,beard:c.beard,build:c.build,start:c.start,cause:c.cause});
   if(c.story.trim())journal(`Before all this: ${c.story.trim()}`,"");
-  UI.create=null;UI.panel=null;UI.open=null;UI.talkTo=null;UI.draft="";UI.paused=false;UI.speed=1;UI.peopleSel=null;UI.modal={type:"help"};
-  w3reset();save();render()}
+  UI.panel=null;UI.open=null;UI.talkTo=null;UI.draft="";UI.paused=false;UI.speed=1;UI.peopleSel=null;UI.oldSave=false;UI.modal=null;
+  if(!coma){UI.modal={type:"help"};enterWorld();return}
+  // the first week happens while you sleep; show it passing, then wake
+  UI.loading={p:0,day:1,sim:0,done:false,skip:false,t0:performance.now()};renderCreate();
+  sleepThrough(p=>{if(UI.loading)UI.loading.sim=p},()=>{if(UI.loading)UI.loading.done=true});setTimeout(sleepTick,80)}
+// the week runs as fast as the page can; the lines about it go by slowly enough to read, unless you skip
+const SLEEP_PER=1400;
+function sleepTick(){const L=UI.loading;if(!L)return;const shown=L.skip?L.sim:Math.min(L.sim,(performance.now()-L.t0)/(SLEEP_PER*7));
+  L.p=shown;const d=clamp(Math.floor(shown*7)+1,1,7);const bar=$("cload-bar");if(bar)bar.style.width=Math.round(shown*100)+"%";
+  if(d!==L.day){L.day=d;const el=$("cload-line"),n=$("cload-day");if(el)el.textContent=SLEEP_DAYS[d-1];if(n)n.textContent=`Day ${d} of 7`}
+  if(L.done&&(L.skip||shown>=1)){L.finishing=true;setTimeout(()=>{if(UI.loading!==L)return;comaWake();UI.loading=null;enterWorld()},L.skip?0:700);return}
+  setTimeout(sleepTick,60)}
+function enterWorld(){UI.create=null;w3reset();save();render()}
 
 // ================= the town at dawn, behind the first screen =================
 const TITLE={on:false,t0:0};
@@ -130,8 +149,8 @@ function titleLoop(ts){if(!UI.create||!W3.ok){TITLE.on=false;return}requestAnima
 function fixNext(){let m=0;const sc=s=>{const n=parseInt(String(s).replace(/^\D+/,""));if(n>m)m=n};for(const p of S.people)sc(p.id);for(const z of S.zeds)sc(z.id);NEXT=m+1}
 function boot(){buildInteriors();buildCollision();layout();initWorldView($("world"));W3.mini=$("mini");aiInit();
   const s=loadSave();
-  if(s&&s.v===3&&s.player&&Array.isArray(s.people)){S=s;reindex();fixNext();UI.create=null;w3reset();if(S.player.alive===false)UI.modal={type:"dead"}}
-  else{S=null;UI.create=defaultChar()}
+  if(s&&s.v===4&&s.player&&Array.isArray(s.people)&&!s.player.coma){S=s;reindex();fixNext();UI.create=null;w3reset();if(S.player.alive===false)UI.modal={type:"dead"}}
+  else{S=null;UI.create=defaultChar();try{UI.oldSave=!s&&!!localStorage.getItem(OLD_SAVE_KEY)}catch(e){UI.oldSave=false}}
   render();requestAnimationFrame(frame)}
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&S&&!UI.create)save()});addEventListener("pagehide",()=>{if(S&&!UI.create)save()});
 // keep progress when a new version of the page arrives while it's open
