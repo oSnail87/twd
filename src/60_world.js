@@ -1,6 +1,6 @@
 
 // ================= the world view: renderer, textures, buildings, terrain =================
-const W3={ok:false,wrap:null,ren:null,scene:null,cam:null,rc:null,zoom:1,keys:{},run:false,path:null,ptarget:null,talkOnArrive:null,attackT:null,useOnArrive:null,
+const W3={ok:false,wrap:null,ren:null,scene:null,cam:null,rc:null,zoom:1.25,keys:{},run:false,path:null,ptarget:null,talkOnArrive:null,attackT:null,useOnArrive:null,
   bm:new Map(),cutSet:new Set(),hover:null,hoverC:null,last:0,acc:0,tk:{},camX:0,camZ:0,hurt:0,rw:1,rh:1,dirty:false,night:false,flash:0,cd:0,swing:0,ang:0,moving:false,
   followers:[],fset:new Set(),zmap:new Map(),siteKeys:{},siteObj:{},siteFlames:{},flames:[],campfire:null,trees:null,precip:null,wx:null,v3:null,promptT:null,promptKey:"",region:null,
   pileObjs:new Map(),blabels:new Map(),nearB:[],lights:0,inB:null};

@@ -219,7 +219,7 @@ function contVerb(c){const C=CONT[c.k];const s=S.cont[c.id];const n=(C?C.n:c.n||
   const verb=["fridge","cupboard","closet","locker","schoollocker","medicine","pharmacab","medcab","armory","vestry","filing"].includes(c.k)?"Open":"Search";return `${verb} the ${n}${s&&s.rolled&&s.seen?" again":""}`}
 function doorVerb(D){const lk=doorLocked(D);if(D.broken)return"A broken door";if(doorOpen(D))return"Close the door";if(!lk)return"Open the door";
   if(lk==="bar")return playerSide(D)==="in"?"Take the boards down":hasTool("pry")?"Pry the boards off":"Kick the door";if(lk==="home")return D.refused&&S.t-D.refused<120?"Kick the door in":"Knock";return hasTool("pry")?"Pry the lock":"Kick the door"}
-function updPrompt(){const pl=S.player;let t=null;if(pl.alive!==false&&!W3.task&&!UI.modal)t=promptTargets()[0]||null;
+function updPrompt(){const pl=S.player;let t=null;if(pl.alive!==false&&!W3.task&&!UI.modal&&!UI.talkTo)t=promptTargets()[0]||null;
   if(t&&t.k==="door"&&!doorOpen(t.D)&&!t.D.bar&&canBoard()&&t.D.ext)t.sub="B · board it up";
   W3.promptT=t;const el=W3.promptEl;if(!el)return;const key=t?t.k+(t.p?.id||t.c?.id||t.D?.id||t.id||"")+t.label+(t.sub||""):"";
   if(key!==W3.promptKey){W3.promptKey=key;if(t){el.hidden=false;el.innerHTML=`<b>E</b> ${esc(t.label)}${t.sub?` <span class="mute">· ${esc(t.sub)}</span>`:""}`}else el.hidden=true}
@@ -300,8 +300,8 @@ function lighting(){weatherFx();const h=hourOf(S.t)+(S.t%60)/60;const d=dayLight
   // the sun comes up over the hills in the east and goes down behind the woods
   const az=clamp((h-5.5)/15,0,1)*Math.PI;W3.sunDir.set(Math.cos(az)*.85,.55+Math.sin(az)*.9,.42+(1-Math.sin(az))*.2).normalize();
   if(d<=0)W3.sunDir.set(-.35,1,.55).normalize();
-  const warm=d>0&&d<1?1-d:0;W3.sun.color.copy(CC(d<=0?"#8aa0c8":"#fff1d6")).lerp(CC("#ffb070"),warm*.8);
-  W3.sun.intensity=d<=0?.16:(.35+.95*d)*cl;W3.hemi.intensity=.18+.5*d*(wx==="clear"?1:.85);W3.hemi.color.copy(CC(d<=0?"#5a6a8a":"#dfe8f0"));
+  const warm=d>0&&d<1?1-d:0;W3.sun.color.copy(CC(d<=0?"#9cb2dc":"#fff1d6")).lerp(CC("#ffb070"),warm*.8);
+  W3.sun.intensity=d<=0?(wx==="clear"?.34:.24):(.35+.95*d)*cl;W3.hemi.intensity=.27+.42*d*(wx==="clear"?1:.85);W3.hemi.color.copy(CC(d<=0?"#4d5f86":"#dfe8f0"));
   const sky=CC(SKY[wx]||SKY.clear).clone(),night=CC("#05080d");W3.scene.background=night.clone().lerp(sky,d);if(W3.scene.fog)W3.scene.fog.color.copy(W3.scene.background);
   W3.night=d<.28;const pl=S.player;const fl=lightOn();W3.spot.intensity=fl?2.2:0;W3.plight.intensity=W3.night?(fl?.25:.55):0;W3.plight.distance=7;
   // a lamp in the room you're in, while the power lasts

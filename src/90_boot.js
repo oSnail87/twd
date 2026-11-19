@@ -128,7 +128,7 @@ function titleLoop(ts){if(!UI.create||!W3.ok){TITLE.on=false;return}requestAnima
 
 // ================= starting up =================
 function fixNext(){let m=0;const sc=s=>{const n=parseInt(String(s).replace(/^\D+/,""));if(n>m)m=n};for(const p of S.people)sc(p.id);for(const z of S.zeds)sc(z.id);NEXT=m+1}
-function boot(){buildInteriors();buildCollision();layout();initWorldView($("world"));aiInit();
+function boot(){buildInteriors();buildCollision();layout();initWorldView($("world"));W3.mini=$("mini");aiInit();
   const s=loadSave();
   if(s&&s.v===3&&s.player&&Array.isArray(s.people)){S=s;reindex();fixNext();UI.create=null;w3reset();if(S.player.alive===false)UI.modal={type:"dead"}}
   else{S=null;UI.create=defaultChar()}

@@ -197,7 +197,7 @@ const WITHDRAW={food:["jerky",3],water:["water_bottle",4],wood:["wood",1],stone:
 // ================= containers and what's in them =================
 // every piece of furniture that opens has a container type. g = its grid. Loot is rolled the first time someone opens it.
 const CONT={
-  nightstand:{n:"Nightstand",g:[2,2]},dresser:{n:"Dresser",g:[4,3]},closet:{n:"Wardrobe",g:[4,5]},bookshelf:{n:"Bookshelf",g:[4,2]},
+  nightstand:{n:"Nightstand",g:[2,2]},dresser:{n:"Dresser",g:[4,3]},closet:{n:"Wardrobe",g:[6,5]},bookshelf:{n:"Bookshelf",g:[4,2]},
   cupboard:{n:"Kitchen cupboard",g:[4,3]},fridge:{n:"Fridge",g:[3,4]},medicine:{n:"Bathroom cabinet",g:[3,2]},desk:{n:"Desk drawers",g:[3,2]},
   workbench:{n:"Workbench",g:[5,3]},toolshelf:{n:"Tool shelf",g:[4,3]},
   sh_grocery:{n:"Grocery shelf",g:[6,3]},sh_pharmacy:{n:"Pharmacy shelf",g:[5,3]},sh_hardware:{n:"Hardware shelf",g:[6,3]},sh_gas:{n:"Store shelf",g:[5,3]},sh_storage:{n:"Storage shelf",g:[6,3]},

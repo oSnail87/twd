@@ -14,6 +14,8 @@ function persona(p){if(p._pz)return p._pz;const R=srng(hashStr(p.id+"/voice"));c
 const ACTWORDS={follow:"agrees to come along with {pn} and starts following them",stay:"stops following {pn} and stays where they are",trade:"is willing to trade; a trade opens right after this line",
   attack:"loses their temper and swings at {pn}",romance_yes:"says yes: they want to be together with {pn}",child_yes:"agrees to try for a child with {pn}",break_up:"ends their relationship with {pn}",
   join_their:"welcomes {pn} into their group",join_mine:"agrees to join {pn}'s group, with their family",leave_mine:"hears that {pn} is leaving the group",take_lead:"hands leadership of their group to {pn}",end:"is done talking and turns back to what they were doing"};
+function sentence(t){t=String(t||"").trim();return!t?"":/[.!?]$/.test(t)?t:t+"."}
+function feelWords(t,pn){return{hostile:`hates ${pn}`,cold:`is cold toward ${pn}`,neutral:`doesn't know ${pn} well yet`,friendly:`likes ${pn}`,close:`is close to ${pn}`}[t]||`doesn't know ${pn} well yet`}
 function heShe(p){return p.age<13?"they":p.sex==="F"?"she":"he"}
 function famWords(p){const L=[];for(const [id,rel] of Object.entries(p.fam||{})){if(id==="you")continue;const q=P(id);if(!q)continue;const where=!q.alive?(q.status==="turned"?"turned into one of the dead":q.status==="left"?"left town":"dead"):dist(q.x,q.z,p.x,p.z)<15?"here nearby":q.group&&q.group===p.group?"in the same group":"alive, somewhere else"+(p.told&&false?"":"");L.push(`${rel} ${q.name} (${where})`)}return L.slice(0,8).join("; ")||"none living close by"}
 function worldWords(){const F=S.flags;const d=dayOf(S.t);const L=[];
@@ -38,7 +40,7 @@ ${fullName(p)}, ${p.age}, ${p.sex==="F"?"woman":"man"}${kid?" (a child)":""}. ${
 Temperament: ${traitWords(p.tr).join(", ")||"even-keeled"}.
 How they talk: ${VOICE[p.style]||VOICE.plain}
 Quirk: ${pz.quirk}. Cares about: ${pz.values}. Flaw: ${pz.flaw}.${kid?` As a kid, ${heShe(p)} ${pz.kid}.`:""}
-Background: ${p.facts.bio||""} ${pz.hook?cap(heShe(p))+" "+pz.hook+".":""} From ${p.facts.from}. Misses ${p.facts.likes}. Afraid of ${p.facts.fear}. Hopes for ${p.facts.hope}.
+Background: ${sentence(p.facts.bio)} ${pz.hook?sentence(/^[A-Z]/.test(pz.hook)?pz.hook:cap(heShe(p))+" "+pz.hook):""} From ${p.facts.from}. Misses ${p.facts.likes}. Afraid of ${p.facts.fear}. Hopes for ${p.facts.hope}.
 ${secret}
 Family: ${famWords(p)}.${p.partner&&p.partner!=="you"?` Partner: ${P(p.partner)?.name||"someone"}.`:""}
 ${g?`Group: ${g.name}${g.leader===p.id?" (they lead it)":g.leader==="you"?` (led by ${pn})`:` (led by ${P(g.leader)?.name||"someone"})`}${p.role?", job: "+ROLES[p.role]?.n:""}.`:"Not in any group."}
@@ -46,7 +48,7 @@ Right now: ${p.act||"around"}${b?` inside ${b.n}`:` at ${PLACES[regionAt(p.x,p.z
 ${memOther?"Weighing on them:\n"+memOther:""}
 
 THE PERSON TALKING TO THEM
-${pl.name}, ${pl.age}${pl.bg?", used to be a "+pl.bg.toLowerCase():""}, pronouns ${pl.pron}. ${rel}${p.met?`They feel ${tierWord(tier(p))} (trust ${Math.round(p.trust)}, warmth ${Math.round(p.aff)}, from -100 to 100).`:"They have never met."}
+${pl.name}, ${pl.age}${pl.bg?", used to be a "+pl.bg.toLowerCase():""}, pronouns ${pl.pron}. ${rel}${p.met?`${p.name} ${feelWords(tier(p),pn)} (trust ${Math.round(p.trust)}, warmth ${Math.round(p.aff)}, from -100 to 100).`:`${p.name} has never met ${pn}.`}
 What they remember about ${pn}:
 ${memYou}
 
@@ -74,12 +76,12 @@ async function sendTalk(){const p=P(UI.talkTo);const msg=(UI.draft||"").trim();i
   if(dist(p.x,p.z,S.player.x,S.player.z)>6&&!p.follow){toast(`${p.met?p.name:"They"} can't hear you from there. Walk closer.`);return}
   p.chat.push({w:"you",x:msg});UI.draft="";p.lastTalk=S.t;
   const r=respond(p,msg);
-  if(!aiReady()){applyTalk(p,r);advance(3);save();render();bubble(p,r.text);return}
-  const live={w:"them",x:"",live:true};p.chat.push(live);UI.talkBusy=true;render();
+  if(!aiReady()){applyTalk(p,r);advance(3);save();render();if(UI.talkTo!==p.id)bubble(p,r.text);return}
+  const prompt=aiPrompt(p,msg,r);const live={w:"them",x:"",live:true};p.chat.push(live);UI.talkBusy=true;render();
   const ctl=new AbortController();AI.ctl=ctl;let out=null;
-  try{const res=await AI.ns(aiPrompt(p,msg,r),{signal:ctl.signal,cache:false,modelTier:"default",onText:({text})=>{const a=aiParse(text);if(a.say!==live.x){live.x=a.say;renderTalkLog()}}});
+  try{const res=await AI.ns(prompt,{signal:ctl.signal,cache:false,modelTier:"default",onText:({text})=>{const a=aiParse(text);if(a.say!==live.x){live.x=a.say;renderTalkLog()}}});
     out=aiParse(res&&res.text);AI.fails=0}
   catch(err){const code=err&&err.code;if(code==="not_granted"){AI.on=false;toast("Claude voices are off. People will use their built-in lines.")}else if(code==="rate_limited"){AI.cool=Date.now()+60000}else if(ctl.signal.aborted){}else{AI.fails++;if(AI.fails>=3)AI.cool=Date.now()+120000}}
   const i=p.chat.indexOf(live);if(i>=0)p.chat.splice(i,1);AI.ctl=null;UI.talkBusy=false;
   if(out&&out.say&&out.say.length>1){r.text=out.say;if(out.note&&!r.memory){r.memory=out.note;r.mv=r.dt+r.da>2?1:r.dt+r.da<-2?-1:0}}
-  applyTalk(p,r);advance(3);save();render();bubble(p,r.text)}
+  applyTalk(p,r);advance(3);save();render();if(UI.talkTo!==p.id)bubble(p,r.text)}

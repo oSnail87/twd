@@ -27,8 +27,8 @@ function figGeo(){const G={};
   G.pool=new T3.CircleGeometry(1,14);G.pool.rotateX(-Math.PI/2);
   return G}
 function initFigs(sc){const G=figGeo();for(const [k,g] of Object.entries(G)){const mat=new T3.MeshLambertMaterial({color:0xffffff});if(k==="pool"){mat.transparent=true;mat.opacity=.85;mat.depthWrite=false}
-    const m=new T3.InstancedMesh(g,mat,k==="leg"||k==="foot"||k==="arm"||k==="hand"?FIG.cap*2:FIG.cap);m.instanceMatrix.setUsage(T3.DynamicDrawUsage);m.frustumCulled=false;m.castShadow=k!=="pool";m.receiveShadow=k!=="pool";m.count=0;
-    m.setColorAt(0,new T3.Color());m.userData.part=k;sc.add(m);FIG.P[k]=m;FIG.idx[k]=[]}}
+    const m=new T3.InstancedMesh(g,mat,k==="leg"||k==="foot"||k==="arm"||k==="hand"?FIG.cap*2:FIG.cap);m.instanceMatrix.setUsage(T3.DynamicDrawUsage);m.frustumCulled=false;m.castShadow=k!=="pool";m.receiveShadow=k!=="pool";
+    m.setColorAt(0,new T3.Color());m.count=0;/* the color buffer is sized from count, so it has to exist before count drops to zero */m.userData.part=k;sc.add(m);FIG.P[k]=m;FIG.idx[k]=[]}}
 // what a person looks like, decided once from who they are
 function lookOf(p){if(p.id==="you")return playerLook();const R=srng(hashStr(p.id));const l=(p.look||"").toLowerCase();const F=p.sex==="F";const age=p.age??30;
   const kid=age<13;let hairC=/gray/.test(l)||age>62?(age>74?HAIRC.white:HAIRC.gray):/black hair/.test(l)?HAIRC.black:/red hair/.test(l)?HAIRC.red:/blond/.test(l)?HAIRC.blond:pick2([HAIRC.brown,HAIRC.black,HAIRC.brown,HAIRC.blond],R);

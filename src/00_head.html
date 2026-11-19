@@ -73,7 +73,8 @@ button.tag:hover:not(:disabled){border-color:var(--ember)} button.tag:disabled{o
 #world{position:absolute;inset:0}
 .w3{position:absolute;inset:0;overflow:hidden;touch-action:none}
 .w3 canvas{display:block;width:100%;height:100%;cursor:default}
-.w3labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.w3::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 75% at 50% 46%,transparent 58%,rgba(0,0,0,.34) 100%)}
+.w3labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
 .w3label{position:absolute;left:0;top:0;pointer-events:none;white-space:nowrap;font-family:var(--f-mono);font-size:11px;line-height:1.3;color:var(--fg);background:rgba(10,12,10,.78);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:3px 7px;will-change:transform}
 .w3label b{font-weight:600}
 .w3label.hover{font-size:11.5px;padding:5px 9px;text-align:center;margin-top:-6px;box-shadow:0 4px 14px rgba(0,0,0,.4)}
@@ -86,11 +87,11 @@ button.tag:hover:not(:disabled){border-color:var(--ember)} button.tag:disabled{o
 .w3label.want{width:20px;height:20px;padding:0;display:grid;place-items:center;border-radius:50%;background:var(--ember);color:#1a120a;font-weight:600;border:none;margin-top:-4px;box-shadow:0 0 0 3px rgba(228,138,63,.25)}
 .w3label.task{min-width:120px;text-align:center;padding:4px 8px 7px;margin-top:-8px}
 .w3label.task i{position:absolute;left:6px;bottom:3px;height:2px;background:var(--ember);max-width:calc(100% - 12px)}
-.w3prompt{font-size:11.5px;padding:4px 9px 4px 5px;margin-top:-8px;border-color:rgba(228,138,63,.35)}
+.w3prompt{z-index:2;font-size:11.5px;padding:4px 9px 4px 5px;margin-top:-8px;border-color:rgba(228,138,63,.35)}
 .w3prompt b{display:inline-block;min-width:18px;text-align:center;background:var(--ember);color:#1a120a;border-radius:3px;padding:0 4px;margin-right:4px}
 .w3prompt .mute{color:var(--mute)}
 .w3hurt{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(160,20,10,.55) 100%)}
-.w3area{position:absolute;left:50%;top:14%;transform:translateX(-50%);pointer-events:none;opacity:0;font-family:var(--f-display);font-size:30px;letter-spacing:.08em;color:var(--fg);text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 30px rgba(0,0,0,.6);white-space:nowrap}
+.w3area{z-index:1;position:absolute;left:50%;top:14%;transform:translateX(-50%);pointer-events:none;opacity:0;font-family:var(--f-display);font-size:30px;letter-spacing:.08em;color:var(--fg);text-shadow:0 2px 12px rgba(0,0,0,.9),0 0 30px rgba(0,0,0,.6);white-space:nowrap}
 .w3fail{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mute)}
 #game.dead .w3{filter:grayscale(.85) brightness(.6);transition:filter 1.5s}
 

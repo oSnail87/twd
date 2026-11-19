@@ -19,7 +19,7 @@ function cFree(c){let used=0;for(const o of c.items){const [w,h]=isz(o);used+=w*
 
 // ---------- what you carry ----------
 const CONT_ORDER=["legs","rig","body","outer","back"];
-const CONT_LABEL={legs:"Pockets",rig:"Rig",body:"Shirt pocket",outer:"Jacket pockets",back:"Bag"};
+const CONT_LABEL={legs:"Pockets",rig:"Rig",body:"Front pocket",outer:"Jacket pockets",back:"Bag"};
 function pConts(){const pl=S.player;const out=[];for(const s of CONT_ORDER){const g=pl.eq[s];if(g&&g.c)out.push({slot:s,g,c:g.c})}return out}
 function gearEq(s){return S.player.eq[s]||null}
 function weapon(){return S.player.eq.weapon||null}
@@ -70,7 +70,7 @@ function rollLoot(cid){const s=contState(cid);if(s.rolled)return s;s.rolled=true
   if(C.b===pl.home&&!pl.flags.homeSeeded)seedHome(b);
   s.c.items.sort((a,b)=>a.y-b.y||a.x-b.x);return s}
 // your own house has a few things you'd know were there
-function seedHome(b){const pl=S.player;pl.flags.homeSeeded=true;const add=(k,list)=>{const c=Object.values(CONTS).find(c=>c.b===b.id&&c.k===k);if(!c)return;const s=contState(c.id);if(!s.rolled){s.rolled=true;for(const [id,ch,mn=1,mx=1] of (LOOT[k]||[]))if(rf()<ch)cAdd(s.c,id,rnd(mn,mx),true)}for(const [id,n] of list)cAdd(s.c,id,n);s.c.items.sort((a,c)=>a.y-c.y||a.x-c.x)};
+function seedHome(b){const pl=S.player;pl.flags.homeSeeded=true;const add=(k,list)=>{const c=Object.values(CONTS).find(c=>c.b===b.id&&c.k===k);if(!c)return;const s=contState(c.id);const fresh=!s.rolled;s.rolled=true;for(const [id,n] of list)cAdd(s.c,id,n);if(fresh)for(const [id,ch,mn=1,mx=1] of (LOOT[k]||[]))if(rf()<ch)cAdd(s.c,id,rnd(mn,mx),true);s.c.items.sort((a,c)=>a.y-c.y||a.x-c.x)};
   add("closet",[["backpack",1],["tshirt",1]]);add("cupboard",[["canned_food",2],["kitchen_knife",1],["water_bottle",1]]);add("fridge",[["water_bottle",2]]);add("nightstand",[["flashlight",1]]);add("medicine",[["bandage",2]])}
 function contName(cid){if(cid.startsWith("pile"))return"On the ground";const C=CONTS[cid];return C?C.n:"Container"}
 function openContObj(cid){if(cid.startsWith("pile")){const p=S.piles.find(p=>p.id===cid);return p?{c:p.c,rev:1e9,pile:p}:null}const s=rollLoot(cid);return{c:s.c,rev:s.rev,st:s}}
