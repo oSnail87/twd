@@ -283,9 +283,11 @@ function onClick(ev){if(!W3.ok||!S||UI.create||UI.modal||S.player.alive===false)
 // ---------- camera ----------
 function camera(dt){const pl=S.player;if(Math.abs(W3.camX-pl.x)>30||Math.abs(W3.camZ-pl.z)>30)snapCamera();const k=1-Math.pow(.002,dt);W3.camX+=(pl.x-W3.camX)*k;W3.camZ+=(pl.z-W3.camZ)*k;
   const asp=W3.rw/Math.max(1,W3.rh);const vh=26/W3.zoom;const C=W3.cam;C.left=-vh*asp/2;C.right=vh*asp/2;C.top=vh/2;C.bottom=-vh/2;C.updateProjectionMatrix();
-  C.position.set(W3.camX+30,34,W3.camZ+30);C.lookAt(W3.camX,0,W3.camZ);
+  // an open panel covers the right of the screen, so the view slides to keep you in the open part
+  const pw=UI.panel&&W3.panelW&&W3.rw>760?W3.panelW:0;const want=pw/Math.max(1,W3.rw)*vh*asp/2;W3.shift=(W3.shift||0)+(want-(W3.shift||0))*(1-Math.pow(.004,dt));
+  const lx=W3.camX+W3.shift*.7071,lz=W3.camZ-W3.shift*.7071;C.position.set(lx+30,34,lz+30);C.lookAt(lx,0,lz);
   // the sun's shadow box follows you, snapped to its own texels so edges don't crawl
-  const L=W3.sun;const sz=L.shadow.camera.right-L.shadow.camera.left;const tx=sz/L.shadow.mapSize.x;const fx=Math.round(W3.camX/tx)*tx,fz=Math.round(W3.camZ/tx)*tx;
+  const L=W3.sun;const sz=L.shadow.camera.right-L.shadow.camera.left;const tx=sz/L.shadow.mapSize.x;const fx=Math.round(lx/tx)*tx,fz=Math.round(lz/tx)*tx;
   L.target.position.set(fx,0,fz);L.position.set(fx+W3.sunDir.x*60,W3.sunDir.y*60,fz+W3.sunDir.z*60);L.target.updateMatrixWorld()}
 
 // ---------- light, weather ----------

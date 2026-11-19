@@ -1,10 +1,11 @@
 
 // ================= conversations: the game decides what happens, Claude writes how each person says it =================
 const AI={ns:null,tried:false,on:true,busy:false,ctl:null,cool:0,fails:0};
-function aiInit(){if(AI.tried)return;AI.tried=true;try{const c=window.claude;if(c&&typeof c.use==="function")Promise.resolve(c.use("sample")).then(ns=>{AI.ns=ns||null;if(S&&UI.talkTo)markUI()}).catch(()=>{AI.ns=null})}catch(e){AI.ns=null}}
+function aiInit(){if(AI.tried)return;AI.tried=true;try{AI.on=localStorage.getItem("twd.ai")!=="0"}catch(e){}
+  try{const c=window.claude;if(c&&typeof c.use==="function")Promise.resolve(c.use("sample")).then(ns=>{AI.ns=ns||null;if(S&&UI.talkTo)markUI();const n=document.getElementById("cai");if(n)n.textContent=aiHelpText()}).catch(()=>{AI.ns=null})}catch(e){AI.ns=null}}
 function aiReady(){return!!(AI.ns&&AI.on&&Date.now()>AI.cool)}
-function aiStateText(){if(UI.talkBusy)return"thinking...";if(!AI.ns)return"";if(!AI.on)return"built-in voices";if(Date.now()<AI.cool)return"built-in voices for a minute";return"voices by Claude"}
-function aiHelpText(){return AI.ns?"People's words are written by Claude, using your Claude usage. You can switch that off in the talk box.":""}
+function aiStateText(){if(UI.talkBusy)return"thinking...";if(!AI.ns)return"";if(!AI.on)return"Claude voices: off";if(Date.now()<AI.cool)return"Claude voices: resting";return"Claude voices: on"}
+function aiHelpText(){return AI.ns?"When you talk to people, Claude writes their words in their own voice, using your Claude usage. The first time, you'll be asked to allow it. You can switch it off in the talk box.":""}
 function talkAbort(){if(AI.ctl){try{AI.ctl.abort()}catch(e){}AI.ctl=null}}
 // the small details that make each person themselves, fixed for life by who they are
 function persona(p){if(p._pz)return p._pz;const R=srng(hashStr(p.id+"/voice"));const sd=p.seed&&SEEDP[p.seed]||{};

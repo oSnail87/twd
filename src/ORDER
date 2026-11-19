@@ -1,1 +1,1 @@
-p1.html p2.js p3.js p4.js p5.js p6.js
+00_head.html 10_base.js 20_interior.js 30_inventory.js 40_sim.js 50_talk.js 55_ai.js 60_world.js 65_figs.js 68_play.js 70_ui.js 80_inv_ui.js 90_boot.js

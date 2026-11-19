@@ -42,9 +42,9 @@ function lookOf(p){if(p.id==="you")return playerLook();const R=srng(hashStr(p.id
   const build=/heavyset/.test(l)?[1.16,1]:/wiry|slight/.test(l)?[.88,1]:/broad/.test(l)?[1.1,1.02]:/athletic/.test(l)?[1.02,1.02]:[1,1];
   const tall=/tall/.test(l)?1.06:/short/.test(l)?.94:/stooped/.test(l)?.96:1;
   const s=(age<4?.5:age<8?.62:age<13?.74:age<16?.9:1)*(F?.95:1)*tall;
-  return{F,skin:SKINS[(hashStr(p.id)>>3)%SKINS.length],hair,hairC,beard,top,sleeve,pants,shoes,hat,hatC,s,wx:build[0],stoop:/stooped/.test(l)||age>72?.18:0}}
+  return{F,skin:SKINS[(hashStr(p.id)>>>3)%SKINS.length],hair,hairC,beard,top,sleeve,pants,shoes,hat,hatC,s,wx:build[0],stoop:/stooped/.test(l)||age>72?.18:0}}
 function playerLook(){const pl=S.player;const F=pl.sex==="F";const col=s=>{const g=gearEq(s);return g?ITEMS[g.id].col||"#7a7a74":null};const head=gearEq("head");
-  const top=col("outer")||col("body")||pl.skin;return{F,skin:pl.skin||SKINS[3],hair:head?null:pl.hairStyle||(F?"hLong":"hShort"),hairC:HAIRC[pl.hair]||HAIRC.brown,beard:!F&&pl.beard,
+  const top=col("outer")||col("body")||pl.skin;return{F,skin:pl.skin||SKINS[3],hair:head||pl.hairStyle==="none"?null:pl.hairStyle||(F?"hLong":"hShort"),hairC:HAIRC[pl.hair]||HAIRC.brown,beard:!F&&pl.beard,
     top,sleeve:col("outer")||col("body")||pl.skin,pants:col("legs")||"#c8c0b0",shoes:col("feet")||pl.skin,hat:head?(head.id==="helmet"?"helmet":"hBuzz"):null,hatC:head?ITEMS[head.id].col:null,pack:col("back")||col("rig"),
     s:(pl.age<16?.92:1)*(F?.95:1)*(pl.build==="tall"?1.05:pl.build==="short"?.94:1),wx:pl.build==="heavy"?1.14:pl.build==="slim"?.9:1,stoop:0}}
 function zedLook(z){const src=z.pid&&z.pid!=="you"?P(z.pid):null;const base=z.pid==="you"?playerLook():src?lookOf(src):lookOf({id:z.id,sex:hashStr(z.id)%2?"F":"M",age:20+hashStr(z.id)%55,job:pick2(["clerk","nurse","farmer","cook","unemployed","quarry","teacher","trucker"],srng(hashStr(z.id)))});
@@ -65,8 +65,8 @@ const _M={};function fm(){return _M.a||(_M.a=[0,1,2,3,4,5,6,7,8].map(()=>new T3.
 let _E,_Q,_V,_S,_T;
 function jm(out,parent,x,y,z,ax,ay,az,sx=1,sy=1,sz=1){_E.set(ax,ay,az);_Q.setFromEuler(_E);_V.set(x,y,z);_S.set(sx,sy,sz);_T.compose(_V,_Q,_S);out.multiplyMatrices(parent,_T);return out}
 function drawFigs(dt,ts){if(!_E){_E=new T3.Euler();_Q=new T3.Quaternion();_V=new T3.Vector3();_S=new T3.Vector3();_T=new T3.Matrix4()}
-  const P=FIG.P;const n={};for(const k in P)n[k]=0;for(const k in FIG.idx)FIG.idx[k].length=0;const col=new T3.Color();
-  const put=(k,m,c,f)=>{const mesh=P[k];const i=n[k]++;if(i>=mesh.instanceMatrix.count)return;mesh.setMatrixAt(i,m);col.copy(typeof c==="string"?CC(c):c);mesh.setColorAt(i,col);FIG.idx[k][i]=f};
+  const FP=FIG.P;const n={};for(const k in FP)n[k]=0;for(const k in FIG.idx)FIG.idx[k].length=0;const col=new T3.Color();
+  const put=(k,m,c,f)=>{const mesh=FP[k];const i=n[k]++;if(i>=mesh.instanceMatrix.count)return;mesh.setMatrixAt(i,m);col.copy(typeof c==="string"?CC(c):c);mesh.setColorAt(i,col);FIG.idx[k][i]=f};
   const [root,torso,hips,lL,lR,aL,aR,head,tmp]=fm();const I=new T3.Matrix4();
   const pl=S.player;
   const all=[...FIGMAP.values(),...FIG.corpses.map(c=>c.f)];
@@ -92,7 +92,7 @@ function drawFigs(dt,ts){if(!_E){_E=new T3.Euler();_Q=new T3.Quaternion();_V=new
     if(L.pack||(f.kind==="npc"&&o.group&&["scavenger","hunter","forager"].includes(o.role)))put("pack",torso,L.pack||"#4a5a3a",f);
     if(f.kind==="npc"&&o.group&&G(o.group)&&!lie)put("band",aL,G(o.group).color,f);
     if(f.dead){tmp.makeScale(.9*s,1,.7*s);tmp.setPosition(f.x,.025,f.z);put("pool",tmp,"#4a0e0a",f)}}
-  for(const k in P){const m=P[k];m.count=Math.min(n[k],m.instanceMatrix.count);m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true}
+  for(const k in FP){const m=FP[k];m.count=Math.min(n[k],m.instanceMatrix.count);m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true}
   FIG.corpses=FIG.corpses.filter(c=>{c.t-=dt;return c.t>0})}
 function addCorpse(src,kind){const f=figFor(kind,src);f.lk=kind==="zed"?zedLook(src):lookOf(src);f.dead=true;f.lie=1;f.x=src.x;f.z=src.z;const old=FIGMAP.get(src.id);if(old)f.ang=old.ang;FIG.corpses.push({f,t:kind==="zed"?70:150})}
 // which figure is under the mouse

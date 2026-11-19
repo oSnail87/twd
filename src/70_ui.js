@@ -20,7 +20,7 @@ function layout(){if($("game"))return;$app.innerHTML=`<div id="game">
   root.addEventListener("input",onInputUI);root.addEventListener("change",onChangeUI);
   $("create").addEventListener("click",onClickUI);$("create").addEventListener("input",onInputUI);}
 function render(){if(UI.create||!S){if(typeof renderCreate==="function")renderCreate();return}
-  $("create").hidden=true;$("game").classList.toggle("dead",S.player.alive===false);
+  $("create").hidden=true;$("game").classList.remove("creating");$("game").classList.toggle("dead",S.player.alive===false);
   hud();renderBar();renderLog();if(!UI.drag)renderPanel();renderTalk();renderModal();UI.dirty=false}
 function hud(){if(!S||UI.create)return;const tl=$("hudtl"),v=$("vitals"),c=$("ctrls");if(tl)tl.innerHTML=clockHtml();if(v)v.innerHTML=vitalsHtml();if(c)c.innerHTML=ctrlsHtml();UI.hudDirty=false}
 
@@ -132,9 +132,9 @@ function renderPanel(){const el=$("panel");if(!el)return;if(!UI.panel||S.player.
   const keep={};for(const x of el.querySelectorAll("[data-keep]"))keep[x.dataset.keep]=x.scrollTop;
   const name={inv:"Inventory",craft:"Make things",group:"Group",people:"People",journal:"Journal",map:"Map"}[UI.panel];
   const body=UI.panel==="inv"?(typeof invPanelHtml==="function"?invPanelHtml():""):UI.panel==="craft"?craftHtml():UI.panel==="group"?groupHtml():UI.panel==="people"?peopleHtml():UI.panel==="journal"?journalHtml():mapHtml();
-  el.hidden=false;el.className="panel p-"+UI.panel;el.innerHTML=`<header><h2>${name}</h2><button class="x" data-act="closepanel" aria-label="Close">×</button></header><div class="pbody" data-keep="pbody">${body}</div>`;
+  el.hidden=false;el.className="panel p-"+UI.panel;W3.panelW=0;el.innerHTML=`<header><h2>${name}</h2><button class="x" data-act="closepanel" aria-label="Close">×</button></header><div class="pbody" data-keep="pbody">${body}</div>`;
   for(const x of el.querySelectorAll("[data-keep]"))if(keep[x.dataset.keep]!=null)x.scrollTop=keep[x.dataset.keep];
-  if(UI.panel==="map")drawBigMap();if(UI.panel==="inv"&&typeof invAfterRender==="function")invAfterRender()}
+  W3.panelW=el.offsetWidth+14;if(UI.panel==="map")drawBigMap();if(UI.panel==="inv"&&typeof invAfterRender==="function")invAfterRender()}
 
 // making things
 function canCraft(r){for(const [k,v] of Object.entries(r.need))if(!invHas(k,v))return`Missing ${ITEMS[k].n.toLowerCase()}`;if(r.tool&&!hasTool(r.tool))return`Needs a ${r.tool}`;if(r.at==="fire"&&!nearFire())return"Needs a fire";return true}
@@ -267,7 +267,7 @@ function renderTalk(){const el=$("talk");if(!el)return;const p=UI.talkTo?P(UI.ta
   ${far?`<p class="warn mono">${esc(p.met?p.name:"They")} can't hear you from here. Walk closer.</p>`:""}
   <form class="say" data-form="talk"><input id="talkbox" autocomplete="off" placeholder="${busy?"They're answering...":"Say anything..."}" value="${esc(UI.draft)}" maxlength="300" aria-label="What you say"${busy?" disabled":""}><button class="btn pri" type="submit"${busy?" disabled":""}>Say</button></form>
   <div class="chips">${QUICK.map(q=>`<button class="chip" data-act="quick" data-v="${esc(q)}"${busy?" disabled":""}>${esc(q)}</button>`).join("")}</div>
-  <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}<span class="mute small" id="aistate">${typeof aiStateText==="function"?esc(aiStateText()):""}</span></footer>`;
+  <footer><button class="tag" data-act="trade" data-v="${p.id}">Trade</button>${p.met?`<button class="tag" data-act="person" data-v="${p.id}">About ${esc(p.name)}</button>`:""}${typeof AI!=="undefined"&&AI.ns?`<button class="tag" id="aistate" data-act="aitoggle" title="${AI.on?"Switch to built-in lines (no Claude usage)":"Let Claude write what people say"}">${esc(aiStateText())}</button>`:""}</footer>`;
   const c=$("chat");if(c)c.scrollTop=c.scrollHeight;positionTalk(true);
   const nb=$("talkbox");if(nb&&(had||UI.talkFresh)&&!busy){nb.focus({preventScroll:true});if(sel)try{nb.setSelectionRange(sel[0],sel[1])}catch(e){}}UI.talkFresh=false}
 function renderTalkLog(){const p=UI.talkTo?P(UI.talkTo):null;const c=$("chat");if(!p||!c)return;const stick=c.scrollTop+c.clientHeight>=c.scrollHeight-30;c.innerHTML=chatHtml(p);if(stick)c.scrollTop=c.scrollHeight}
@@ -373,6 +373,7 @@ function onAct(a,v,el,e){const pl=S&&S.player;
     case"adopt":adopt(v);save();render();return;
     case"choose":choose(+v);return;
     case"closemodal":UI.modal=null;render();checkPending();return;
+    case"aitoggle":AI.on=!AI.on;try{localStorage.setItem("twd.ai",AI.on?"1":"0")}catch(err){}toast(AI.on?"Claude writes what people say again.":"People use their built-in lines now, with no Claude usage.");renderTalk();return;
     case"tq":{const [side,k,d]=v.split("|");const m=UI.modal;if(!m||m.type!=="trade")return;const max=side==="give"?(tradables()[k]||0):(P(m.pid).pack[k]||0);m[side][k]=clamp((m[side][k]||0)+(+d),0,max);if(!m[side][k])delete m[side][k];render();return}
     case"dotrade":doTrade();return;
     case"confirmnew":UI.modal={type:"confirmNew"};render();return;

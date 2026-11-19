@@ -6,7 +6,7 @@ const SAVE_KEY="twd.save.v3";
 let PMAP={};
 function P(id){return id==="you"?S.player:PMAP[id]}
 function reindex(){PMAP={};for(const p of S.people)PMAP[p.id]=p}
-function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function save(){if(!S)return;try{if(typeof doorsOut==="function"&&W3.ok)doorsOut();localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 function loadSave(){try{const r=localStorage.getItem(SAVE_KEY);return r?JSON.parse(r):null}catch(e){return null}}
 function wipeSave(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
 function journal(text,kind=""){S.journal.unshift({t:S.t,x:text,k:kind});S.journal.length=Math.min(S.journal.length,100)}
@@ -102,13 +102,13 @@ function newWorld(c){
   // player household
   const pl={id:"you",name:c.name,sur:"",pron:c.pron,sex:c.sex,age:c.age,look:c.look,mark:c.mark,bg:c.bg,traits:c.traits,story:c.story,
     hp:100,food:75,water:70,warmth:90,energy:85,sick:0,bleeding:0,bitten:null,sk:{fight:1,scavenge:1,craft:1,build:1,medic:1,speak:1,survive:1},
-    x:0,z:0,eq:{},partner:null,trying:false,preg:null,kids:[],group:null,flags:{},alive:true,hutTile:null,fam:{},home:"h3",hair:c.hair||"brown",skin:c.skin||"#c99873"};
+    x:0,z:0,eq:{},partner:null,trying:false,preg:null,kids:[],group:null,flags:{},alive:true,hutTile:null,fam:{},home:"h3",hair:c.hair||"brown",skin:c.skin||"#c99873",hairStyle:c.hairStyle||null,beard:!!c.beard&&c.sex==="M",build:c.build||"average"};
   const bgSk={"Nurse":{medic:3},"Mechanic":{craft:3,build:1},"Sheriff's deputy":{fight:2,speak:1},"Line cook":{survive:1,speak:1,craft:1},"Teacher":{speak:3},"Farmhand":{survive:2,build:1},"Construction worker":{build:3,fight:1},"College student":{scavenge:2,speak:1},"Between jobs":{scavenge:2}};
   for(const [k,v] of Object.entries(bgSk[c.bg]||{}))pl.sk[k]+=v;
   if(c.traits.includes("Charming"))pl.sk.speak+=2;if(c.traits.includes("Tough"))pl.sk.fight+=1;if(c.traits.includes("Handy"))pl.sk.craft+=1;if(c.traits.includes("Resourceful"))pl.sk.scavenge+=1;if(c.traits.includes("Kind"))pl.sk.medic+=1;if(c.traits.includes("Outdoorsy"))pl.sk.survive+=1;
   S.player=pl;
   const hb=BMAP[pl.home];const bd0=bedPos(hb,0);const sp0=insidePos(hb,bd0?bd0.room:null);pl.x=sp0.x;pl.z=sp0.z;
-  for(const s of SLOTS)pl.eq[s]=null;equipNew("tshirt");equipNew(c.age>40?"flannel":"hoodie");equipNew("jeans");equipNew("sneakers");
+  for(const s of SLOTS)pl.eq[s]=null;equipNew(c.age>40?"flannel":"hoodie");equipNew("jeans");equipNew("sneakers");
   invAdd("photo",1,true);invAdd("snacks",1,true);invAdd("water_bottle",1,true);
   // who's home with you
   const hhKind=c.household;

@@ -335,7 +335,7 @@ function updateCutaway(){const pl=S.player;const inB=bldAt(pl.x,pl.z);W3.inB=inB
     if(s>-rad*.3&&s<rad+8&&p<rad*1.05+1.2)want.add(b.id)}
   for(const o of W3.bm.values()){const c=want.has(o.b.id)?1:0;o.target=c}}
 function animCutaway(dt){for(const o of W3.bm.values()){const t=o.target||0;if(o.cut===t&&o.settled)continue;o.cut+=(t-o.cut)*Math.min(1,dt*9);if(Math.abs(o.cut-t)<.01){o.cut=t;o.settled=true}else o.settled=false;
-  const sy=1-o.cut*.86;o.walls.scale.y=sy;o.win.visible=o.cut<.5;const shadowOnly=o.cut>.5;if(o.roofMat.colorWrite===shadowOnly){o.roofMat.colorWrite=!shadowOnly;o.roofMat.depthWrite=!shadowOnly;for(const m of o.extMats){m.colorWrite=!shadowOnly;m.depthWrite=!shadowOnly}}}}
+  const sy=1-o.cut*.86;o.walls.scale.y=sy;o.win.visible=o.cut<.5;const hide=o.cut>.5;if(o.roof.visible===hide)o.roof.visible=!hide}}
 function animDoors(dt){const pl=S.player;for(const o of W3.bm.values()){if(Math.abs(o.b.x-pl.x)>40||Math.abs(o.b.z-pl.z)>40)continue;for(const d of o.doors){const D=d.D;let want=D.open||D.broken?1:0;
   if(!want&&!D.lock&&!D.bar&&(D.npcT||0)>performance.now())want=1;d.a+=(want-d.a)*Math.min(1,dt*7);d.piv.rotation.y=d.piv.userData.base+d.piv.userData.sign*d.a*1.75*(D.broken?.8:1)}}}
 function windowLights(){const night=W3.night;const powered=!S.flags.blackout;for(const o of W3.bm.values()){const b=o.b;let lit=false;if(night){const res=S.people.some(p=>p.alive&&p.home===b.id&&!p.group&&bldAt(p.x,p.z)===b);lit=res&&(powered||hashStr(b.id+dayOf(S.t))%3===0)}

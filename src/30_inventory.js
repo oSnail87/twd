@@ -71,6 +71,6 @@ function rollLoot(cid){const s=contState(cid);if(s.rolled)return s;s.rolled=true
   s.c.items.sort((a,b)=>a.y-b.y||a.x-b.x);return s}
 // your own house has a few things you'd know were there
 function seedHome(b){const pl=S.player;pl.flags.homeSeeded=true;const add=(k,list)=>{const c=Object.values(CONTS).find(c=>c.b===b.id&&c.k===k);if(!c)return;const s=contState(c.id);if(!s.rolled){s.rolled=true;for(const [id,ch,mn=1,mx=1] of (LOOT[k]||[]))if(rf()<ch)cAdd(s.c,id,rnd(mn,mx),true)}for(const [id,n] of list)cAdd(s.c,id,n);s.c.items.sort((a,c)=>a.y-c.y||a.x-c.x)};
-  add("closet",[["backpack",1]]);add("cupboard",[["canned_food",2],["kitchen_knife",1],["water_bottle",1]]);add("fridge",[["water_bottle",2]]);add("nightstand",[["flashlight",1]]);add("medicine",[["bandage",2]])}
+  add("closet",[["backpack",1],["tshirt",1]]);add("cupboard",[["canned_food",2],["kitchen_knife",1],["water_bottle",1]]);add("fridge",[["water_bottle",2]]);add("nightstand",[["flashlight",1]]);add("medicine",[["bandage",2]])}
 function contName(cid){if(cid.startsWith("pile"))return"On the ground";const C=CONTS[cid];return C?C.n:"Container"}
 function openContObj(cid){if(cid.startsWith("pile")){const p=S.piles.find(p=>p.id===cid);return p?{c:p.c,rev:1e9,pile:p}:null}const s=rollLoot(cid);return{c:s.c,rev:s.rev,st:s}}
