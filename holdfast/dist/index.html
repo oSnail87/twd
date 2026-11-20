@@ -115,6 +115,8 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const cap1=s=>s?s[0].toUpperCase()+s.slice(1):s;
 const listAnd=a=>a.length<2?(a[0]||""):a.slice(0,-1).join(", ")+" and "+a[a.length-1];
 const HOUR=60,DAY=1440;
+// how fast the clock runs at 1×: game minutes per real second. One second is a minute, so a minute of play is an hour in camp.
+const CLOCK=1;
 const dayOf=t=>Math.floor(t/DAY)+1;const hourOf=t=>Math.floor((t%DAY)/60);
 function clockStr(t){const h=hourOf(t),m=Math.floor(t%60);const hh=h%12||12;return`${hh}:${String(m).padStart(2,"0")} ${h<12?"AM":"PM"}`}
 
@@ -139,29 +141,32 @@ const LOOK={skin:["#f0d2b4","#e3bd98","#c99873","#a8744e","#8a5a3a","#5e3e2a"],h
 
 // ================= the land: a world map of places, each its own scene =================
 // mx/mz place it on the world map (in miles-ish units); each place loads as its own isometric scene when you go there.
+// pop is how many people were there when it started: the dead there come from them.
 // kind picks the scene's layout; beds/farm/water/def/wood/hide only matter if you make camp there; danger sets how many of the dead are around
 const LOCS={
-  start:{n:"Route 9 pileup",mx:0,mz:8,kind:"road",danger:1,camp:false,d:"Where you started: a stalled line of cars on the highway."},
-  farm:{n:"Harlan Farm",mx:-46,mz:-34,kind:"farm",beds:4,farm:1.5,water:1.2,def:.8,wood:1,hide:1,danger:1,d:"A farmhouse, a barn and open fields. Good soil and a hand-pumped well, but you can see it for miles."},
-  mill:{n:"Cutter's Mill",mx:-48,mz:27,kind:"mill",beds:3,farm:1.1,water:1.6,def:1.1,wood:1.1,hide:1,danger:1,d:"An old stone mill on the river. Water all year and thick walls, a long walk from town."},
-  church:{n:"St. Agnes Church",mx:22,mz:-16,kind:"church",beds:6,farm:.7,water:.9,def:1.3,wood:.8,hide:.8,danger:2,d:"A brick church with a fenced yard on the edge of Millbrook. Close to the stores, and close to the dead."},
-  scout:{n:"Pine Ridge Camp",mx:54,mz:46,kind:"scout",beds:6,farm:.6,water:1.1,def:.9,wood:1.6,hide:1.4,danger:1,d:"A scout camp deep in the pines, with cabins by a lake. Hidden and quiet, but poor ground for crops."},
-  motel:{n:"Starlite Motel",mx:-14,mz:16,kind:"motel",beds:8,farm:.7,water:.8,def:.7,wood:.9,hide:.7,danger:2,d:"A row of rooms right off the highway. Plenty of beds, and easy to find for anyone."},
-  grocery:{n:"Grocery",mx:38,mz:-48,kind:"store",beds:2,farm:.3,water:.8,def:.9,wood:.6,hide:.6,danger:3,col:"#8a7a5a",d:"Millbrook's grocery. Picked over, but nobody got into the stockroom."},
-  pharmacy:{n:"Pharmacy",mx:52,mz:-46,kind:"store",beds:1,farm:.3,water:.7,def:.8,wood:.6,hide:.6,danger:3,col:"#6a7a8a",d:"The corner pharmacy. Medicine, if the dead haven't got it."},
-  hardware:{n:"Hardware Store",mx:40,mz:-34,kind:"store",beds:2,farm:.3,water:.7,def:1,wood:.8,hide:.6,danger:2,col:"#8a5a3a",d:"Tools, nails, rope, tarps. Everything you need to build."},
-  police:{n:"Police Station",mx:58,mz:-33,kind:"police",beds:3,farm:.3,water:.8,def:1.6,wood:.6,hide:.6,danger:4,d:"Brick walls and a locked armory, overrun the first night."},
-  school:{n:"Millbrook School",mx:22,mz:-56,kind:"school",beds:10,farm:.8,water:.9,def:1,wood:.7,hide:.7,danger:3,d:"A one-story school with a ball field and a cafeteria. It was an evacuation point. It didn't go well."},
-  gas:{n:"Gas Station",mx:6,mz:4,kind:"gas",beds:1,farm:.3,water:.6,def:.6,wood:.6,hide:.6,danger:1,d:"A gas station and mini-mart at the crossroads."}};
+  start:{n:"Route 9 pileup",mx:0,mz:8,kind:"road",danger:1,pop:5,camp:false,d:"Where you started: a stalled line of cars on the highway."},
+  farm:{n:"Harlan Farm",mx:-46,mz:-34,kind:"farm",pop:2,beds:4,farm:1.5,water:1.2,def:.8,wood:1,hide:1,danger:1,d:"A farmhouse, a barn and open fields. Good soil and a hand-pumped well, but you can see it for miles."},
+  mill:{n:"Cutter's Mill",mx:-48,mz:27,kind:"mill",pop:1,beds:3,farm:1.1,water:1.6,def:1.1,wood:1.1,hide:1,danger:1,d:"An old stone mill on the river. Water all year and thick walls, a long walk from town."},
+  church:{n:"St. Agnes Church",mx:22,mz:-16,kind:"church",pop:7,beds:6,farm:.7,water:.9,def:1.3,wood:.8,hide:.8,danger:2,d:"A brick church with a fenced yard on the edge of Millbrook. Close to the stores, and close to the dead."},
+  scout:{n:"Pine Ridge Camp",mx:54,mz:46,kind:"scout",pop:2,beds:6,farm:.6,water:1.1,def:.9,wood:1.6,hide:1.4,danger:1,d:"A scout camp deep in the pines, with cabins by a lake. Hidden and quiet, but poor ground for crops."},
+  motel:{n:"Starlite Motel",mx:-14,mz:16,kind:"motel",pop:7,beds:8,farm:.7,water:.8,def:.7,wood:.9,hide:.7,danger:2,d:"A row of rooms right off the highway. Plenty of beds, and easy to find for anyone."},
+  grocery:{n:"Grocery",mx:38,mz:-48,kind:"store",pop:9,beds:2,farm:.3,water:.8,def:.9,wood:.6,hide:.6,danger:3,col:"#8a7a5a",d:"Millbrook's grocery. Picked over, but nobody got into the stockroom."},
+  pharmacy:{n:"Pharmacy",mx:52,mz:-46,kind:"store",pop:6,beds:1,farm:.3,water:.7,def:.8,wood:.6,hide:.6,danger:3,col:"#6a7a8a",d:"The corner pharmacy. Medicine, if the dead haven't got it."},
+  hardware:{n:"Hardware Store",mx:40,mz:-34,kind:"store",pop:5,beds:2,farm:.3,water:.7,def:1,wood:.8,hide:.6,danger:2,col:"#8a5a3a",d:"Tools, nails, rope, tarps. Everything you need to build."},
+  police:{n:"Police Station",mx:58,mz:-33,kind:"police",pop:8,beds:3,farm:.3,water:.8,def:1.6,wood:.6,hide:.6,danger:4,d:"Brick walls and a locked armory, overrun the first night."},
+  school:{n:"Millbrook School",mx:22,mz:-56,kind:"school",pop:14,beds:10,farm:.8,water:.9,def:1,wood:.7,hide:.7,danger:3,d:"A one-story school with a ball field and a cafeteria. It was an evacuation point. It didn't go well."},
+  gas:{n:"Gas Station",mx:6,mz:4,kind:"gas",pop:4,beds:1,farm:.3,water:.6,def:.6,wood:.6,hide:.6,danger:1,d:"A gas station and mini-mart at the crossroads."}};
 const SITES=LOCS;// older name used around the code for places you can live
 const SH=30;// a scene runs from -SH to SH on both axes
 // where things are stored in each kind of place, and what's likely inside: [key, chance, min, max]; i: marks a loose item
-const CONT={car:{n:"Car",g:[4,2],loot:[["food",.3,1,2],["water",.3,1,2],["i:bulb",.15],["i:blanket",.15],["i:tape",.15],["i:battery",.1],["i:knife",.08]]},
+const CONT={car:{n:"Car",g:[4,2],loot:[["food",.3,1,2],["water",.3,1,2],["i:bulb",.15],["i:blanket",.15],["i:tape",.15],["i:battery",.1],["i:knife",.08],["i:pistol",.03],["ammo",.06,2,6]]},
   shelf:{n:"Shelves",g:[5,3],loot:[["food",.6,2,6],["water",.4,1,4],["i:tin",.3,1,3],["i:jar",.2,1,2],["i:alcohol",.15],["i:seeds",.15,1,3]]},
   stock:{n:"Stockroom",g:[6,4],loot:[["food",.9,4,10],["water",.7,3,8],["i:bucket",.3],["i:bleach",.3],["i:cloth",.3,1,3]]},
   meds:{n:"Pharmacy shelves",g:[5,3],loot:[["meds",.8,1,4],["i:insulin",.35,1,3],["i:epipen",.25,1,2],["i:inhaler",.3,1,2],["i:heartpills",.3,10,30],["i:alcohol",.2]]},
   tools:{n:"Tool aisle",g:[6,3],loot:[["scrap",.7,2,6],["i:nails",.6,1,2],["i:rope",.5,1,3],["i:tarp",.4,1,2],["i:hammer",.35],["i:saw",.3],["i:shovel",.3],["i:wire",.4,1,3],["i:tape",.4,1,2],["i:chain",.2],["i:seeds",.3,2,6]]},
-  armory:{n:"Armory locker",g:[4,3],loot:[["ammo",.8,6,20],["i:bat",.3],["i:knife",.4],["i:tape",.2]]},
+  armory:{n:"Armory locker",g:[6,3],loot:[["ammo",.85,8,24],["i:pistol",.55],["i:shotgun",.45],["i:rifle",.2],["i:bat",.3],["i:knife",.4],["i:tape",.2]]},
+  gunsafe:{n:"Gun cabinet",g:[5,2],loot:[["i:rifle",.6],["i:shotgun",.35],["ammo",.8,4,14]]},
+  cruiser:{n:"Trooper's cruiser",g:[5,2],loot:[["i:pistol",1],["ammo",1,8,14],["i:bulb",.5],["water",.4,1,2]]},
   desk:{n:"Desks",g:[4,2],loot:[["food",.25,1,2],["i:bulb",.25],["i:tape",.25],["i:wire",.15],["meds",.15,1,1]]},
   kitchen:{n:"Kitchen",g:[5,3],loot:[["food",.7,2,6],["water",.5,1,4],["i:knife",.4],["i:jar",.3,1,3],["i:bucket",.2],["i:tin",.3,1,3]]},
   barn:{n:"Barn loft",g:[6,3],loot:[["wood",.7,2,6],["i:rope",.5,1,3],["i:seeds",.5,2,8],["i:shovel",.4],["i:chain",.3],["i:boards",.5,1,4],["i:tarp",.3]]},
@@ -169,16 +174,16 @@ const CONT={car:{n:"Car",g:[4,2],loot:[["food",.3,1,2],["water",.3,1,2],["i:bulb
   pumps:{n:"Mini-mart",g:[5,3],loot:[["food",.6,1,4],["water",.6,1,4],["i:bottle",.4,1,4],["i:tape",.3],["i:line",.2],["i:fishhook",.2,2,6],["i:bulb",.25]]},
   shed:{n:"Shed",g:[4,3],loot:[["wood",.6,1,4],["scrap",.4,1,3],["i:rope",.3],["i:saw",.2],["i:line",.25],["i:fishhook",.2,2,8],["i:bow",.08]]}};
 // what each kind of place holds: the main building's footprint and look, and the containers to search
-const SCENES={road:{b:null,conts:["car","car","car","car","car"]},
-  farm:{b:{w:9,d:7,h:4,c:"#d8d0c0",roof:"#6a3a2a",at:[-6,-8]},b2:{w:8,d:10,h:5,c:"#8a3a2a",roof:"#4a4a48",at:[10,-8]},fields:true,conts:["kitchen","closet","barn","shed"],tree:.5},
-  mill:{b:{w:8,d:8,h:6,c:"#8a8478",roof:"#4a3a2a",at:[0,-9]},water:true,conts:["kitchen","shed","closet"],tree:.8},
-  church:{b:{w:8,d:14,h:6,c:"#8a4a3a",roof:"#3a3a3c",at:[0,-8],steeple:true},fence:true,conts:["kitchen","closet","desk"],tree:.4},
-  scout:{b:{w:6,d:5,h:3.5,c:"#6a5038",roof:"#3a4a32",at:[-8,-8]},b2:{w:6,d:5,h:3.5,c:"#6a5038",roof:"#3a4a32",at:[8,-8]},water:true,conts:["kitchen","closet","shed"],tree:1.6},
-  motel:{b:{w:22,d:6,h:3.5,c:"#c8b898",roof:"#5a5a5a",at:[0,-10]},lot:true,conts:["closet","closet","kitchen","car","car"],tree:.4},
-  store:{b:{w:14,d:10,h:4.5,c:null,roof:"#4a4a4a",at:[0,-8],flat:true},lot:true,conts:["shelf","shelf","stock","car"],tree:.25},
-  police:{b:{w:12,d:10,h:4.5,c:"#7a6a5a",roof:"#3a3a3a",at:[0,-8],flat:true},lot:true,conts:["armory","desk","desk","car","car"],tree:.25},
-  school:{b:{w:20,d:10,h:4,c:"#a8886a",roof:"#4a4a4a",at:[0,-9],flat:true},field:true,conts:["kitchen","desk","desk","closet","stock"],tree:.4},
-  gas:{b:{w:8,d:6,h:3.5,c:"#d8d8d0",roof:"#a83a2a",at:[-6,-8],flat:true},canopy:true,lot:true,conts:["pumps","pumps","car","car","shed"],tree:.3}};
+const SCENES={road:{b:null,conts:["car","car","cruiser","car","car"]},
+  farm:{b:{w:9,d:7,h:4,c:"#d8d0c0",roof:"#6a3a2a",at:[-6,-8]},b2:{w:8,d:10,h:5,c:"#8a3a2a",roof:"#4a4a48",at:[10,-8],barn:true,kit:["hay"],floor:"#6a5236"},kit:["table"],floor:"#8a6a48",fields:true,conts:["kitchen","closet","barn","shed","gunsafe"],tree:.5},
+  mill:{b:{w:8,d:8,h:6,c:"#8a8478",roof:"#4a3a2a",at:[0,-9]},kit:["table"],floor:"#7a6a58",water:true,conts:["kitchen","shed","closet"],tree:.8},
+  church:{b:{w:8,d:14,h:6,c:"#8a4a3a",roof:"#3a3a3c",at:[0,-8],steeple:true},kit:["pews"],floor:"#6a5a48",fence:true,conts:["kitchen","closet","desk"],tree:.4},
+  scout:{b:{w:6,d:5,h:3.5,c:"#6a5038",roof:"#3a4a32",at:[-8,-8]},b2:{w:6,d:5,h:3.5,c:"#6a5038",roof:"#3a4a32",at:[8,-8]},kit:["table"],floor:"#8a6a48",water:true,conts:["kitchen","closet","shed"],tree:1.6},
+  motel:{b:{w:22,d:6,h:3.5,c:"#c8b898",roof:"#5a5a5a",at:[0,-10]},kit:["rooms"],floor:"#6a5e58",lot:true,conts:["closet","closet","kitchen","car","car"],tree:.4},
+  store:{b:{w:14,d:10,h:4.5,c:null,roof:"#4a4a4a",at:[0,-8],flat:true},kit:["aisles","counter"],floor:"#9a9a92",lot:true,conts:["shelf","shelf","stock","car"],tree:.25},
+  police:{b:{w:12,d:10,h:4.5,c:"#7a6a5a",roof:"#3a3a3a",at:[0,-8],flat:true},kit:["desks"],floor:"#7a7a78",lot:true,conts:["armory","desk","desk","car","car"],tree:.25},
+  school:{b:{w:20,d:10,h:4,c:"#a8886a",roof:"#4a4a4a",at:[0,-9],flat:true},kit:["desks"],floor:"#8a8070",field:true,conts:["kitchen","desk","desk","closet","stock"],tree:.4},
+  gas:{b:{w:8,d:6,h:3.5,c:"#d8d8d0",roof:"#a83a2a",at:[-6,-8],flat:true},kit:["aisles"],floor:"#a0a098",canopy:true,lot:true,conts:["pumps","pumps","car","car","shed"],tree:.3}};
 // the pharmacy and hardware store are stores with their own shelves
 const SCENE_CONTS={pharmacy:["meds","meds","shelf","car"],hardware:["tools","tools","shelf","car"],grocery:["shelf","shelf","shelf","stock","car"]};
 function placeAt(k){return LOCS[k]||null}
@@ -230,7 +235,7 @@ const USES={fishing:"catches fish: a little food every day",trapping:"snares sma
   tool:"makes work go faster",light:"light at night: fewer surprises",clothing:"keeps someone warm and covered",storage:"holds supplies",material:"raw material for building",trade:"worth something to someone",none:"nothing in particular"};
 const ITEMS={insulin:"insulin pen",epipen:"EpiPen",inhaler:"inhaler",heartpills:"heart pills",rope:"rope",cloth:"cloth",nails:"box of nails",tarp:"tarp",pipe:"metal pipe",jar:"glass jar",tape:"duct tape",wire:"wire",knife:"kitchen knife",bottle:"plastic bottle",
   bucket:"bucket",hammer:"hammer",saw:"hand saw",tin:"tin can",fishhook:"fishing hooks",line:"fishing line",bleach:"bleach",alcohol:"bottle of vodka",battery:"car battery",bulb:"flashlight",
-  seeds:"seed packets",blanket:"blanket",boards:"loose boards",chain:"chain",bike:"bicycle",shovel:"shovel",bat:"baseball bat",bow:"hunting bow",gunpowder:"gunpowder",sheet:"sheet metal"};
+  seeds:"seed packets",blanket:"blanket",boards:"loose boards",chain:"chain",bike:"bicycle",shovel:"shovel",bat:"baseball bat",bow:"hunting bow",gunpowder:"gunpowder",sheet:"sheet metal",pistol:"pistol",shotgun:"pump shotgun",rifle:"hunting rifle"};
 // what works without Claude: the words that must appear (any of each group), what it takes, and what it makes
 const RECIPES=[
   {w:[/net/],need:{rope:2},make:"Fishing net",use:"fishing",v:2,say:"You knot the rope into a rough mesh, weight the corners with stones, and you've got a net."},
@@ -256,10 +261,17 @@ const NOPE=[[/gun|rifle|pistol|firearm/,"A gun needs a machined barrel, a firing
 const ISZ={food:[1,1,6],water:[1,2,8],wood:[2,1,5],scrap:[1,1,6],meds:[1,1,4],ammo:[1,1,20],
   insulin:[1,1,6],epipen:[1,1,2],inhaler:[1,1,2],heartpills:[1,1,30],rope:[1,1,3],cloth:[1,1,5],nails:[1,1,1],tarp:[2,1,1],pipe:[1,3,1],jar:[1,1,3],tape:[1,1,3],wire:[1,1,3],knife:[1,2,1],bottle:[1,1,4],
   bucket:[2,2,1],hammer:[1,2,1],saw:[1,3,1],tin:[1,1,6],fishhook:[1,1,10],line:[1,1,3],bleach:[1,2,1],alcohol:[1,2,1],battery:[2,2,1],bulb:[1,1,2],seeds:[1,1,8],blanket:[2,2,1],
-  boards:[3,1,4],chain:[1,1,1],bike:[3,2,1],shovel:[1,3,1],bat:[1,3,1],bow:[1,3,1],gunpowder:[1,1,1],sheet:[2,2,2]};
+  boards:[3,1,4],chain:[1,1,1],bike:[3,2,1],shovel:[1,3,1],bat:[1,3,1],bow:[1,3,1],gunpowder:[1,1,1],sheet:[2,2,2],pistol:[2,1,1],shotgun:[4,1,1],rifle:[4,1,1]};
 const ICOL={food:"#8a6a3a",water:"#3a6a8a",wood:"#6a4a2a",scrap:"#6a6a6a",meds:"#a83a3a",ammo:"#8a7a3a",personal:"#7a3a6a",item:"#4a5560",crafted:"#3d6a50"};
 // what the tools and odds and ends are good for when someone picks them up
-const ITEM_USE={hammer:"tool",saw:"tool",shovel:"tool",knife:"weapon",bat:"weapon",bow:"weapon",pipe:"weapon",blanket:"comfort",alcohol:"comfort",bulb:"light",bucket:"water",seeds:"tool"};
+const ITEM_USE={hammer:"tool",saw:"tool",shovel:"tool",knife:"weapon",bat:"weapon",bow:"weapon",pipe:"weapon",blanket:"comfort",alcohol:"comfort",bulb:"light",bucket:"water",seeds:"tool",pistol:"weapon",shotgun:"weapon",rifle:"weapon"};
+// guns: how far they reach, how often they hit up close, how far the bang carries, how long between shots (ms), how many rounds you keep on you
+const GUNS={pistol:{n:"Pistol",range:13,hit:.72,noise:18,cool:450,carry:24},
+  shotgun:{n:"Shotgun",range:8,hit:.92,spread:.5,noise:24,cool:950,carry:16},
+  rifle:{n:"Hunting rifle",range:24,hit:.82,noise:30,cool:1300,carry:20}};
+const GUN_RANK={shotgun:3,rifle:2,pistol:1};
+// what some people had on them when it started
+const CARRY_GUN={deputy:["pistol",.7],soldier:["rifle",.35],hunter:["rifle",.7],rancher:["shotgun",.45],farmer:["shotgun",.25]};
 // people who need something to stay alive
 const CONDS={diabetic:{n:"diabetic",item:"insulin",every:2,hurt:16,need:"insulin every couple of days"},
   allergy:{n:"allergic to bee stings",item:"epipen",emergency:true,need:"an EpiPen if a bee gets them"},
@@ -302,6 +314,7 @@ function mkPerson(o){o=o||{};const sex=o.sex||(rf()<.5?"F":"M");const age=o.age?
   if(p.motive==="family")p.tr.kind=Math.max(p.tr.kind,.2);
   // they bring a few doses of whatever keeps them alive
   if(p.cond){const it=CONDS[p.cond].item;p.carry={[it]:it==="heartpills"?20:it==="epipen"?1:ri(2,4)}}
+  const cg=CARRY_GUN[job0];if(cg&&!kid&&rf()<cg[1]){p.carry=p.carry||{};p.carry[cg[0]]=1;p.carry.ammo=ri(4,12)}
   return p}
 const REL={parentF:"mother",parentM:"father",kidF:"daughter",kidM:"son",spouseF:"wife",spouseM:"husband",sibF:"sister",sibM:"brother",gpF:"grandmother",gpM:"grandfather",gkF:"granddaughter",gkM:"grandson"};
 function link(a,b,ab,ba){a.fam[b.id]=REL[ab+b.sex];b.fam[a.id]=REL[ba+a.sex]}
@@ -327,22 +340,50 @@ const ENTRY={x:0,z:SH-2};
 function place(k){S.places[k]=S.places[k]||{seen:false,conts:{},burned:false,cleared:0};return S.places[k]}
 // the layout of a place never changes: the same seed draws the same scene every time
 const LAYOUT={};
-function layout(k){if(LAYOUT[k])return LAYOUT[k];const L=LOCS[k];const T=SCENES[L.kind];const R=srng(hashStr(k));const o={b:[],conts:[],trees:[],cars:[],blk:[]};
-  const addB=(b,tag)=>{if(!b)return;const r={x:b.at[0],z:b.at[1],w:b.w,d:b.d,h:b.h,c:b.c||L.col||"#8a8478",roof:b.roof,flat:!!b.flat,steeple:!!b.steeple,tag};o.b.push(r);o.blk.push([r.x-r.w/2,r.z-r.d/2,r.x+r.w/2,r.z+r.d/2])};
+function layout(k){if(LAYOUT[k])return LAYOUT[k];const L=LOCS[k];const T=SCENES[L.kind];const R=srng(hashStr(k));const o={b:[],conts:[],trees:[],cars:[],blk:[],foot:[],furn:[],beds:[],stove:null};
+  // every building has walls you can't walk through and a door in the front (toward the road), so you can go in and live there
+  const addB=(b,tag)=>{if(!b)return;const r={x:b.at[0],z:b.at[1],w:b.w,d:b.d,h:b.h,c:b.c||L.col||"#8a8478",roof:b.roof,flat:!!b.flat,steeple:!!b.steeple,tag,barn:!!b.barn,
+      kit:b.kit||T.kit||[],floor:b.floor||T.floor||"#7a6a58"};o.b.push(r);
+    const x0=r.x-r.w/2,x1=r.x+r.w/2,z0=r.z-r.d/2,z1=r.z+r.d/2,t=.3,dw=DOOR/2;o.foot.push([x0,z0,x1,z1]);
+    o.blk.push([x0,z0,x1,z0+t,0],[x0,z0,x0+t,z1,0],[x1-t,z0,x1,z1,0],[x0,z1-t,r.x-dw,z1,0],[r.x+dw,z1-t,x1,z1,0])};
   addB(T.b,"main");addB(T.b2,"b2");
+  // inside: the place's beds along the back wall, then whatever it has (a table, pews, shelves, desks, hay)
+  const homes=o.b.filter(r=>!r.barn);const nb=L.camp===false?0:(L.beds||0);homes.forEach((r,i)=>fitOut(o,r,Math.floor(nb/homes.length)+(i<nb%homes.length?1:0),R));
+  for(const r of o.b.filter(r=>r.barn))fitOut(o,r,0,R);
   const kinds=SCENE_CONTS[k]||T.conts;const main=o.b[0];let ci=0;
-  for(const ck of kinds){let x,z;
-    if(ck==="car"){x=(R()*2-1)*14;z=8+R()*10;if(k==="start"){x=-20+ci*9+R()*2;z=4+R()*6}o.cars.push({x,z,rot:R()*.6-.3+(R()<.5?0:Math.PI),c:pick2(["#7a2a22","#2a3a5a","#c8c8c0","#3a3a3a","#5a6a4a","#8a7a5a"],R)});o.blk.push([x-1.2,z-2.2,x+1.2,z+2.2])}
-    else if(ck==="barn"&&o.b[1]){x=o.b[1].x;z=o.b[1].z+o.b[1].d/2+.9}
+  for(const ck of kinds){let x,z,rot=0,bi=-1;
+    if(ck==="car"||ck==="cruiser"){x=(R()*2-1)*14;z=8+R()*10;if(k==="start"){x=-20+ci*9+R()*2;z=4+R()*6}const col=pick2(["#7a2a22","#2a3a5a","#c8c8c0","#3a3a3a","#5a6a4a","#8a7a5a"],R);o.cars.push({x,z,rot:R()*.6-.3+(R()<.5?0:Math.PI),c:ck==="cruiser"?"#e4e4de":col,cop:ck==="cruiser"});o.blk.push([x-1.2,z-2.2,x+1.2,z+2.2])}
     else if(ck==="shed"){x=pick2([-18,18,-14,14],R);z=-2+R()*8;o.blk.push([x-1.6,z-1.6,x+1.6,z+1.6])}
-    else if(main){const slots=Math.max(1,kinds.filter(c=>c!=="car"&&c!=="barn"&&c!=="shed").length);const i=o.conts.filter(c=>c.vis==="door").length;x=main.x-main.w/2+(i+.5)*main.w/slots;z=main.z+main.d/2+.9}
+    else if(main){// inside, along the right-hand wall, front to back
+      const r=ck==="barn"&&o.b[1]?o.b[1]:main;bi=o.b.indexOf(r);const i=o.conts.filter(c=>c.bi===bi).length;x=r.x+r.w/2-.78;z=r.z+r.d/2-1.3-i*1.7;rot=Math.PI/2}
     else{x=R()*20-10;z=R()*10}
-    o.conts.push({id:k+":"+ci,k:ck,x,z,vis:ck==="car"?"car":ck==="shed"?"shed":ck==="barn"?"door":"door"});ci++}
+    o.conts.push({id:k+":"+ci,k:ck,x,z,rot,bi,vis:ck==="car"||ck==="cruiser"?"car":ck==="shed"?"shed":"door"});ci++}
   const nt=Math.round(30*(T.tree||.5));for(let i=0;i<nt;i++){let x,z,t=0;do{x=(R()*2-1)*(SH+4);z=(R()*2-1)*(SH+4);t++}while(t<20&&(Math.abs(x)<SH-6&&Math.abs(z)<SH-6||Math.abs(x)<4));o.trees.push([x,z,.8+R()*.7])}
   // a few trees inside the scene too, away from buildings and the road
-  for(let i=0;i<Math.round(6*(T.tree||.5));i++){const x=(R()*2-1)*(SH-4),z=(R()*2-1)*(SH-4);if(Math.abs(x)<5)continue;if(o.blk.some(b=>x>b[0]-3&&x<b[2]+3&&z>b[1]-3&&z<b[3]+3))continue;o.trees.push([x,z,.7+R()*.6]);o.blk.push([x-.5,z-.5,x+.5,z+.5])}
+  for(let i=0;i<Math.round(6*(T.tree||.5));i++){const x=(R()*2-1)*(SH-4),z=(R()*2-1)*(SH-4);if(Math.abs(x)<5)continue;if([...o.foot,...o.blk].some(b=>x>b[0]-3&&x<b[2]+3&&z>b[1]-3&&z<b[3]+3))continue;o.trees.push([x,z,.7+R()*.6]);o.blk.push([x-.5,z-.5,x+.5,z+.5])}
   o.fields=!!T.fields;o.water=!!T.water;o.fence=!!T.fence;o.lot=!!T.lot;o.field=!!T.field;o.canopy=!!T.canopy;
   return LAYOUT[k]=o}
+const DOOR=2.4;// how wide a doorway is
+// furnish a building: beds along the back wall (leaving the right-hand wall for cupboards), then the rest
+function fitOut(o,r,nb,R){const w=r.w,d=r.d,X=x=>r.x+x,Z=z=>r.z+z,F=o.furn;
+  const rooms=r.kit.includes("rooms");const per=rooms?nb:Math.max(1,Math.floor((w-2.6)/1.35)+1);const rows=Math.ceil(nb/per);
+  // a motel is a row of rooms: a bed each, a nightstand, and a wall between you and the next room
+  if(rooms){const sp=(w-2)/nb;for(let i=0;i<nb;i++){const x=-w/2+.4+sp*(i+.5),z=-d/2+1.3;F.push({t:"bed",x:X(x),z:Z(z)});o.beds.push({x:X(x),z:Z(z)});F.push({t:"stand",x:X(x+.85),z:Z(-d/2+.5)});
+      if(i){const wx=X(-w/2+.4+sp*i);F.push({t:"wall",x:wx,z:Z(-d/2+1.4),d:2.8,c:r.c});o.blk.push([wx-.06,Z(-d/2),wx+.06,Z(-d/2+2.8),0])}}}
+  else for(let i=0;i<nb;i++){const row=Math.floor(i/per),n=Math.min(per,nb-row*per),j=i-row*per;const x=-.5+(j-(n-1)/2)*1.35,z=-d/2+1.3+row*2.3;F.push({t:"bed",x:X(x),z:Z(z)});o.beds.push({x:X(x),z:Z(z)})}
+  const back=-d/2+.3+rows*2.3+(rows?0:.6),front=d/2-1.3,mid=(back+front)/2,open=front-back;
+  for(const k of r.kit){
+    if(k==="table"&&open>2.2){F.push({t:"rug",x:X(-w/4+.4),z:Z(mid),w:2.8,d:2.2});F.push({t:"table",x:X(-w/4+.4),z:Z(mid)});o.table=o.table||{x:X(-w/4+.4),z:Z(mid)}}
+    if(k==="pews")for(let z=back+1.2;z<front-1.2;z+=1.6)for(const sx of [-1,1])F.push({t:"pew",x:X(sx*w/4),z:Z(z),w:w/2-2.4});
+    if(k==="aisles"){const len=Math.max(1.5,open-2.4);for(let x=-w/2+2.6;x<w/2-2;x+=3.2){if(Math.abs(x)<DOOR/2+.4)continue;F.push({t:"shelf",x:X(x),z:Z(mid),len});o.blk.push([X(x)-.3,Z(mid)-len/2,X(x)+.3,Z(mid)+len/2,0])}}
+    if(k==="counter"&&w>=12)F.push({t:"counter",x:X(-w/2+3),z:Z(front-.5)});
+    if(k==="desks"){const cols=Math.max(1,Math.floor((w-3.4)/2.2));for(let z=back+1;z<front-.8;z+=1.8)for(let c=0;c<cols;c++){const x=(c-(cols-1)/2)*2.2;if(Math.abs(x)<.9&&z>front-2.5)continue;F.push({t:"desk",x:X(x),z:Z(z)})}}
+    if(k==="altar")F.push({t:"altar",x:X(0),z:Z(-d/2+.7)});
+    if(k==="hay")for(let i=0;i<5;i++)F.push({t:"hay",x:X(-w/2+1.4+R()*(w-3.6)),z:Z(-d/2+1.4+R()*(d-3.4))})}
+  // the stove: in the front corner by the door, away from the beds
+  if(!o.stove&&!r.barn)o.stove={x:X(-w/2+.95),z:Z(front-.3)};
+  // somewhere to sit and somewhere to lie down for whoever doesn't get a bed
+  if(!r.barn){r.floorSpots=[];for(let x=-w/2+1.2;x<w/2-1.6;x+=1.4)for(let z=back+.6;z<front;z+=1.6)r.floorSpots.push({x:X(x),z:Z(z)})}}
 function pick2(a,R){return a[Math.floor(R()*a.length)]}
 function contState(loc,cid){const pl=place(loc);let s=pl.conts[cid];if(!s){const ck=layout(loc).conts.find(c=>c.id===cid)?.k||"shelf";const T=CONT[ck];s=pl.conts[cid]={c:{g:[...T.g],items:[],u:1},rolled:false}}return s}
 function rollCont(loc,cid){const s=contState(loc,cid);if(s.rolled)return s;s.rolled=true;const ck=layout(loc).conts.find(c=>c.id===cid)?.k||"shelf";const d=dayOf(S.t);
@@ -353,7 +394,7 @@ function rollCont(loc,cid){const s=contState(loc,cid);if(s.rolled)return s;s.rol
 const GRID={};const GN=2*(SH+6);
 function blockers(loc){const L=layout(loc).blk.slice();for(const b of S.blds)if(b.loc===loc&&b.done&&BUILDS[b.type].solid){const [w,d]=bSize(b);L.push([b.x-w/2,b.z-d/2,b.x+w/2,b.z+d/2])}return L}
 function bSize(b){const s=BUILDS[b.type].size;return b.rot%2?[s[1],s[0]]:[s[0],s[1]]}
-function grid(loc){let g=GRID[loc];if(g&&g.v===S.bv)return g;g={v:S.bv,a:new Uint8Array(GN*GN)};for(const [x0,z0,x1,z1] of blockers(loc)){for(let i=Math.floor(x0+SH+6-.4);i<=Math.floor(x1+SH+6+.4);i++)for(let j=Math.floor(z0+SH+6-.4);j<=Math.floor(z1+SH+6+.4);j++)if(i>=0&&j>=0&&i<GN&&j<GN)g.a[j*GN+i]=1}return GRID[loc]=g}
+function grid(loc){let g=GRID[loc];if(g&&g.v===S.bv)return g;g={v:S.bv,a:new Uint8Array(GN*GN)};for(const [x0,z0,x1,z1,pad=.4] of blockers(loc)){for(let i=Math.floor(x0+SH+6-pad);i<=Math.floor(x1+SH+6+pad-1e-6);i++)for(let j=Math.floor(z0+SH+6-pad);j<=Math.floor(z1+SH+6+pad-1e-6);j++)if(i>=0&&j>=0&&i<GN&&j<GN)g.a[j*GN+i]=1}return GRID[loc]=g}
 const gc=v=>clamp(Math.floor(v+SH+6),0,GN-1);
 function blockedAt(loc,x,z){return grid(loc).a[gc(z)*GN+gc(x)]===1}
 function clearLine(loc,x0,z0,x1,z1){const g=grid(loc);const n=Math.ceil(dist(x0,z0,x1,z1)/.45);for(let i=1;i<n;i++){const x=lerp(x0,x1,i/n),z=lerp(z0,z1,i/n);if(g.a[gc(z)*GN+gc(x)])return false}return true}
@@ -380,17 +421,22 @@ function newGame(pl){S={v:1,t:7*HOUR+40,nid:1,bv:1,camp:null,res:{food:10,water:
   for(const p of [...h1,...h2]){p.status="member";p.trust=45+ri(0,15);p.mood=45;p.follow=true;S.people.push(p)}
   topUpWalkers("start");
   log(`Day 1. The pileup on Route 9 isn't moving, and the radio keeps saying stay indoors. ${listAnd(S.people.map(p=>p.name))} are stuck here with you.`);
-  log("Open the map (M) and pick somewhere to make camp. Search the cars first, if you like.","hint");
+  log("Open the map (M) and pick somewhere to make camp. Search the cars first, if you like. A state trooper's cruiser sits empty up the line.","hint");
   return S}
 
 // ================= the camp =================
 function campHere(){const k=S.player.loc;const L=LOCS[k];if(!L||L.camp===false)return false;if(S.rival&&S.rival.site===k&&!S.rival.gone)return false;
-  S.camp={site:k,r:17,n:L.n,day:dayOf(S.t)};const f=addBld("fire",3,4,{done:true,name:"Campfire"});
-  for(const p of S.people)if(p.status==="member"&&p.loc===k){p.follow=false;p.away=null}
-  log(`You make camp at ${L.n}.`,"big");S.nextStranger=S.t+ri(16,26)*HOUR;unloadHaul();
+  S.camp={site:k,r:17,n:L.n,day:dayOf(S.t)};const lay=layout(k);const st=lay.stove;
+  // you move into the building: the stove inside does what a cookfire would
+  if(st)addBld("fire",st.x,st.z,{done:true,name:"Woodstove",opt:{indoor:true}});else addBld("fire",3,4,{done:true,name:"Campfire"});
+  const spots=lay.b.filter(r=>r.floorSpots).flatMap(r=>r.floorSpots);
+  for(const p of S.people)if(p.status==="member"&&p.loc===k){p.follow=false;p.away=null;if(spots.length){const s=pick(spots);moveTo(p,s.x,s.z);p.act="moving in"}}
+  log(`You make camp at ${L.n}.`,"big");
+  if(st)log(`Everyone moves inside: ${lay.beds.length?`${lay.beds.length} bed${lay.beds.length>1?"s":""}, `:""}a woodstove and four walls between you and the dead. Press V to see inside from anywhere.`,"good");S.nextStranger=S.t+ri(16,26)*HOUR;unloadHaul();
   for(const p of members()){mem(p,`We made camp at ${L.n}.`,2);bringCarry(p)}
   syncInv();return true}
-function bringCarry(p){if(!p.carry)return;for(const [k,n] of Object.entries(p.carry))S.items[k]=(S.items[k]||0)+n;p.carry=null}
+function bringCarry(p){if(!p.carry)return;for(const [k,n] of Object.entries(p.carry)){if(RES[k])S.res[k]=(S.res[k]||0)+n;else S.items[k]=(S.items[k]||0)+n;
+    if(GUNS[k])log(`${p.name} puts ${pronoun(p,"p")} ${ITEMS[k]} in with the camp's things${p.carry.ammo?`, with ${p.carry.ammo} rounds`:""}.${S.player.gun?"":" You could carry it yourself (Stores, I)."}`)}p.carry=null}
 function addBld(type,x,z,o){o=o||{};const B=BUILDS[type];const b={id:nid("b"),type,loc:o.loc||S.player.loc,x,z,rot:o.rot||0,done:!!o.done,prog:o.done?B.hrs:0,opt:o.opt||{},name:o.name||B.n,grow:0,hp:100};
   S.blds.push(b);S.bv++;if(typeof onBld==="function")onBld(b);return b}
 function campBlds(){return S.camp?S.blds.filter(b=>b.loc===S.camp.site):[]}
@@ -400,14 +446,15 @@ function canAfford(cost){return Object.entries(cost).every(([k,v])=>(S.res[k]||0
 function pay(cost){for(const [k,v] of Object.entries(cost))S.res[k]-=v;syncInv()}
 function costWords(c){return Object.entries(c).map(([k,v])=>`${v} ${RES[k].toLowerCase()}`).join(", ")}
 function defense(){if(!S.camp)return 0;const s=SITES[S.camp.site];const g=here().filter(p=>p.job==="guard"&&!p.kid);
-  return Math.round(s.def*3+g.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+bldDone("tower").length*2.5*(g.length?1:.4)+bldDone("fence").length*1+useVal("defense")*1.2+Math.min(3,S.res.ammo/5))}
+  return Math.round(s.def*3+g.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+bldDone("tower").length*2.5*(g.length?1:.4)+bldDone("fence").length*1+useVal("defense")*1.2+(S.res.ammo>=1?Math.min(campGuns(),g.length)*1.5:0)+Math.min(2,S.res.ammo/8))}
+function campGuns(){return Object.keys(GUNS).reduce((a,k)=>a+itemCount(k),0)}
 function useVal(u){return S.crafted.filter(c=>c.use===u).reduce((a,c)=>a+(c.v||1),0)+(S.inv?S.inv.items.filter(o=>!o.k.startsWith("c:")&&ITEM_USE[o.k]===u).length*.5:0)}
 function campPoint(ang,r){return{x:clamp(Math.cos(ang)*r,-SH+2,SH-2),z:clamp(4+Math.sin(ang)*r,-SH+2,SH-2)}}
 function inCamp(x,z){return S.camp&&dist(x,z,0,4)<S.camp.r+3}
 function campSize(){return members().length+1}
 
 // ================= time =================
-const MOVE=.36;// units per game minute, walking
+const MOVE=3.6/CLOCK;// units per game minute, walking: about 3.6 a second at 1×
 function step(dt){if(!S)return;const t0=S.t;S.t+=dt;moveAll(dt);
   if(Math.floor(S.t/HOUR)!==Math.floor(t0/HOUR))hourly()}
 function mv(o,s){if(o.tx==null)return;const d=dist(o.x,o.z,o.tx,o.tz);if(d<=s){o.x=o.tx;o.z=o.tz;
@@ -420,7 +467,8 @@ function moveAll(dt){const sp=MOVE*dt;const pl=S.player;if(pl.ko<=0&&LOCS[pl.loc
     mv(p,sp*(p.hp<40?.6:1)*(p.kid?.95:1))}
   for(const w of S.walkers){if(w.dead)continue;mv(w,sp*.3);
     if(w.cool)w.cool=Math.max(0,w.cool-dt);
-    const tgt=nearestLiving(w.loc,w.x,w.z,9);if(tgt&&!w.cool){if(!w.tx||dist(w.tx,w.tz,tgt.x,tgt.z)>1.5){w.path=null;w.tx=tgt.x;w.tz=tgt.z}if(dist(w.x,w.z,tgt.x,tgt.z)<1.1)clash(tgt,w)}}
+    const tgt=nearestLiving(w.loc,w.x,w.z,9);if(tgt&&!w.cool){if(!w.tx||dist(w.tx,w.tz,tgt.x,tgt.z)>1.5){w.path=null;w.tx=tgt.x;w.tz=tgt.z}if(dist(w.x,w.z,tgt.x,tgt.z)<1.1)clash(tgt,w)}
+    else if(w.tx==null&&rf()<dt*.03/CLOCK)moveTo(w,w.x+rf()*6-3,w.z+rf()*6-3)}
   // guards step out to meet anything that comes close to camp
   if(S.camp)for(const g of here()){if(g.job!=="guard"||g.sleep&&rf()<.9||g.busy)continue;const w=S.walkers.find(w=>!w.dead&&w.loc===S.camp.site&&dist(w.x,w.z,0,4)<S.camp.r+9&&dist(w.x,w.z,g.x,g.z)<20);
     if(w&&(g.tx==null||g.hunt!==w.id)){g.hunt=w.id;g.tx=w.x;g.tz=w.z;g.path=null;g.act="going after one of the dead"}}}
@@ -431,36 +479,55 @@ function nearestLiving(loc,x,z,r){let b=null,bd=r;const pl=S.player;if(pl.ko<=0&
 function spawnWalker(loc,x,z){if(x==null){const e=rf()*4|0;const t=rf()*2-1;const E=SH-1;[x,z]=[[t*E,-E],[E,t*E],[t*E,E],[-E,t*E]][e]}
   const w={id:nid("w"),loc,x,z,tx:null,tz:null,path:null,cool:0,look:{skin:pick(["#8a9a7a","#9aa08a","#7a8a6a","#a0a890"]),top:pick(LOOK.top),pants:pick(LOOK.pants)}};S.walkers.push(w);return w}
 function walkersAt(loc){return S.walkers.filter(w=>w.loc===loc&&!w.dead)}
+// The dead at a place are the people who were there when it started (not all of them have turned on day one),
+// plus whatever the living have drawn in since. Busy places fill up; places nobody goes stay quiet.
+function placeDead(k){const P=place(k);if(P.dead==null)P.dead=LOCS[k]?.pop??3;return P.dead}
+function turned(){return Math.min(1,.45+(dayOf(S.t)-1)*.3)}
+function deadHere(k){const P=place(k);return Math.round(placeDead(k)*turned()+(P.heat||0)/3)}
+function dangerAt(k){return clamp(deadHere(k)/3.5,.3,5)}
+// one of them goes down for good
+function putDown(w){if(!w||w.dead)return;w.dead=true;w.diedAt=S.t;if(!LOCS[w.loc])return;const P=place(w.loc);if(w.orig)P.dead=Math.max(0,placeDead(w.loc)-1);else P.heat=Math.max(0,(P.heat||0)-2)}
 // when you arrive somewhere, the dead that live there are waiting
-function topUpWalkers(loc){if(loc===campK())return;const L=LOCS[loc];const pl=place(loc);const d=dayOf(S.t);
-  const want=Math.round((L.danger||1)*(1.6+d*.18)*(pl.burned?.4:1)*(S.t-pl.cleared<DAY*2?.3:1));const have=walkersAt(loc).length;
-  for(let i=have;i<want;i++){let x,z,t=0;do{x=(rf()*2-1)*(SH-4);z=(rf()*2-1)*(SH-6)-4;t++}while(t<20&&(blockedAt(loc,x,z)||dist(x,z,ENTRY.x,ENTRY.z)<14));spawnWalker(loc,x,z)}}
+function topUpWalkers(loc){if(loc===campK()||!LOCS[loc])return;const pl=place(loc);
+  const burnt=pl.burned?.4:1;const want=Math.round(deadHere(loc)*burnt);const have=walkersAt(loc);let orig=Math.round(placeDead(loc)*turned()*burnt)-have.filter(w=>w.orig).length;
+  for(let i=have.length;i<want;i++){let x,z,t=0;do{x=(rf()*2-1)*(SH-4);z=(rf()*2-1)*(SH-6)-4;t++}while(t<20&&(blockedAt(loc,x,z)||dist(x,z,ENTRY.x,ENTRY.z)<14));const w=spawnWalker(loc,x,z);if(orig-->0)w.orig=true}}
 function walkerHour(){S.walkers=S.walkers.filter(w=>!w.dead||S.t-w.diedAt<DAY/2);
   // places you're not at forget their dead until you come back
   S.walkers=S.walkers.filter(w=>w.loc===S.player.loc||w.loc===campK());
-  if(S.camp){const live=walkersAt(S.camp.site);const n=campSize();const s=SITES[S.camp.site];const d=dayOf(S.t);
+  // the living stir things up, and places nobody goes cool off
+  for(const P of Object.values(S.places))P.heat=(P.heat||0)*.985;
+  const here_k=S.player.loc;if(LOCS[here_k]&&here_k!==campK()&&!S.flags.traveling){const P=place(here_k);P.heat+=(1+withYou().length)*.12;
+    if(rf()<P.heat/45&&walkersAt(here_k).length<14){const w=spawnWalker(here_k);moveTo(w,S.player.x+rf()*8-4,S.player.z+rf()*8-4)}}
+  if(S.camp){const live=walkersAt(S.camp.site);const n=campSize();const s=SITES[S.camp.site];const P=place(S.camp.site);
     // a bigger camp makes more noise and draws more of them
-    const rate=(.1+d*.012+n*.012)/(s.hide||1);if(live.length<4+n/2&&rf()<rate)spawnWalker(S.camp.site)}
+    P.heat+=n*.03;const rate=(.03+P.heat/60)/(s.hide||1);if(live.length<4+n/2&&rf()<rate)spawnWalker(S.camp.site)}
   for(const w of S.walkers){if(w.dead||w.tx!=null||rf()>.5)continue;let tx=w.x+rf()*12-6,tz=w.z+rf()*12-6;
     if(w.loc===campK()&&rf()<.25){tx=lerp(tx,0,.4);tz=lerp(tz,4,.4)}moveTo(w,tx,tz)}}
 // someone meets one of the dead: a quick, narrated scuffle
-function clash(v,w){if(w.dead||w.cool)return;w.cool=20;const pl=S.player;
+function clash(v,w){if(w.dead||w.cool)return;w.cool=2*CLOCK;const pl=S.player;
   const helpers=[v,...S.people.filter(q=>q!==v&&q.loc===v.loc&&q.status!=="dead"&&q.status!=="left"&&!q.kid&&!q.sleep&&dist(q.x,q.z,v.x,v.z)<7&&(q.job==="guard"||q.tr.brave>0||q.follow))];
   if(v!==pl&&pl.ko<=0&&pl.loc===v.loc&&dist(pl.x,pl.z,v.x,v.z)<7)helpers.push(pl);
   const fighter=helpers.reduce((a,b)=>fightOf(b)>fightOf(a)?b:a,v);
   let chance=.6+fightOf(fighter)*.1+(helpers.length-1)*.1;if(useVal("weapon")>0)chance+=.06;
-  if(fighter!==pl&&fighter.job==="guard"&&S.res.ammo>0&&rf()<.4){S.res.ammo--;chance+=.2}
+  // whoever has a gun gets a shot off first: the player from what they carry, people in camp from camp stores
+  if(fighter===pl&&pl.gun&&(pl.rounds||0)>0){pl.rounds--;chance+=.22;gunNoise(pl,w)}
+  else if(fighter!==pl&&fighter.gun&&fighter.loc===campK()&&S.res.ammo>=1&&rf()<.85){S.res.ammo--;chance+=.25;gunNoise(fighter,w)}
   const nm=x=>x===pl?"You":x.name;if(fighter.hunt)fighter.hunt=null;
-  if(rf()<chance){w.dead=true;w.diedAt=S.t;say(fighter,pick(["Got it.","Stay down.","That's one.","Clear!","Go back to sleep."]));
+  if(rf()<chance){putDown(w);say(fighter,pick(["Got it.","Stay down.","That's one.","Clear!","Go back to sleep."]));
     if(rf()<.3||fighter===pl)log(`${nm(fighter)} put down one of the dead${v.loc===campK()&&inCamp(w.x,w.z)?" at the edge of camp":""}.`);if(fighter!==pl)fighter.sk.fight=Math.min(3,fighter.sk.fight+.04);return}
   // it went badly: someone gets hurt, and the thing is shoved back
-  const dmg=ri(8,20);v.hp=Math.max(0,v.hp-dmg);w.x+=rf()*4-2;w.z+=rf()*4-2;w.cool=40;
+  const dmg=ri(8,20);v.hp=Math.max(0,v.hp-dmg);w.x+=rf()*4-2;w.z+=rf()*4-2;w.cool=4*CLOCK;
   if(v===pl){if(pl.hp<=0)knockOut();else log(`One of them gets a hand on you. You tear free, bruised and shaking.`,"warn");return}
   say(v,pick(["Get it off me!","Help!","Back! Back!"]));
   if(v.hp<=0){die(v,v.kid?"was pulled down by the dead":"was pulled down by the dead before anyone could reach "+pronoun(v,"o"));return}
   log(`${v.name} got hurt fighting off one of the dead.`,"warn");
   if(v.hp<50&&rf()<(v.kid?.04:.12)&&!v.bitten&&v.status==="member"){v.bitten=true;queueCard("bitten",{who:v.id})}}
-function fightOf(x){return x.id==="you"?2+Math.min(1,useVal("weapon")*.3):x.sk.fight+(x.tr.brave>.3?.5:0)}
+function fightOf(x){return x.id==="you"?2+Math.min(1,useVal("weapon")*.3):x.sk.fight+(x.tr.brave>.3?.5:0)+(x.gun&&x.loc===campK()&&S.res.ammo>=1?.6:0)}
+// a shot fired in a scuffle: the flash, and the noise that brings more of them
+function gunNoise(o,w){const G=GUNS[o.id==="you"?S.player.gun:o.gun];if(!G)return;o.aim=typeof performance!=="undefined"?performance.now():0;if(typeof shotFx==="function")shotFx(o,w,true);noiseAt(o.loc,o.x,o.z,G.noise)}
+function noiseAt(loc,x,z,r){if(LOCS[loc])place(loc).heat=(place(loc).heat||0)+r/12;for(const o of S.walkers){if(o.loc!==loc||o.dead||dist(o.x,o.z,x,z)>r)continue;o.path=null;o.tx=clamp(x+rf()*4-2,-SH+1,SH-1);o.tz=clamp(z+rf()*4-2,-SH+1,SH-1)}
+  // further off, more of them hear it and come to see
+  if(rf()<r/90&&walkersAt(loc).length<14){const n=spawnWalker(loc);n.tx=clamp(x+rf()*6-3,-SH+1,SH-1);n.tz=clamp(z+rf()*6-3,-SH+1,SH-1)}}
 function knockOut(){const pl=S.player;pl.ko=1;pl.hp=35;log("Everything goes black.","bad");
   const saver=S.people.filter(p=>p.status==="member"&&p.loc===pl.loc&&!p.kid)[0]||here().filter(p=>!p.kid).sort((a,b)=>b.sk.fight-a.sk.fight)[0];
   setTimeout(()=>{if(!S)return;S.t+=3*HOUR;if(S.camp&&pl.loc!==S.camp.site)arriveAt(S.camp.site,true);pl.x=2;pl.z=6;pl.tx=null;pl.path=null;pl.ko=0;
@@ -469,7 +536,7 @@ function knockOut(){const pl=S.player;pl.ko=1;pl.hp=35;log("Everything goes blac
     if(typeof onScene==="function")onScene()},50)}
 
 // ================= the hour =================
-function hourly(){const h=hourOf(S.t);
+function hourly(){const h=hourOf(S.t);if(typeof armUp==="function")armUp(true);
   if(!S.camp){for(const p of S.people)if(p.status==="member"&&!p.follow&&p.tx==null&&rf()<.4)moveTo(p,p.x+rf()*4-2,p.z+rf()*4-2);walkerHour();return}
   if(h===6)dawn();if(h===8)sendScavs();
   for(const p of S.people){if(p.status==="member"&&atCamp(p))planHour(p,h);else if(p.status==="stranger"&&p.loc===campK())strangerHour(p);else if(p.status==="member"&&p.away&&p.away.out&&S.t>=p.away.back)comeBack(p)}
@@ -492,10 +559,11 @@ function jobSpot(p){const c=S.camp;const j=p.job;const B=t=>bldDone(t);
 function willWork(p){if(p.strike&&S.t<p.strike)return false;return p.mood>18||p.tr.diligent>.3}
 function planHour(p,h){if(p.follow||p.busy){p.sleep=false;return}const c=S.camp;p.sleep=false;p.inside=false;p.at=null;
   if(p.bitten&&p.quarantine){p.act="locked away";return}
-  if(h>=22||h<6){p.sleep=true;const beds=bedsTotal();const i=here().indexOf(p);p.inside=i<beds;const siteBeds=SITES[c.site].beds||0;
-    const bb=campBlds().filter(b=>b.done&&BUILDS[b.type].beds);const main=layout(c.site).b[0];let spot;
-    if(p.inside&&i<siteBeds&&main)spot={x:main.x+rf()*2-1,z:main.z+main.d/2+.6};else if(p.inside&&bb.length)spot={x:bb[(i-siteBeds)%bb.length].x,z:bb[(i-siteBeds)%bb.length].z};else spot=campPoint(rf()*6.28,3);
-    moveTo(p,spot.x,spot.z);p.act=p.inside?"asleep":"sleeping on the ground";return}
+  if(h>=22||h<6){p.sleep=true;p.inBed=false;const lay=layout(c.site);const i=here().indexOf(p);const siteBeds=lay.beds.length;let spot=null,floor=false;
+    if(i<siteBeds){spot=lay.beds[i];p.inBed=true}
+    else{let j=i-siteBeds;for(const b of campBlds().filter(b=>b.done&&BUILDS[b.type].beds)){const cap=BUILDS[b.type].beds;if(j<cap){spot={x:b.x,z:b.z};p.inside=true;break}j-=cap}}
+    if(!spot){const fl=lay.b.filter(r=>r.floorSpots).flatMap(r=>r.floorSpots);if(fl.length){spot=fl[(i-siteBeds)%fl.length];floor=true}else spot=campPoint(rf()*6.28,3)}
+    moveTo(p,spot.x,spot.z,()=>{p.dir=0});p.act=p.inBed||p.inside?"asleep":floor?"asleep on the floor":"sleeping on the ground";return}
   if(p.hp<35){const m=bldDone("clinic")[0];const s=m?{x:m.x,z:m.z+2.4}:campPoint(.8,3);moveTo(p,s.x+rf(),s.z+rf());p.act="resting, hurt";return}
   if(p.job&&h>=7&&h<19&&willWork(p)&&p.job!=="scav"){const s=jobSpot(p);moveTo(p,s.x,s.z);p.at=s.b?s.b.id:"spot";p.act=s.txt||(s.b&&!s.b.done?`building the ${s.b.name.toLowerCase()}`:JOBS[p.job].v);return}
   freeTime(p,h)}
@@ -503,7 +571,11 @@ function planHour(p,h){if(p.follow||p.busy){p.sleep=false;return}const c=S.camp;
 function freeTime(p,h){const T=p.tr;const opts=[];const fire=bldDone("fire")[0];const fam=famHere(p);const others=here().filter(q=>q!==p&&!q.sleep);
   if(fam.length)opts.push([1+T.kind+(p.motive==="family"?1.5:0),()=>{const q=pick(fam);moveTo(p,q.x+1,q.z+1);return q.kid?`watching over ${q.name}`:`keeping close to ${q.name}`}]);
   if(others.length)opts.push([1+T.social*1.5,()=>{const q=pick(others);moveTo(p,q.x+1.2,q.z+.6);if(rf()<.4)chatter(p,q);return`talking with ${q.name}`}]);
-  if(fire)opts.push([.8-T.diligent*.6+(h>=18?1.2:0),()=>{moveTo(p,fire.x+rf()*3-1.5,fire.z+rf()*3-1.5);return h>=18?"sitting by the fire":"taking it easy"}]);
+  const indoor=fire&&fire.opt&&fire.opt.indoor;
+  if(fire)opts.push([.8-T.diligent*.6+(h>=18?1.2:0),()=>{if(indoor)moveTo(p,fire.x+1+rf()*1.6,fire.z-.4-rf()*1.6);else moveTo(p,fire.x+rf()*3-1.5,fire.z+rf()*3-1.5);return indoor?(h>=18?"warming up by the stove":"taking it easy inside"):h>=18?"sitting by the fire":"taking it easy"}]);
+  // home life inside: the table, and somewhere quiet
+  const lay=layout(S.camp.site);if(lay.table)opts.push([.6+(h>=17?.8:0),()=>{moveTo(p,lay.table.x+rf()*1.6-.8,lay.table.z+(rf()<.5?-.85:.85));return pick(["sitting at the table","playing cards at the table","mending clothes at the table","having coffee at the table"])}]);
+  const home=lay.b.find(r=>r.floorSpots&&r.floorSpots.length);if(home)opts.push([.35+(T.social<0?.45:0)+(T.brave<0?.3:0),()=>{const s=pick(home.floorSpots);moveTo(p,s.x,s.z);return pick(["resting inside","reading by the window","keeping out of the wind","sitting quietly inside"])}]);
   const bench=bldDone("bench")[0]||bldDone("garden")[0];if(bench)opts.push([.5+T.social*.3,()=>{moveTo(p,bench.x+rf(),bench.z+1);return bench.type==="garden"?"looking at the flowers":"sitting on the bench"}]);
   const bp=campBlds().find(b=>!b.done);if(bp&&!p.kid)opts.push([.6+T.diligent*1.4+T.kind*.4,()=>{moveTo(p,bp.x+1,bp.z+bSize(bp)[1]/2+.8);p.at=bp.id;return`helping build the ${bp.name.toLowerCase()}`}]);
   const n=campSize();if(!p.kid||p.age>=10){if(S.res.water<n*2)opts.push([1.2+T.diligent+T.kind*.5,()=>{const s=jobSpot({...p,job:"water"});moveTo(p,s.x,s.z);p.at="water";return"fetching water, since we're low"}]);
@@ -580,7 +652,8 @@ function sendScavs(){const sc=here().filter(p=>p.job==="scav"&&willWork(p)&&p.hp
   const spots=Object.keys(LOCS).filter(k=>k!==campK()&&k!=="start"&&!(S.rival&&S.rival.site===k&&!S.rival.gone)&&!place(k).burned);
   const k=S.flags.scavTo&&spots.includes(S.flags.scavTo)?S.flags.scavTo:pick(spots);
   for(const p of sc){p.away={kind:"scav",to:k,back:S.t+(travelHours(campK(),k)*2+3)*HOUR,out:false};p.act=`heading out to the ${LOCS[k].n}`;moveTo(p,ENTRY.x+rf()*2,ENTRY.z,()=>{p.away.out=true})}}
-function comeBack(p){const k=p.away.to;const L=LOCS[k];const r=lootRoll(k,p.sk.scav);const danger=(L.danger||1)*.05-p.sk.scav*.025+(dayOf(S.t)*.003);
+function comeBack(p){const k=p.away.to;const L=LOCS[k];const r=lootRoll(k,p.sk.scav);const armed=p.gun&&S.res.ammo>=1;const danger=(dangerAt(k)*.05-p.sk.scav*.025)*(armed?.65:1);const P=place(k);P.heat=(P.heat||0)+1.5;if(rf()<(armed?.6:.3))P.dead=Math.max(0,placeDead(k)-1);
+  if(armed)S.res.ammo=Math.max(0,S.res.ammo-ri(1,4));
   p.away.out=false;p.x=ENTRY.x;p.z=ENTRY.z;
   if(rf()<danger*.18&&!p.kid){p.away=null;die(p,`never came back from the ${L.n}`);return}
   if(rf()<danger){p.hp-=ri(10,28);log(`${p.name} ran into trouble at the ${L.n} and came back limping.`,"warn")}
@@ -687,11 +760,13 @@ function stores(x,kind){S.storeLog=S.storeLog||[];S.storeLog.push({t:S.t,x,k:kin
 // ================= people help themselves =================
 function useHour(h){if(!S.camp)return;const ppl=here();
   // tools and weapons get picked up by whoever's job uses them, and put back at night
-  if(h===7){for(const o of S.inv?.items||[])o.by=null;
+  if(h===7){for(const o of S.inv?.items||[])o.by=null;for(const p of ppl)p.gun=null;
     const want={tool:["build","farm","wood"],weapon:["guard","scav"],light:["guard"],water:["water"]};
-    for(const o of S.inv?.items||[]){const u=o.k.startsWith("c:")?S.crafted.find(c=>"c:"+c.id===o.k)?.use:ITEM_USE[o.k];if(!u||!want[u])continue;
-      const p=ppl.find(p=>want[u].includes(p.job)&&!S.inv.items.some(q=>q.by===p.id)&&(!o.owner||o.owner===p.id||p.tr.kind<-.35));if(p){o.by=p.id;if(rf()<.3)stores(`${p.name} took the ${invNameOf(o.k).toLowerCase()} for ${JOBS[p.job].v}.`)}}}
-  if(h===22)for(const o of S.inv?.items||[])o.by=null;
+    // guns go out first, and the guards get first pick of them
+    const items=[...(S.inv?.items||[])].sort((a,b)=>(GUNS[b.k]?1:0)-(GUNS[a.k]?1:0));const order=[...ppl].sort((a,b)=>(b.job==="guard")-(a.job==="guard"));
+    for(const o of items){const u=o.k.startsWith("c:")?S.crafted.find(c=>"c:"+c.id===o.k)?.use:ITEM_USE[o.k];if(!u||!want[u])continue;
+      const p=order.find(p=>want[u].includes(p.job)&&!S.inv.items.some(q=>q.by===p.id)&&(!o.owner||o.owner===p.id||p.tr.kind<-.35));if(p){o.by=p.id;if(GUNS[o.k])p.gun=o.k;if(rf()<.3)stores(`${p.name} took the ${invNameOf(o.k).toLowerCase()} for ${JOBS[p.job].v}.`)}}}
+  if(h===22){for(const o of S.inv?.items||[])o.by=null;for(const p of ppl)p.gun=null}
   for(const p of ppl){if(p.sleep||p.kid&&rf()<.5)continue;const T=p.tr;
     // a rough day: a drink, if there's one
     if(p.mood<30&&itemCount("alcohol")>0&&rf()<.06*(1-T.faith*.5)&&!protectedFor("alcohol",p)){takeItem("alcohol",1);p.mood+=12;stores(`${p.name} drank the ${ITEMS.alcohol}.`);if(rf()<.5)log(`${p.name} finished off a bottle of vodka by the fire.`)}
@@ -732,7 +807,7 @@ function craftedIn(useKey){return S.crafted.filter(c=>c.use===useKey)}
 // Every ask is weighed against who they are: trust in you, their nature, their motive and their family.
 // The reasons come back with the answer, so you can see why someone said no.
 function noise(p,k){const R=srng(hashStr(p.id+k+dayOf(S.t)));return R()*2-1}
-function danger(k){const L=LOCS[k];if(!L)return 1;let d=L.danger||1;if(S.rival&&!S.rival.gone&&S.rival.site===k)d+=3;return d}
+function danger(k){const L=LOCS[k];if(!L)return 1;let d=dangerAt(k);if(S.rival&&!S.rival.gone&&S.rival.site===k)d+=3;return d}
 function weigh(p,kind,ctx){ctx=ctx||{};const R=[];const add=(v,t)=>{if(Math.abs(v)>=.15)R.push({v:Math.round(v*10)/10,t})};const T=p.tr;
   const kids=kidsOf(p).filter(q=>q.status==="member");const fam=famOf(p).filter(q=>q.status==="member"||q.status===p.status);const kid=kids[0]||fam[0];
   const trust=(p.trust-45)/25;
@@ -863,23 +938,27 @@ function sceneBrief(){const pl=S.player;const L=LOCS[pl.loc];const ppl=S.people.
   return`Where: ${L.n}${pl.loc===campK()?" (your camp)":""}. Day ${dayOf(S.t)}, ${clockStr(S.t)}.
 People here: ${ppl.map(p=>`${p.name} (${p.status==="member"?(p.follow?"following you":p.act||"camp member"):p.status}${p.kid?", kid":""})`).join("; ")||"nobody"}.
 Things to search here: ${layout(pl.loc).conts.map(c=>CONT[c.k].n).join(", ")||"none"}.
+The dead in sight: ${walkersAt(pl.loc).length}. You carry: ${pl.gun?`a ${ITEMS[pl.gun]}, ${pl.rounds||0} rounds`:"no gun"}.
 Camp: ${S.camp?`${S.camp.n}, ${members().length} people. Stores: ${Object.entries(S.res).map(([k,v])=>`${RES[k].toLowerCase()} ${Math.floor(v)}`).join(", ")}. Items: ${craftList().join(", ")||"none"}.`:"no camp yet"}
 Places on the map: ${Object.entries(LOCS).map(([k,l])=>`${k}=${l.n}`).join(", ")}.`}
 const ACT_SCHEMA=`Actions (use only these; names must be people or keys listed above):
 {"do":"say","to":"<person name, or empty for whoever is nearest>","text":"<what you say>"}
 {"do":"walk","to":"<person name, or a thing to search>"}
 {"do":"travel","to":"<place key>"}
-{"do":"camp"}  (make camp right here)
+{"do":"camp"}  (move in here: everyone makes this place home and lives inside)
+{"do":"inside","what":"<optional: house, barn>"}  (walk into the nearest building through its door)
+{"do":"fire"}  (light the stove or a small fire to warm up by; never burns anything)
 {"do":"build","what":"<one of: ${Object.keys(BUILDS).join(", ")}>"}
 {"do":"job","who":"<name>","job":"<one of: ${Object.keys(JOBS).join(", ")}, or none>"}
 {"do":"lead","who":"<name>","job":"<job key>"}  (put them in charge of it)
 {"do":"invite","who":"<name>"}   {"do":"turnaway","who":"<name>"}
 {"do":"follow","who":["<names>"]}  (ask them to come with you)   {"do":"stay","who":["<names>"]}
 {"do":"search","what":"<thing to search, or all>"}
-{"do":"burn"}  (set this place on fire)
+{"do":"burn"}  (set this whole place on fire and destroy it; only when the player clearly says to burn the place down. Lighting a fire, a stove or a campfire is "fire", never "burn")
 {"do":"craft","text":"<what you try to make and how>"}
 {"do":"wait","hours":<1-12>}
 {"do":"war"}  (rally people to fight the Pruitt crew)
+{"do":"shoot"}  (fire at the nearest of the dead, if you carry a gun; guns are never used on living people)
 {"do":"act","text":"<anything else: what you do, written as 'You ...'>","hours":<0-4>,"mood":<-4 to 4, how it lifts or drags the whole camp>,"trust":{"<name>":<-10 to 10>},"res":{"<food|water|wood|scrap|meds|ammo>":<-3 to 3>}}`;
 async function aiInterpret(text){const prompt=`${WORLD_BRIEF}
 You are the game master. The player typed what their character does. Turn it into game actions. Be generous: if it's possible for a person in this situation, let it happen with an "act" action and honest, small effects. If it's impossible or nonsensical, use "act" with no effects and say why in "say".
@@ -975,7 +1054,8 @@ function rally(){if(!S.rival||S.rival.gone){toast("There's nobody to fight. Not 
   const L=members().filter(p=>!p.kid&&(atCamp(p)&&pl_().loc===campK()||p.loc===pl_().loc));if(!L.length){toast("There's nobody here to ask.");return}
   const out=L.map(p=>({p,r:weigh(p,"war")}));for(const o of out){o.p.lastTalk=S.t;if(o.r.yes){o.p.follow=true;o.p.away=null}}
   if(typeof warCard==="function")warCard(out)}
-function battle(){const R=S.rival;const party=withYou().filter(p=>!p.kid);let us=2+party.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+Math.min(4,S.res.ammo/6)+useVal("weapon")*.4;const them=rivalStr();
+function battle(){const R=S.rival;const pl=pl_();const party=withYou().filter(p=>!p.kid);let us=2+party.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+Math.min(4,S.res.ammo/6)+useVal("weapon")*.4+(pl.gun&&pl.rounds>0?1.5:0);const them=rivalStr();
+  if(pl.gun)pl.rounds=Math.max(0,(pl.rounds||0)-ri(3,8));
   if(S.res.ammo>0)S.res.ammo=Math.max(0,S.res.ammo-party.length*2);
   const roll=us*(.75+rf()*.5)-them*(.75+rf()*.5);const beats=[];const foes=S.people.filter(p=>p.status==="rival");const hurtUs=[];
   beats.push(`You come at ${LOCS[R.site].n} ${hourOf(S.t)>=20||hourOf(S.t)<5?"in the dark":"in broad daylight"}, ${party.length?listAnd(party.map(p=>p.name))+" beside you":"alone"}.`);
@@ -993,11 +1073,11 @@ function battle(){const R=S.rival;const party=withYou().filter(p=>!p.kid);let us
   syncInv();return{won:roll>0,beats}}
 
 // ---------- places ----------
-function travelTo(k){const pl=pl_();if(S.flags.traveling||k===pl.loc||!LOCS[k])return;const hrs=travelHours(pl.loc,k);const party=withYou();
+function travelTo(k){const pl=pl_();if(S.flags.traveling||k===pl.loc||!LOCS[k])return;armUp(true);const hrs=travelHours(pl.loc,k);const party=withYou();
   S.flags.traveling={to:k,from:pl.loc,hrs,start:S.t};for(const p of party){p.loc="road";p.tx=null;p.path=null;p.onArrive=null}pl.loc="road";pl.tx=null;pl.path=null;pl.onArrive=null;if(UI.loot)closeLoot();
   log(`You set out for ${LOCS[k].n}${party.length?" with "+listAnd(party.map(p=>p.name)):""}. About ${hrs} hour${hrs>1?"s":""} on foot.`);if(typeof onTravel==="function")onTravel(hrs)}
 function travelTick(){const T=S.flags.traveling;if(!T)return true;step(HOUR/2);if(S.t-T.start<T.hrs*HOUR)return false;
-  const party=S.people.filter(p=>p.loc==="road");if(rf()<.15+(LOCS[T.to].danger||1)*.04){const f=[pl_(),...party].reduce((a,b)=>fightOf(b)>fightOf(a)?b:a);const fx=f===pl_()?"You":f.name;
+  const party=S.people.filter(p=>p.loc==="road");if(rf()<.12+dangerAt(T.to)*.04){const f=[pl_(),...party].reduce((a,b)=>fightOf(b)>fightOf(a)?b:a);const fx=f===pl_()?"You":f.name;
     if(rf()<.75)log(`On the road, a few of the dead stagger out of a ditch. ${fx} ${f===pl_()?"deal":"deals"} with them.`);else{const v=pick([pl_(),...party]);v.hp-=ri(6,16);log(`Walkers on the road. ${v===pl_()?"You":v.name} took a nasty knock getting past them.`,"warn")}}
   S.flags.traveling=null;arriveAt(T.to);return true}
 function arriveAt(k,silent){const pl=pl_();const party=S.people.filter(p=>p.loc==="road"||p.follow&&p.loc===pl.loc);pl.loc=k;pl.x=ENTRY.x;pl.z=ENTRY.z-2;pl.tx=null;pl.path=null;
@@ -1008,13 +1088,15 @@ function arriveAt(k,silent){const pl=pl_();const party=S.people.filter(p=>p.loc=
     // sometimes someone's hiding here
     if(first&&k!=="start"&&rf()<.4&&!(S.rival&&S.rival.site===k)){const hh=mkHousehold(null,k,{x:rf()*12-6,z:rf()*6});for(const q of hh){q.status="stranger";q.trust=ri(5,25);q.waitTill=S.t+9999*HOUR;q.act="hiding";S.people.push(q)}log(`Someone's here: ${hh.length>1?`${hh.length} people`:hh[0].sex==="F"?"a woman":"a man"}, hiding and watching you.`,"warn")}
     if(S.rival&&S.rival.site===k&&!S.rival.gone)log("The Pruitt crew lives here now. They're watching you.","warn")}
-  if(typeof onScene==="function")onScene();save()}
+  armUp(true);
+  if(typeof onScene==="function")onScene();save();
+  if(S.flags.moveIn){const m=S.flags.moveIn;S.flags.moveIn=null;if(m===k&&!S.camp&&!silent)doCamp()}}
 function goHome(){if(S.camp)travelTo(S.camp.site)}
 function burnPlace(){const pl=pl_();const k=pl.loc;if(k===campK()){toast("That's your camp.");return}if(k==="road")return;const P2=place(k);if(P2.burned){toast("It's already burned.");return}
   const R=S.rival;const theirs=R&&!R.gone&&R.site===k;const h=hourOf(S.t);
   if(theirs&&!(h>=22||h<5)){toast("Not in daylight, with all of them watching. Come back at night, or fight them.");return}
   P2.burned=true;S.bv++;for(const c of layout(k).conts){const s=contState(k,c.id);if(c.vis==="door"){s.rolled=true;s.c.items=[]}}
-  for(const w of walkersAt(k))if(rf()<.6){w.dead=true;w.diedAt=S.t}
+  for(const w of walkersAt(k))if(rf()<.6)putDown(w);place(k).heat=(place(k).heat||0)+6;
   if(theirs){R.weak=true;R.angry+=2;R.raidAt=S.t+ri(18,36)*HOUR;const f=S.people.filter(p=>p.status==="rival");const v=f.length&&rf()<.3?pick(f):null;if(v)die(v,"burned in the fire");log(`You set fire to the Pruitts' place in the dark and get out before anyone's awake enough to shoot. Their stores go up with it.${v?" "+v.name+" didn't get out.":""} They'll want blood.`,"big")}
   else log(`You set ${LOCS[k].n} on fire. Whatever was inside burns with it, and so do the dead that were in there.`,"big");
   step(HOUR);if(typeof onScene==="function")onScene();save()}
@@ -1033,11 +1115,27 @@ async function doCommand(raw){const text=raw.trim();if(!text)return;if(!S)return
     if(!target){say(pl,cap1(words));return}return speak(target,cap1(words))}
   if(/^(hi|hey|hello|howdy)\b/.test(t)){const target=who||nearestPerson();if(target)return speak(target,cap1(text));say(pl,cap1(text));return}
   if(/^(talk|speak|chat)( to| with)?\b/.test(t)){const target=who||nearestPerson();if(target){openTalk(target);approach(target)}return}
+  // living inside: move in, go in, step out
+  const tt=t.replace(/[.!?]+$/,"").replace(/\s+(now|please|quick(ly)?|fast|together)$/,"").trim();
+  if(LIVE_RE.test(tt)&&!/\b(tent|cabin|wall|tower)\b/.test(tt))return moveIn(tt);
+  if(INSIDE_RE.test(tt)||/^(everyone|everybody|all of you|y'all)\b.*\b(inside|indoors)\b|^get (everyone|everybody) (inside|indoors|in)\b/.test(tt))return goInside(tt,everyoneIn(tt));
+  if(OUTSIDE_RE.test(tt))return goOutside();
+  // fire: the bodies, the place itself (only when you say so plainly, and you're asked first), or a fire to sit by
+  if(/\b(burn|torch|set fire|on fire|ablaze|cremate|bury)\b/.test(tt)&&BODY_RE.test(tt))return clearBodies(/\bbury\b/.test(tt));
+  if(/\b(burn|torch|set fire|on fire|ablaze)\b/.test(tt)&&BURN_RE.test(tt))return askBurn();
   // camp, map, travel
   if(/(make|set up|pitch|start|build|found) (our |a |the )?(camp|base|home)( here)?\b/.test(t)&&!/(tent|cabin|wall|tower)/.test(t)){return doCamp()}
+  if(FIRE_RE.test(tt)&&!(/^(build|construct|put up|set up|dig|make)\b/.test(tt)&&PIT_RE.test(tt)))return lightFire();
   if(/^(open )?(the )?map$/.test(t))return openMap();
   m=/^(go|head|travel|walk|drive|run|get|move|hike|return)\s+(back\s+)?(to|over to|toward|towards|home|back)\b\s*(.*)$/.exec(t);
   if(m){const rest=(m[4]||"")+" "+(m[3]==="home"?"home":"");if(/\b(home|camp|base)\b/.test(rest)&&S.camp)return goHome();const k=locIn(rest);if(k)return travelTo(k);const tgt=namedIn(rest)[0];if(tgt){if(here_(tgt))approach(tgt);return}const c=contIn(rest);if(c)return approach(c)}
+  // guns are for the dead, never the living
+  if(/^(shoot|open fire|aim|take a shot|blast|snipe|pick off|gun down)\b|^fire\b(?! up)/.test(t)||/\b(shoot|take a shot at)\b/.test(t)||/\bfire (at|on) (the |that |those |a |an )?(dead|walkers?|zombies?|biters?|them|it|one)\b/.test(t)){
+    const living=who||/\b(pruitts?|boyd|stranger|strangers|person|people|guy|man|woman|kid|kids|survivors?)\b/.test(t);
+    if(living&&!/\b(dead|walkers?|zombies?|biters?|corpses?)\b/.test(t)){toast("You won't point a gun at the living. If it comes to the Pruitts, that's a war, and it needs your people behind you.");return}
+    return shootNearest()}
+  if(/^(kill|take out|put down|stab|hit|fight|smash|attack)\b.*\b(dead|walkers?|zombies?|biters?|one of them)\b/.test(t)){const w=nearestWalker();if(!w){toast("There's none of the dead here.");return}
+    if(pl.gun&&((pl.rounds||0)>0||loadUp()))return closeAndShoot(w);return approach(w,()=>clash(pl,w))}
   // orders
   if(/(come with me|follow me|with me|tag along|let's go)/.test(t)){const L=everyoneIn(t)?localPeople().filter(p=>p.status==="member"&&!p.kid):names.filter(p=>p.status==="member");if(!L.length&&who)L.push(who);if(!L.length){toast("Who do you want to come with you? Use a name.");return}return askMany(L,"come")}
   if(/(stay (here|put|behind)|wait here|stop following|go (back )?home|go back to camp)/.test(t)){const L=everyoneIn(t)?withYou():names;if(!L.length)return toast("Who should stay?");return askMany(L,"stay")}
@@ -1050,7 +1148,6 @@ async function doCommand(raw){const text=raw.trim();if(!text)return;if(!S)return
   if(/^(build|construct|put up|set up|raise|erect|dig|plant)\b/.test(t)||/^make (a|an|some|the) /.test(t)&&Object.values(BWORDS).some(re=>re.test(t))){for(const [k,re] of Object.entries(BWORDS))if(re.test(t))return startPlace(k);if(/^(build|construct|put up|raise|erect)/.test(t)){openBuild();return}}
   if(/^(craft|make|tie|sew|carve|whittle|fashion|rig|assemble|knot|weave|sharpen|combine|put|attach|tape|nail|turn)\b/.test(t)&&(Object.keys(S.items).some(k=>t.includes(ITEMS[k].split(" ").pop()))||/^(craft|make|tie|sew|carve|whittle|fashion|weave|knot)\b/.test(t)))return craft(text);
   if(/^(search|loot|check|open|look through|look in|rummage|go through|raid)\b/.test(t)){const c=contIn(t)||nearestCont();if(c)return approach(c,()=>openLoot(c));toast("There's nothing like that to search here.");return}
-  if(/(burn|torch|set fire|light .* on fire|set .* on fire)/.test(t))return burnPlace();
   m=/^(wait|rest|sleep|nap|sit)\b.*?(\d+)?\s*(hour|hr)?/.exec(t);if(m&&/^(wait|rest|sleep|nap)/.test(t)){const h=m[2]?+m[2]:/sleep/.test(t)?8:2;return waitHours(h)}
   if(/^(help|\?)$/.test(t))return openHelp();
   // anything else: Claude reads it, or the game does its honest best
@@ -1076,7 +1173,8 @@ async function runAction(a){const nm=x=>namedIn(String(x||""))[0];const pl=pl_()
     case"follow":{const L=(Array.isArray(a.who)?a.who:[a.who]).map(nm).filter(Boolean);await askMany(L,"come");break}
     case"stay":{const L=(Array.isArray(a.who)?a.who:[a.who]).map(nm).filter(Boolean);await askMany(L,"stay");break}
     case"search":{const c=a.what&&a.what!=="all"?contIn(String(a.what).toLowerCase()):nearestCont();if(c)approach(c,()=>openLoot(c));break}
-    case"burn":burnPlace();break;case"craft":await craft(String(a.text||""));break;case"wait":waitHours(+a.hours||1);break;case"war":rally();break;
+    case"shoot":shootNearest();break;
+    case"burn":askBurn();break;case"inside":goInside(String(a.what||""));break;case"fire":lightFire();break;case"craft":await craft(String(a.text||""));break;case"wait":waitHours(+a.hours||1);break;case"war":rally();break;
     case"act":{const p=a.trust&&Object.keys(a.trust)[0]?nm(Object.keys(a.trust)[0]):null;const go=()=>{if(a.text)log(String(a.text).slice(0,300));
         const md=clamp(+a.mood||0,-4,4);if(md)for(const q of members())q.mood=clamp(q.mood+md,0,100);
         for(const [n,v] of Object.entries(a.trust||{})){const q=nm(n);if(q){q.trust=clamp(q.trust+clamp(+v||0,-10,10),0,100);mem(q,String(a.text||"").replace(/^You /,S.player.name+" ").slice(0,120),Math.sign(+v||0)*2)}}
@@ -1089,6 +1187,95 @@ async function craft(text){if(!S.camp&&!Object.keys(S.items).length){toast("You 
   if(done&&done.harm.length)log(`That used medicine ${listAnd(done.harm.map(p=>p.name))} needs to stay alive. ${done.harm.length>1?"They":pronoun(done.harm[0],"S")} won't forget it.`,"bad");if(typeof renderAll==="function")renderAll();return res}
 function doCamp(){if(S.camp){toast(`You already have a camp at ${S.camp.n}.`);return}const k=pl_().loc;const L=LOCS[k];if(!L||L.camp===false){toast("You can't live here. Open the map (M) and pick a place.");return}
   if(S.rival&&S.rival.site===k&&!S.rival.gone){toast("The Pruitts live here.");return}if(campHere()){if(typeof onScene==="function")onScene();save()}}
+
+// ================= living inside =================
+const LIVE_RE=/\b(move in(to)?|moving in(to)?|live (in|here|inside|there)|living (in|here|inside)|settle (in|here)|inhabit|hole up|bunk down|bunker down|shelter (in|here)|call (it|this|this place|here) home|(make|turn) (it|this|here|that|(the|this|that) [\w']+( [\w']+)?)( into)? (our|my|a|your) (new )?(home|base|house)|make (a|our) (new )?home|claim (this|the|that) (house|building|place|farmhouse|church|store|school|motel|mill))\b/;
+const INSIDE_RE=/^((go|head|get|walk|step|move|come|run|duck|hurry|go back|head back|get back|come back)\s+(inside|indoors|in(to)? (the |that |this )?(house|farmhouse|building|barn|church|chapel|store|shop|school|station|motel|mill|cabin|office|room|place))|enter|go in|head in|get in here)\b/;
+const OUTSIDE_RE=/^((go|head|get|walk|step|move|come|run)\s+(back\s+)?(outside|outdoors|out)( the (front |back )?door)?|(leave|exit) the (house|farmhouse|building|barn|church|store|school|motel|mill))$/;
+const BODY_RE=/\b(bod(y|ies)|corpses?|the dead|dead (ones|walkers|bodies)|remains)\b/;
+// burning the place down has to be said plainly: "burn it down", "torch the place", "set the barn on fire"
+const BURN_RE=/\b(down|it|place|house|farmhouse|home|building|barn|church|chapel|store|shop|school|station|motel|mill|everything|whole|lot|town)\b/;
+const FIRE_RE=/^(make|light|start|build|get|stoke|feed|kindle|fire up|relight|keep)\b.*\b(fire|stove|woodstove|fireplace|hearth|campfire)\b|^(sit|warm up|warm|gather|huddle|hang out|relax|rest)\b.*\b(by|at|around|near|next to) (the |a )?(fire|stove|woodstove|fireplace|campfire)\b/;
+const PIT_RE=/\b(fire ?pits?|fire ?rings?|cook ?fires?|cook ?pits?|pits?|kitchens?|rings?)\b/;
+function bldAt(loc,x,z){return LOCS[loc]?layout(loc).b.find(r=>x>r.x-r.w/2&&x<r.x+r.w/2&&z>r.z-r.d/2&&z<r.z+r.d/2)||null:null}
+function pickBld(t){const pl=pl_();if(!LOCS[pl.loc])return null;const B=layout(pl.loc).b;if(!B.length)return null;t=t||"";
+  if(/\bbarn\b/.test(t)){const b=B.find(r=>r.barn);if(b)return b}
+  if(/\b(house|farmhouse|home|cabin|church|chapel|store|shop|school|station|motel|mill|office)\b/.test(t)){const b=B.find(r=>!r.barn);if(b)return b}
+  const H=B.filter(r=>!r.barn);return(H.length?H:B).slice().sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z))[0]}
+// walk in through the door (the walls do the rest: you can only get in through the doorway)
+function goInside(t,all){const pl=pl_();if(pl.ko>0||S.flags.traveling)return;const r=pickBld(t);if(!r){toast("There's no building here to go into.");return}
+  const spot=()=>r.floorSpots&&r.floorSpots.length?pick(r.floorSpots):{x:r.x+(rf()-.5)*2,z:r.z+(rf()-.5)*2};
+  const ppl=all?localPeople().filter(p=>p.status==="member"&&!p.sleep&&!(p.ko>0)&&!(p.away&&p.away.out)&&bldAt(p.loc,p.x,p.z)!==r):[];
+  if(bldAt(pl.loc,pl.x,pl.z)===r&&!ppl.length){toast(all?"Everyone's already inside.":"You're already inside.");return}
+  if(bldAt(pl.loc,pl.x,pl.z)!==r){const s=spot();moveTo(pl,s.x,s.z)}
+  for(const p of ppl){const s=spot();moveTo(p,s.x,s.z);p.act="heading inside"}
+  log(ppl.length?`You get everyone inside${r.barn?" the barn":""}.`:r.barn?"You head into the barn.":pl.loc===campK()?"You go inside.":`You go inside ${LOCS[pl.loc].n}.`)}
+function goOutside(){const pl=pl_();const r=bldAt(pl.loc,pl.x,pl.z);if(!r){toast("You're already outside.");return}moveTo(pl,r.x+(rf()-.5)*2,r.z+r.d/2+2.5);log("You step outside.")}
+// a place named in so many words ("the church", "Harlan Farm"), not a word that could mean anywhere ("the store")
+function locStrict(t){for(const [k,L] of Object.entries(LOCS)){if(k==="start")continue;if(new RegExp("\\b"+k+"\\b").test(t)||t.includes(L.n.toLowerCase().replace(/['.]/g,"")))return k}return null}
+// "move in", "we live here now", "make this place our home": make camp here and go inside, or set off for the place you named
+function moveIn(t){const pl=pl_();const k=locStrict(t);
+  if(k&&k!==pl.loc){if(S.camp){toast(`You already live at ${S.camp.n}.`);return}if(LOCS[k].camp===false){toast(`Nobody could live at ${LOCS[k].n}.`);return}
+    S.flags.moveIn=k;return travelTo(k)}
+  if(!S.camp)return doCamp();
+  if(S.camp.site===pl.loc){if(bldAt(pl.loc,pl.x,pl.z)&&!everyoneIn(t)){toast("You live here. This is home now.");return}return goInside(t,everyoneIn(t))}
+  toast(`You already live at ${S.camp.n}. Head home first.`)}
+// lighting a fire or the stove is something you do, not something you build, and it never burns anything down
+function lightFire(){const pl=pl_();const k=pl.loc;const st=S.blds.find(b=>b.loc===k&&b.type==="fire"&&b.done);const ppl=localPeople().filter(p=>p.status==="member");
+  const warm=()=>{const fresh=!S.flags.warmAt||S.t-S.flags.warmAt>6*HOUR;S.flags.warmAt=S.t;if(fresh)for(const q of ppl)q.mood=clamp(q.mood+2,0,100)};
+  if(st){const indoor=!!(st.opt&&st.opt.indoor);return approach(st,()=>{
+    log(indoor?`You get the woodstove going. It ticks as it heats${ppl.length?", and people drift over to warm their hands":""}.`:`You build the fire back up.${ppl.length?" People drift over to sit by it.":""}`);warm();
+    for(const q of ppl.filter(q=>!q.sleep&&!(q.ko>0)&&!(q.away&&q.away.out)).slice(0,5)){if(indoor)moveTo(q,st.x+1+rf()*1.6,st.z-.4-rf()*1.6);else{const a=rf()*Math.PI*2,r=1.6+rf();moveTo(q,st.x+Math.cos(a)*r,st.z+Math.sin(a)*r)}q.act=indoor?"warming up by the stove":"sitting by the fire"}})}
+  log(`You get a small fire going in a coffee can${ppl.length?" and everyone huddles around it":""} for a while.`);warm();step(HOUR)}
+// the bodies of the dead, burned or buried
+function clearBodies(bury){const pl=pl_();const dead=S.walkers.filter(w=>w.loc===pl.loc&&w.dead);const n=dead.length;if(!n){toast(`There are no bodies here to ${bury?"bury":"burn"}.`);return}
+  const named=dead.filter(w=>w.name).map(w=>w.name);
+  log(bury?`You dig ${n>1?"a long shallow trench":"a shallow grave"} and lay ${n>1?`the ${n} bodies`:"the body"} in it.${named.length?` You say a few words for ${listAnd(named)}.`:""}`:`You drag ${n>1?`the ${n} bodies`:"the body"} out into the open, well away from the buildings, and burn ${n>1?"them":"it"}. The smoke is awful. It's still better than leaving them.`);
+  if(named.length)for(const q of members())q.mood=clamp(q.mood+3,0,100);
+  S.walkers=S.walkers.filter(w=>!dead.includes(w));step(bury?2*HOUR:HOUR)}
+// burning a place down can't be undone, so it's always asked first
+function askBurn(){const pl=pl_();const k=pl.loc;if(k===campK()){toast("That's your camp. You live here.");return}if(!LOCS[k]||k==="road"||k==="start"){toast("There's nothing here to burn.");return}if(place(k).burned){toast("It's already burned.");return}
+  if(typeof confirmCard==="function")confirmCard("Burn it down?",`Set ${LOCS[k].n} on fire. Anything you haven't searched burns with it, and nobody can live here after. It can't be undone.`,burnPlace);else burnPlace()}
+
+// ================= guns =================
+// Once you find a gun you keep it on you. Rounds come out of what you're carrying, or out of camp stores when you're home
+// (before there's a camp, the stores are just what the group has with them).
+function loadUp(){const pl=pl_();if(!pl.gun)return 0;const cap=GUNS[pl.gun].carry;let need=cap-(pl.rounds||0),got=0;if(need<=0)return 0;
+  const h=S.haul;for(const o of [...h.items]){if(o.k!=="ammo"||need<=0)continue;const d=Math.min(o.n,need);o.n-=d;need-=d;got+=d;if(o.n<=0)h.items.splice(h.items.indexOf(o),1)}
+  if(need>0&&(!S.camp||pl.loc===campK())){const d=Math.min(need,Math.floor(S.res.ammo+1e-6));if(d>0){S.res.ammo-=d;need-=d;got+=d;syncInv()}}
+  pl.rounds=(pl.rounds||0)+got;return got}
+// pick up a gun you've just found (not one someone else brought into camp), and keep it loaded
+function armUp(quiet,looted){if(!S)return;const pl=pl_();if(!LOCS[pl.loc])return;
+  if(!pl.gun){const h=S.haul;const hg=h.items.filter(o=>GUNS[o.k]).sort((a,b)=>GUN_RANK[b.k]-GUN_RANK[a.k])[0];let k=null;
+    if(hg){k=hg.k;hg.n--;if(hg.n<=0)h.items.splice(h.items.indexOf(hg),1)}
+    else if(looted&&looted.length){k=[...looted].sort((a,b)=>GUN_RANK[b]-GUN_RANK[a]).find(k=>itemCount(k)>0)||null;if(k){takeItem(k,1);syncInv()}}
+    if(k){pl.gun=k;pl.rounds=pl.rounds||0;loadUp();log(`You keep the ${ITEMS[k]} on you${pl.rounds?`, with ${pl.rounds} rounds`:", but there's no ammo for it yet"}. Click one of the dead to shoot it.`,"good");return}}
+  if(pl.gun&&(pl.rounds||0)<GUNS[pl.gun].carry){const got=loadUp();if(got&&!quiet)log(`You load up: ${pl.rounds} rounds for the ${ITEMS[pl.gun]}.`)}}
+const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d};
+function nearestWalker(){const pl=pl_();return walkersAt(pl.loc).sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z))[0]||null}
+function inSight(w){const pl=pl_();return pl.gun&&dist(pl.x,pl.z,w.x,w.z)<=GUNS[pl.gun].range&&clearLine(pl.loc,pl.x,pl.z,w.x,w.z)}
+function shoot(w){const pl=pl_();const G=GUNS[pl.gun];if(!G||!w||w.dead||w.loc!==pl.loc||pl.ko>0)return false;
+  const now=typeof performance!=="undefined"?performance.now():Date.now();if(now<(pl.gunReady||0))return true;
+  if((pl.rounds||0)<=0&&!loadUp()){toast(`The ${ITEMS[pl.gun]} is empty. ${S.camp&&pl.loc!==campK()?"There may be ammo back at camp.":"Cars and the police station might have ammo."}`);return false}
+  const d=dist(pl.x,pl.z,w.x,w.z);pl.rounds--;pl.gunReady=now+G.cool;pl.aim=now;pl.tx=null;pl.tz=null;pl.path=null;pl.onArrive=null;pl.dir=Math.atan2(w.x-pl.x,w.z-pl.z);
+  // closer is surer, hurt and shaking is worse, and a shotgun can drop more than one
+  const p=clamp(G.hit*(1-.5*(d/G.range)**2)-(pl.hp<40?.12:0),.15,.95);const hits=rf()<p?[w]:[];
+  if(G.spread)for(const o of walkersAt(pl.loc)){if(o===w||dist(pl.x,pl.z,o.x,o.z)>G.range)continue;if(Math.abs(angDiff(Math.atan2(o.x-pl.x,o.z-pl.z),pl.dir))<.3&&rf()<G.spread)hits.push(o)}
+  for(const o of hits)putDown(o);S.stats.shot=(S.stats.shot||0)+hits.length;
+  if(typeof shotFx==="function")shotFx(pl,w,hits.includes(w));noiseAt(pl.loc,pl.x,pl.z,G.noise);
+  if(!hits.length)say(pl,pick(["Missed.","Damn it.","Hold still...","Come on."]));
+  else if(hits.length>1)log(`One blast from the shotgun drops ${hits.length} of them.`,"good");
+  else if(rf()<.25)log(pick([`You drop one of the dead with the ${ITEMS[pl.gun]}.`,"One shot. It goes down and stays down.","The shot rolls away across the empty lot. One less of them."]));
+  if(pl.rounds===0)toast("That was your last round.");
+  return true}
+// walk until you have a clear shot, then take it
+function closeAndShoot(w,tries){const pl=pl_();if(!pl.gun||!w||w.dead)return;tries=tries||0;const R=GUNS[pl.gun].range*.7;const d=dist(pl.x,pl.z,w.x,w.z);
+  if(d<=GUNS[pl.gun].range&&clearLine(pl.loc,pl.x,pl.z,w.x,w.z)){shoot(w);return}
+  if(tries>1){approach(w,()=>{if(!w.dead)shoot(w)});return}
+  const f=Math.max(0,(d-R)/Math.max(d,.01));moveTo(pl,pl.x+(w.x-pl.x)*f,pl.z+(w.z-pl.z)*f,()=>{if(!w.dead&&w.loc===pl.loc)closeAndShoot(w,tries+1)})}
+function shootNearest(){const pl=pl_();if(!pl.gun){toast("You don't have a gun. Try the police station's armory, or that trooper's cruiser on the highway.");return}
+  const L=walkersAt(pl.loc).sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z));const w=L.find(inSight)||L[0];
+  if(!w){toast("There's nothing to shoot here.");return}closeAndShoot(w)}
 // ================= the isometric scene =================
 const T3=window.THREE;
 const W={ok:false,loc:null,figs:{},blds:{},conts:{},fx:[],zoom:14,tgt:{x:0,z:0},free:false,ghost:null};
@@ -1113,10 +1300,10 @@ function initWorld(cv){if(!T3){W.ok=false;return}try{
   W.ok=true;resizeWorld()}catch(e){console.error(e);W.ok=false}}
 function resizeWorld(){if(!W.ok)return;const w=innerWidth,h=innerHeight;W.r.setSize(w,h,false);W.aspect=w/h;camUpdate()}
 function camUpdate(){const z=W.zoom,a=W.aspect||1;W.cam.left=-z*a;W.cam.right=z*a;W.cam.top=z;W.cam.bottom=-z;W.cam.updateProjectionMatrix();
-  const t=W.tgt;W.cam.position.set(t.x+60,60,t.z+60);W.cam.lookAt(t.x,0,t.z);W.sun.position.set(t.x+30,60,t.z+18);W.sun.target.position.set(t.x,0,t.z)}
+  const t=W.tgt;const j=W.kick>0?(Math.random()-.5)*W.kick*2:0;W.cam.position.set(t.x+60+j,60,t.z+60-j);W.cam.lookAt(t.x+j,0,t.z-j);W.sun.position.set(t.x+30,60,t.z+18);W.sun.target.position.set(t.x,0,t.z)}
 function clearGroup(g){while(g.children.length){const c=g.children.pop();c.traverse(o=>{if(o.geometry)o.geometry.dispose()})}}
 // ---------- building a place ----------
-function buildScene(){if(!W.ok||!S)return;const k=S.player.loc==="road"?(S.flags.traveling?.from||"start"):S.player.loc;W.loc=k;clearGroup(W.root);clearGroup(W.dyn);W.figs={};W.blds={};W.conts={};W.fx=[];
+function buildScene(){if(!W.ok||!S)return;const k=S.player.loc==="road"?(S.flags.traveling?.from||"start"):S.player.loc;W.loc=k;clearGroup(W.root);clearGroup(W.dyn);W.figs={};W.blds={};W.conts={};W.fx=[];W.bm=[];W.xray=null;
   const L=LOCS[k];const lay=layout(k);const burned=place(k).burned;const R=srng(hashStr(k+"g"));
   // the ground, tinted a little differently in every place
   const G=new T3.PlaneGeometry(2*SH+40,2*SH+40,40,40);G.rotateX(-Math.PI/2);const col=[];const base=new T3.Color(L.kind==="scout"?"#4e6a3a":L.kind==="farm"?"#6a7a40":"#647a44");
@@ -1130,17 +1317,25 @@ function buildScene(){if(!W.ok||!S)return;const k=S.player.loc==="road"?(S.flags
   if(lay.fields)for(let i=0;i<8;i++)flat(18,1.1,i%2?"#7a5a3a":"#6a8a3a",-14,10+i*1.5,.03);
   if(lay.water){const w=flat(14,2*SH+30,"#3a6a8a",SH+3,0,.05);w.material=new T3.MeshLambertMaterial({color:"#3a6a8a",transparent:true,opacity:.92});flat(2,2*SH+30,"#8a7a5a",SH-4.5,0,.035)}
   if(lay.fence)for(let x=-14;x<=14;x+=2){W.root.add(box(.15,1.1,.15,"#2a2a2a",x,0,SH-14));if(Math.abs(x)>2)W.root.add(box(2,.08,.08,"#2a2a2a",x+1,.9,SH-14))}
-  for(const b of lay.b){const g=new T3.Group();const wc=burned?"#2e2a28":b.c;g.add(box(b.w,b.h,b.d,wc,0,0,0));
-    if(!burned){if(b.flat)g.add(box(b.w+.4,.3,b.d+.4,b.roof,0,b.h,0));else g.add(roof(b.w,b.d,b.h*.55,b.roof,b.h));
-      // windows and a door on the front
-      for(let x=-b.w/2+1.5;x<b.w/2-1;x+=3)g.add(box(.9,.8,.06,"#2a3440",x,b.h*.45,b.d/2+.01));g.add(box(1.1,2,.08,"#4a3426",0,0,b.d/2+.02));
-      if(b.steeple){g.add(box(2.4,b.h+5,2.4,b.c,0,0,b.d/2-1.2));const sp=new T3.Mesh(new T3.ConeGeometry(1.8,4,4),mat(b.roof));sp.position.set(0,b.h+7,b.d/2-1.2);sp.rotation.y=Math.PI/4;sp.castShadow=true;g.add(sp)}}
+  // buildings: a floor, four walls with a doorway, a roof, and what's inside. The two walls facing you and the roof
+  // come off when you're inside (or press V), so you can see people living there.
+  for(const b of lay.b){const g=new T3.Group();const wc=burned?"#2e2a28":b.c;const h=burned?b.h*.55:b.h;const t=.3,dw=DOOR/2,dh=Math.min(2.3,h-.5);
+    const full=new T3.Group(),stub=new T3.Group(),top=new T3.Group();stub.visible=false;
+    g.add(box(b.w-.1,.06,b.d-.1,burned?"#2a2624":b.floor,0,0,0));
+    g.add(box(b.w,h,t,wc,0,0,-b.d/2+t/2),box(t,h,b.d,wc,-b.w/2+t/2,0,0));
+    const side=(H,G)=>{G.add(box(t,H,b.d,wc,b.w/2-t/2,0,0),box(b.w/2-dw,H,t,wc,-(b.w/2+dw)/2,0,b.d/2-t/2),box(b.w/2-dw,H,t,wc,(b.w/2+dw)/2,0,b.d/2-t/2))};
+    side(h,full);full.add(box(2*dw,h-dh,t,wc,0,dh,b.d/2-t/2));side(.45,stub);
+    if(!burned){for(let x=-b.w/2+1.4;x<b.w/2-1;x+=3)if(Math.abs(x)>dw+.6)full.add(box(.9,.8,.06,"#2a3440",x,h*.45,b.d/2+.01));
+      for(let z=-b.d/2+1.6;z<b.d/2-1;z+=3)full.add(box(.06,.8,.9,"#2a3440",b.w/2+.01,h*.45,z));
+      if(b.flat)top.add(box(b.w+.4,.3,b.d+.4,b.roof,0,h,0));else top.add(roof(b.w,b.d,h*.55,b.roof,h));
+      if(b.steeple){top.add(box(2.4,5,2.4,b.c,0,h,b.d/2-1.2));const sp=new T3.Mesh(new T3.ConeGeometry(1.8,4,4),mat(b.roof));sp.position.set(0,h+7,b.d/2-1.2);sp.rotation.y=Math.PI/4;sp.castShadow=true;top.add(sp)}}
     else{for(let i=0;i<5;i++)g.add(box(.3,R()*b.h,.3,"#1e1a18",(R()-.5)*b.w,0,(R()-.5)*b.d));W.fx.push({smoke:true,x:b.x,z:b.z,h:b.h})}
-    g.position.set(b.x,0,b.z);W.root.add(g)}
+    g.add(full,stub,top);g.position.set(b.x,0,b.z);W.root.add(g);W.bm.push({full,stub,top,x0:b.x-b.w/2,x1:b.x+b.w/2,z0:b.z-b.d/2,z1:b.z+b.d/2,cut:false})}
+  if(!burned)for(const f of lay.furn)W.root.add(furnModel(f));
   if(lay.canopy&&!burned){const g=new T3.Group();g.add(box(12,.4,7,"#d8d8d0",0,4,0));for(const [x,z] of [[-5,-3],[5,-3],[-5,3],[5,3]])g.add(box(.3,4,.3,"#a8a8a0",x,0,z));for(const x of [-2.5,2.5])g.add(box(.8,1.4,.5,"#a83a2a",x,0,0));g.position.set(6,0,4);W.root.add(g)}
-  for(const c of lay.cars){const g=new T3.Group();g.add(box(1.9,.8,4,c.c,0,.3,0));g.add(box(1.7,.6,2.2,"#2a3440",0,1.1,-.2));for(const [x,z] of [[-.95,-1.3],[.95,-1.3],[-.95,1.3],[.95,1.3]]){const w=cyl(.36,.36,.25,"#1a1a1a",0,0,0,10);w.rotation.z=Math.PI/2;w.position.set(x,.36,z);g.add(w)}g.position.set(c.x,0,c.z);g.rotation.y=c.rot;W.root.add(g)}
+  for(const c of lay.cars){const g=new T3.Group();g.add(box(1.9,.8,4,c.c,0,.3,0));g.add(box(1.7,.6,2.2,"#2a3440",0,1.1,-.2));for(const [x,z] of [[-.95,-1.3],[.95,-1.3],[-.95,1.3],[.95,1.3]]){const w=cyl(.36,.36,.25,"#1a1a1a",0,0,0,10);w.rotation.z=Math.PI/2;w.position.set(x,.36,z);g.add(w)}if(c.cop){g.add(box(1.92,.05,1.2,"#1e1e22",0,1.1,1.3));g.add(box(1.92,.05,1,"#1e1e22",0,1.1,-1.5));g.add(box(.55,.16,.26,"#d83a30",-.3,1.7,-.2));g.add(box(.55,.16,.26,"#3a62d8",.3,1.7,-.2))}g.position.set(c.x,0,c.z);g.rotation.y=c.rot;W.root.add(g)}
   for(const c of lay.conts){if(c.vis==="car")continue;let g;if(c.vis==="shed"){g=new T3.Group();g.add(box(3,2.2,3,"#7a6a52",0,0,0));g.add(box(3.4,.2,3.4,"#5a5a58",0,2.2,0));g.add(box(1,1.8,.06,"#4a3426",0,0,1.51))}
-    else{g=new T3.Group();g.add(box(1.4,1,.9,"#8a6a42",0,0,0));g.add(box(1.5,.08,1,"#6a4a2a",0,1,0))}g.position.set(c.x,0,c.z);g.userData.cont=c.id;W.root.add(g);W.conts[c.id]=g}
+    else{g=new T3.Group();g.add(box(1.4,1.1,.8,"#8a6a42",0,0,0));g.add(box(1.5,.08,.9,"#6a4a2a",0,1.1,0));g.add(box(.08,.5,.04,"#3a2a1a",-.3,.4,.41),box(.08,.5,.04,"#3a2a1a",.3,.4,.41))}g.position.set(c.x,0,c.z);g.rotation.y=-(c.rot||0);g.userData.cont=c.id;W.root.add(g);W.conts[c.id]=g}
   const tg=new T3.Group();for(const [x,z,s] of lay.trees){const tr=cyl(.18*s,.24*s,1.4*s,"#5a4030",x,0,z,6);tg.add(tr);const c=new T3.Mesh(new T3.ConeGeometry(1.3*s,3.2*s,7),mat(L.kind==="scout"?"#2e4a2a":"#3a5a30"));c.position.set(x,1.2*s+1.6*s,z);c.castShadow=true;tg.add(c)}W.root.add(tg);
   for(const b of S.blds)if(b.loc===k)drawBld(b);
   W.tgt={x:S.player.x,z:S.player.z};W.free=false;camUpdate()}
@@ -1150,6 +1345,8 @@ function bldModel(b){const g=new T3.Group();const o=b.opt||{};const t=b.type;
   else if(t==="cabin"){g.add(box(5,2.6,4,o.walls||"#8a6a48",0,0,0));g.add(roof(5,4,1.4,o.roof||"#5a3a2a",2.6));g.add(box(.9,1.8,.06,"#4a3426",0,0,2.01));g.add(box(.8,.7,.06,"#2a3440",1.6,1.2,2.01))}
   else if(t==="plot"){g.add(box(6,.15,4,"#5a4028",0,0,0));const gr=Math.max(.05,b.grow||0);for(let i=0;i<4;i++){const r=box(5.6,.1+gr*.8,.4,b.grow>=1?"#7a9a3a":"#5a8a3a",0,.15,-1.5+i);r.scale.y=1;g.add(r)}}
   else if(t==="well"){for(const [x,z] of [[-.5,0],[.5,0]])g.add(cyl(.45,.45,1.1,"#3a5a7a",x,0,z,10));g.add(box(2,.08,.3,"#6a4a2a",0,1.3,0))}
+  else if(t==="fire"&&o.indoor){g.add(box(.9,.75,.7,"#2a2a2c",0,0,0));g.add(box(1,.06,.8,"#3a3a3c",0,.75,0));g.add(cyl(.09,.09,3.4,"#2a2a2c",0,.8,-.15,8));
+    const f=box(.4,.22,.04,"#ff9a3a",0,.18,.36);f.material=new T3.MeshBasicMaterial({color:"#ff9a3a"});f.userData.flame=true;g.add(f)}
   else if(t==="fire"){for(let i=0;i<8;i++){const a=i/8*Math.PI*2;g.add(box(.35,.25,.35,"#7a7a78",Math.cos(a)*.7,0,Math.sin(a)*.7))}const f=new T3.Mesh(new T3.ConeGeometry(.35,.9,6),new T3.MeshBasicMaterial({color:"#ffb040"}));f.position.y=.5;f.userData.flame=true;g.add(f);for(let i=0;i<3;i++)g.add(box(1.2,.15,.15,"#4a3020",0,.05,0)).rotation.y=i;}
   else if(t==="tower"){for(const [x,z] of [[-1,-1],[1,-1],[-1,1],[1,1]])g.add(box(.2,4,.2,"#6a4a2a",x,0,z));g.add(box(2.6,.2,2.6,"#7a5a3a",0,4,0));g.add(box(2.6,.8,.1,"#7a5a3a",0,4.2,1.3));g.add(box(2.6,.8,.1,"#7a5a3a",0,4.2,-1.3));g.add(roof(2.6,2.6,.8,"#5a4a3a",5.2))}
   else if(t==="fence"){for(let x=-3;x<=3;x+=1.5){const p=box(.18,1.6,.18,"#7a5a3a",x,0,0);g.add(p)}g.add(box(6.2,.15,.1,"#8a6a48",0,.6,0));g.add(box(6.2,.15,.1,"#8a6a48",0,1.2,0))}
@@ -1165,8 +1362,23 @@ function drawBld(b){if(!W.ok)return;if(W.blds[b.id]){W.root.remove(W.blds[b.id])
     for(const [x,z] of [[-1,-1],[1,-1],[-1,1],[1,1]]){const [w,d]=bSize(b);g.add(box(.1,2.5,.1,"#c8a868",x*w/2,0,z*d/2))}}
   g.position.set(b.x,0,b.z);g.rotation.y=(b.rot||0)*Math.PI/2;g.userData.bld=b.id;W.root.add(g);W.blds[b.id]=g}
 function onBld(b){drawBld(b)}
+// what's inside a building
+function furnModel(f){const g=new T3.Group();
+  if(f.t==="bed"){g.add(box(1,.3,1.9,"#5a4a3a",0,0,0));g.add(box(.94,.16,1.84,"#c8c0b0",0,.3,0));g.add(box(.7,.1,.4,"#e8e4dc",0,.46,-.65));g.add(box(.96,.06,1.1,"#5a6a8a",0,.47,.35))}
+  else if(f.t==="table"){g.add(box(1.6,.08,1,"#7a5a3a",0,.72,0));for(const [x,z] of [[-.7,-.4],[.7,-.4],[-.7,.4],[.7,.4]])g.add(box(.08,.72,.08,"#5a4028",x,0,z));for(const z of [-.85,.85])g.add(box(.45,.45,.4,"#6a4a30",0,0,z))}
+  else if(f.t==="rug"){const m=new T3.Mesh(new T3.PlaneGeometry(f.w,f.d),mat("#7a3a32"));m.rotation.x=-Math.PI/2;m.position.y=.07;m.receiveShadow=true;g.add(m)}
+  else if(f.t==="pew"){g.add(box(f.w,.45,.5,"#5a3e2a",0,0,0));g.add(box(f.w,.6,.08,"#5a3e2a",0,.45,.22))}
+  else if(f.t==="altar"){g.add(box(2,1,.8,"#e0d8c8",0,0,0));g.add(box(.1,1,.1,"#c8a848",0,1,0));g.add(box(.5,.1,.1,"#c8a848",0,1.65,0))}
+  else if(f.t==="shelf"){g.add(box(.1,1.7,f.len,"#55555a",0,0,0));for(let y=0;y<1.7;y+=.42)g.add(box(.64,.05,f.len,"#76767c",0,y,0));for(const z of [-f.len/2,f.len/2])g.add(box(.64,1.7,.06,"#55555a",0,0,z));
+    for(const s of [-1,1])for(let y=.05;y<1.6;y+=.42)for(let z=-f.len/2+.25;z<f.len/2-.15;z+=.34)if(Math.random()<.62)g.add(box(.22,.14+Math.random()*.16,.24,pick(["#a8583a","#3a6a8a","#c8a848","#5a8a4a","#d8d0c0","#8a3a5a"]),s*.18,y,z))}
+  else if(f.t==="counter"){g.add(box(2.5,1,.7,"#6a5040",0,0,0));g.add(box(.5,.3,.4,"#3a3a3a",.6,1,0))}
+  else if(f.t==="desk"){g.add(box(1.1,.06,.7,"#a08060",0,.65,0));for(const [x,z] of [[-.5,-.3],[.5,-.3],[-.5,.3],[.5,.3]])g.add(box(.05,.65,.05,"#4a4a4a",x,0,z));g.add(box(.4,.4,.4,"#4a5a6a",0,0,.55))}
+  else if(f.t==="hay"){g.add(box(1.2,.6,.8,"#c8a858",0,0,0))}
+  else if(f.t==="wall"){g.add(box(.12,1.5,f.d,f.c||"#c8b898",0,0,0))}
+  else if(f.t==="stand"){g.add(box(.45,.55,.4,"#6a4a30",0,0,0));g.add(box(.12,.3,.12,"#d8c890",0,.55,0))}
+  g.position.set(f.x,0,f.z);return g}
 // ---------- people ----------
-function figModel(look,kind){const g=new T3.Group();const s=kind==="kid"?.72:1;const skin=look.skin;const top=look.top,pants=look.pants;
+function figModel(look,kind,gear){const g=new T3.Group();const s=kind==="kid"?.72:1;const skin=look.skin;const top=look.top,pants=look.pants;
   const hip=new T3.Group();hip.position.y=.9*s;g.add(hip);
   const mk=(w,h,d,c,y)=>{const m=new T3.Mesh(new T3.BoxGeometry(w,h,d),mat(c));m.position.y=y;m.castShadow=true;return m};
   const legL=new T3.Group(),legR=new T3.Group();legL.position.set(-.12*s,0,0);legR.position.set(.12*s,0,0);legL.add(mk(.18*s,.88*s,.2*s,pants,-.44*s));legR.add(mk(.18*s,.88*s,.2*s,pants,-.44*s));hip.add(legL,legR);
@@ -1176,18 +1388,29 @@ function figModel(look,kind){const g=new T3.Group();const s=kind==="kid"?.72:1;c
   const head=new T3.Mesh(new T3.SphereGeometry(.16*s,10,8),mat(skin));head.position.y=.84*s;head.castShadow=true;hip.add(head);
   if(look.hair&&kind!=="walker"){const h=new T3.Mesh(new T3.SphereGeometry(.172*s,10,6,0,Math.PI*2,0,Math.PI*.55),mat(look.hair));h.position.y=.86*s;hip.add(h);if(look.long){const l=mk(.3*s,.34*s,.08*s,look.hair,.7*s);l.position.z=-.12*s;hip.add(l)}}
   if(look.hat){const h=cyl(.19*s,.19*s,.1*s,look.hat,0,.94*s,0,10);h.position.y=.98*s;hip.add(h)}
-  g.userData={hip,legL,legR,armL,armR,ph:rf()*6};return g}
+  let gunHand=null,gunBack=null;
+  if(gear&&GUNS[gear]){const dark="#24272a",wood="#5a3e26";gunHand=new T3.Group();armR.add(gunHand);
+    if(gear==="pistol"){gunHand.add(mk(.07*s,.22*s,.12*s,dark,0));gunHand.position.set(0,-.78*s,.02*s)}
+    else{const long=()=>{const q=new T3.Group();q.add(mk(.06*s,.62*s,.07*s,dark,-.12*s));q.add(mk(.09*s,.3*s,.1*s,wood,.3*s));if(gear==="shotgun")q.add(mk(.08*s,.16*s,.09*s,wood,-.2*s));return q};
+      gunHand.add(long());gunHand.position.set(0,-.98*s,.02*s);gunHand.visible=false;
+      gunBack=long();gunBack.position.set(0,.36*s,-.19*s);gunBack.rotation.z=.7;hip.add(gunBack)}}
+  g.userData={hip,legL,legR,armL,armR,gunHand,gunBack,gear:gear||"",ph:rf()*6};return g}
 function syncFigs(dt,now){if(!W.ok||!S)return;const k=W.loc;const pl=S.player;const want=new Set();
   const ents=[];if(pl.loc===k&&pl.ko<=0)ents.push([pl,pl.look,"you"]);
+  const gearOf=(o,kind)=>kind==="walker"?"":(o.id==="you"?pl.gun:o.gun)||"";
   for(const p of S.people)if(p.loc===k&&p.status!=="left"&&!(p.away&&p.away.out)&&!(p.sleep&&p.inside)&&(p.status!=="dead"||now&&false))ents.push([p,p.look,p.kid?"kid":"adult"]);
   for(const w of S.walkers)if(w.loc===k)ents.push([w,w.look,"walker"]);
-  for(const [o,look,kind] of ents){want.add(o.id);let f=W.figs[o.id];if(!f){f=figModel(look,kind);f.position.set(o.x,0,o.z);W.dyn.add(f);W.figs[o.id]=f}
+  for(const [o,look,kind] of ents){want.add(o.id);let f=W.figs[o.id];const gear=gearOf(o,kind);if(f&&f.userData.gear!==gear){W.dyn.remove(f);f=null}
+    if(!f){f=figModel(look,kind,gear);f.position.set(o.x,0,o.z);W.dyn.add(f);W.figs[o.id]=f}
     const u=f.userData;const moving=o.tx!=null;f.position.x+=(o.x-f.position.x)*Math.min(1,dt*12);f.position.z+=(o.z-f.position.z)*Math.min(1,dt*12);
     const dir=o.dir??0;let dr=dir-f.rotation.y;while(dr>Math.PI)dr-=Math.PI*2;while(dr<-Math.PI)dr+=Math.PI*2;f.rotation.y+=dr*Math.min(1,dt*8);
-    if(o.dead){f.rotation.z=0;u.hip.rotation.x=-Math.PI/2;u.hip.position.y=.18;continue}
-    if(o.sleep&&!o.inside){u.hip.rotation.x=-Math.PI/2;u.hip.position.y=.2;continue}else{u.hip.rotation.x=0;u.hip.position.y=kind==="kid"?.65:.9}
+    if(o.dead){f.rotation.z=0;u.hip.rotation.x=-Math.PI/2;u.hip.position.y=.18;u.armL.rotation.x=u.armR.rotation.x=0;continue}
+    if(o.sleep&&!o.inside&&o.tx==null){u.hip.rotation.x=-Math.PI/2;u.hip.position.y=o.inBed?.68:.2;u.armL.rotation.x=u.armR.rotation.x=0;continue}else{u.hip.rotation.x=0;u.hip.position.y=kind==="kid"?.65:.9}
     u.ph+=dt*(moving?(kind==="walker"?5:9)*(S.speed||1)**.3:1.5);const sw=moving?Math.sin(u.ph)*.6:0;u.legL.rotation.x=sw;u.legR.rotation.x=-sw;
     if(kind==="walker"){u.armL.rotation.x=-1.3+Math.sin(u.ph*.5)*.15;u.armR.rotation.x=-1.4+Math.cos(u.ph*.5)*.15;f.rotation.z=Math.sin(u.ph*.5)*.08}else{u.armL.rotation.x=-sw*.8;u.armR.rotation.x=sw*.8}
+    // raising a gun to fire
+    const aiming=o.aim&&now-o.aim<700;if(u.gunHand&&u.gunBack){u.gunHand.visible=aiming;u.gunBack.visible=!aiming}
+    if(aiming){u.armR.rotation.x=-1.5;if(u.gunBack)u.armL.rotation.x=-1.3;continue}
     if(o.busyTalk)u.armR.rotation.x=-.5+Math.sin(now/200)*.2;
     if(o.working){u.armR.rotation.x=-1+Math.sin(now/180)*.6}}
   for(const id in W.figs)if(!want.has(id)){W.dyn.remove(W.figs[id]);delete W.figs[id]}}
@@ -1195,12 +1418,23 @@ function lightFor(t){const h=(t%DAY)/60;const day=clamp(Math.sin((h-5.2)/15*Math
   W.hemi.intensity=.42+day*.4;W.sun.intensity=.18+day*.7;W.sun.color.setHSL(.09,.6,.6+day*.3-dusk*.1);W.hemi.color.setHSL(.6-dusk*.5,.3,.45+day*.35);
   W.sc.background=new T3.Color().setHSL(.6-dusk*.48,.25+dusk*.2,.1+day*.18+dusk*.08)}
 function renderWorld(dt,now){if(!W.ok||!S)return;const want=S.player.loc==="road"?W.loc:S.player.loc;if(want!==W.loc)buildScene();
+  if(W.bm){const pl=S.player;const xr=W.xray??(W.loc===campK());for(const m of W.bm){const cut=xr||pl.loc===W.loc&&pl.x>m.x0&&pl.x<m.x1&&pl.z>m.z0&&pl.z<m.z1;if(m.cut!==cut){m.cut=cut;m.top.visible=!cut;m.full.visible=!cut;m.stub.visible=cut}}}
   syncFigs(dt,now);if(!W.free&&S.player.loc===W.loc){W.tgt.x+=(S.player.x-W.tgt.x)*Math.min(1,dt*3);W.tgt.z+=(S.player.z-W.tgt.z)*Math.min(1,dt*3)}camUpdate();lightFor(S.t);
   W.root.traverse(o=>{if(o.userData&&o.userData.flame){o.scale.y=.8+Math.sin(now/90+o.id)*.25;o.scale.x=o.scale.z=.9+Math.sin(now/130)*.1}});
   // smoke over burned places
   if(W.fx.length&&rf()<.3){for(const f of W.fx){const p=new T3.Mesh(new T3.SphereGeometry(.6+rf()*.5,6,5),new T3.MeshBasicMaterial({color:"#3a3634",transparent:true,opacity:.5}));p.position.set(f.x+rf()*4-2,f.h,f.z+rf()*4-2);p.userData.smk=1;W.dyn.add(p)}}
+  for(const c of [...W.dyn.children])if(c.userData.shot!=null){c.userData.shot-=dt;c.material.opacity=(c.userData.op??1)*Math.max(0,c.userData.shot/c.userData.life);if(c.userData.shot<=0){W.dyn.remove(c);c.geometry.dispose();c.material.dispose()}}
+  if(W.kick>0)W.kick=Math.max(0,W.kick-dt*.9);
   for(const c of [...W.dyn.children])if(c.userData.smk){c.position.y+=dt*1.6;c.scale.multiplyScalar(1+dt*.25);c.material.opacity-=dt*.07;if(c.material.opacity<=0){W.dyn.remove(c);c.geometry.dispose()}}
   W.r.render(W.sc,W.cam)}
+function shotFx(from,to,hit){if(!W.ok||!S||from.loc!==W.loc)return;const a0=Math.atan2(to.x-from.x,to.z-from.z);
+  const a=new T3.Vector3(from.x+Math.sin(a0)*.8,1.42,from.z+Math.cos(a0)*.8),b=new T3.Vector3(to.x,hit?1.15:1.3,to.z);if(!hit){b.x+=rf()*1.8-.9;b.z+=rf()*1.8-.9}
+  const add=(m,life)=>{m.userData.shot=life;m.userData.life=life;m.userData.op=m.material.opacity;W.dyn.add(m);return m};
+  const len=a.distanceTo(b);const tr=add(new T3.Mesh(new T3.BoxGeometry(.07,.07,len),new T3.MeshBasicMaterial({color:"#ffe39a",transparent:true,opacity:1})),.16);tr.position.copy(a).lerp(b,.5);tr.lookAt(b);tr.userData.shot=tr.userData.life=.2;
+  add(new T3.Mesh(new T3.SphereGeometry(.3,8,6),new T3.MeshBasicMaterial({color:"#ffd36e",transparent:true,opacity:1})),.13).position.copy(a);
+  add(new T3.Mesh(new T3.SphereGeometry(.75,10,8),new T3.MeshBasicMaterial({color:"#ffb84a",transparent:true,opacity:.45})),.09).position.copy(a);
+  if(hit)add(new T3.Mesh(new T3.SphereGeometry(.3,7,5),new T3.MeshBasicMaterial({color:"#4a3c30",transparent:true,opacity:.8})),.45).position.copy(b);
+  W.kick=from.id==="you"?.14:.05}
 // ---------- screen and world ----------
 function toScreen(x,y,z){W.v3.set(x,y,z).project(W.cam);return{x:(W.v3.x+1)/2*innerWidth,y:(1-W.v3.y)/2*innerHeight,vis:W.v3.z<1}}
 function groundAt(cx,cy){const v=new T3.Vector2(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);W.ray.setFromCamera(v,W.cam);const out=new T3.Vector3();return W.ray.ray.intersectPlane(W.plane,out)?{x:out.x,z:out.z}:null}
@@ -1226,12 +1460,13 @@ function setHtml(el,h){if(el&&el._h!==h){el.innerHTML=h;el._h=h}}
 function renderHud(){if(!S)return;const pl=S.player;const L=LOCS[pl.loc]||{n:"On the road"};const h=hourOf(S.t);
   const ck=$("clock");if(!$("ctime"))ck.innerHTML=`<div class="t" id="ctime"></div><div class="w" id="cwhere"></div><div class="sp" id="cspeed"></div>`;
   setHtml($("ctime"),`Day ${dayOf(S.t)} · ${clockStr(S.t)}`);setHtml($("cwhere"),`${esc(L.n)}${pl.loc===campK()?" · camp":""}${h>=21||h<5?" · night":""}`);
-  setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[3,"3×"],[8,"8×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join(""));
+  setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[5,"5×"],[20,"20×"],[60,"60×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join(""));
   const n=campSize();const food=S.res.food/Math.max(1,n);
   setHtml($("res"),S.camp?[["People",`${n}`],["Beds",`${bedsTotal()}`,bedsTotal()<n?"bad":""],["Food",`${Math.floor(S.res.food)} <span class="mut">(${food.toFixed(1)}d)</span>`,food<1.5?"bad":food<3?"warn":""],["Water",Math.floor(S.res.water),S.res.water<n?"bad":""],
-      ["Wood",Math.floor(S.res.wood)],["Scrap",Math.floor(S.res.scrap)],["Medicine",Math.floor(S.res.meds)],["Ammo",Math.floor(S.res.ammo)],["Defense",defense()],["Mood",avgMood(),avgMood()<35?"bad":""],["You",`${Math.round(pl.hp)}%`,pl.hp<40?"bad":""]]
-    .map(([k,v,c])=>`<span class="k">${k}</span><span class="v ${c||""}">${v}</span>`).join(""):`<span class="k">No camp yet</span><span class="v"></span><span class="k">People</span><span class="v">${members().length+1}</span><span class="k">You</span><span class="v">${Math.round(pl.hp)}%</span>`);
+      ["Wood",Math.floor(S.res.wood)],["Scrap",Math.floor(S.res.scrap)],["Medicine",Math.floor(S.res.meds)],["Ammo",Math.floor(S.res.ammo)],["Defense",defense()],["Mood",avgMood(),avgMood()<35?"bad":""],["You",`${Math.round(pl.hp)}%`,pl.hp<40?"bad":""],...gunHud()]
+    .map(([k,v,c])=>`<span class="k">${k}</span><span class="v ${c||""}">${v}</span>`).join(""):`<span class="k">No camp yet</span><span class="v"></span><span class="k">People</span><span class="v">${members().length+1}</span><span class="k">You</span><span class="v">${Math.round(pl.hp)}%</span>`+gunHud().map(([k,v,c])=>`<span class="k">${k}</span><span class="v ${c||""}">${v}</span>`).join(""));
   renderTools();renderHint()}
+function gunHud(){const pl=S.player;if(!pl.gun)return[];const r=pl.rounds||0;return[[GUNS[pl.gun].n,`${r} <span class="mut">rds</span>`,r<=0?"bad":r<5?"warn":""]]}
 function avgMood(){const L=members();return L.length?Math.round(L.reduce((a,p)=>a+p.mood,0)/L.length):50}
 function renderTools(){const waiting=S.people.filter(p=>p.status==="stranger"&&p.loc===S.player.loc).length;
   setHtml($("tools"),[["map","Map","M"],["people","People","P"],["build","Build","B"],["stores","Stores","I"],["camp","Camp","C"],["help","Help","H"]].map(([k,n,key])=>`<button data-tool="${k}">${n}<span class="k">${key}</span></button>`).join("")+
@@ -1261,19 +1496,19 @@ function initInput(){const cv=$("gl");let down=null;
   addEventListener("keydown",e=>{const typing=/INPUT|TEXTAREA/.test(document.activeElement?.tagName);if(e.key==="Escape"){if(UI.place){cancelPlace();return}closeAll();document.activeElement?.blur();return}
     if(typing){if(e.key==="Enter"&&document.activeElement.id==="cmd")submitCmd();if(e.key==="Enter"&&document.activeElement.id==="tin")sendTalk();return}
     if($("build").classList.contains("open"))return;
-    const k=e.key.toLowerCase();if(k==="enter"){$("cmd").focus();e.preventDefault();return}if(k==="m")openMap();if(k==="p")openPeople();if(k==="b")openBuild();if(k==="i")openStores();if(k==="c")openCamp();if(k==="h"||k==="?")openHelp();
+    const k=e.key.toLowerCase();if(k==="enter"){$("cmd").focus();e.preventDefault();return}if(k==="m")openMap();if(k==="p")openPeople();if(k==="b")openBuild();if(k==="i")openStores();if(k==="c")openCamp();if(k==="h"||k==="?")openHelp();if(k==="v"){W.xray=!(W.xray??(W.loc===campK()));toast(W.xray?"Roofs off: you can see inside.":"Roofs on.")}
     if(k==="r"&&UI.place){UI.place.rot=(UI.place.rot+1)%4;placeGhost()}if(k===" "){UI.paused=!UI.paused;renderHud();e.preventDefault()}if(k==="f"){W.free=false}
     const pan={w:[-1,-1],arrowup:[-1,-1],s:[1,1],arrowdown:[1,1],a:[-1,1],arrowleft:[-1,1],d:[1,-1],arrowright:[1,-1]}[k];if(pan){W.free=true;W.tgt.x+=pan[0]*2;W.tgt.z+=pan[1]*2;camUpdate()}});
   $("go").onclick=submitCmd;
   document.body.addEventListener("click",e=>{const b=e.target.closest("[data-sp],[data-tool],[data-act]");if(!b)return;
     if(b.dataset.sp!=null){const v=+b.dataset.sp;if(v===0)UI.paused=true;else{UI.paused=false;UI.speed=v}renderHud();return}
-    if(b.dataset.tool){const t=b.dataset.tool;({map:openMap,people:openPeople,build:openBuild,stores:openStores,camp:openCamp,help:openHelp,home:goHome,makecamp:doCamp,burn:()=>confirmCard("Burn it down?",`Set ${LOCS[S.player.loc].n} on fire. Anything you haven't searched burns with it. It can't be undone.`,burnPlace)})[t]?.();renderHud();return}
+    if(b.dataset.tool){const t=b.dataset.tool;({map:openMap,people:openPeople,build:openBuild,stores:openStores,camp:openCamp,help:openHelp,home:goHome,makecamp:doCamp,burn:askBurn})[t]?.();renderHud();return}
     if(b.dataset.act){ACTS[b.dataset.act]?.(b.dataset);}})}
 function submitCmd(){const i=$("cmd");const v=i.value.trim();if(!v)return;i.value="";doCommand(v).then(()=>{renderAll()}).catch(err=>{console.error(err);toast("Something went wrong with that.")})}
 function clickWorld(cx,cy){if(UI.place){tryPlace();return}const h=pickAt(cx,cy);if(!h)return;const pl=S.player;if(S.flags.traveling||pl.ko>0)return;
   if(h.kind==="ground"){moveTo(pl,h.o.x,h.o.z);W.free=false;return}
   if(h.kind==="person")return personMenu(h.o,cx,cy);
-  if(h.kind==="walker"){approach(h.o,()=>clash(pl,h.o));W.free=false;return}
+  if(h.kind==="walker"){if(pl.gun&&((pl.rounds||0)>0||loadUp()>0))closeAndShoot(h.o);else approach(h.o,()=>clash(pl,h.o));W.free=false;return}
   if(h.kind==="cont"){approach(h.o,()=>openLoot(h.o));W.free=false;return}
   if(h.kind==="bld")return bldMenu(h.o,cx,cy)}
 function closeMenu(){$("menu").style.display="none";UI.menu=null}
@@ -1340,6 +1575,10 @@ function openHelp(){openSide("help",`<h2>How it works</h2>
   <p>Click the ground to walk. Click people to talk, give them jobs, put them in charge or bring them along. Drag to look around, scroll to zoom, F to follow yourself again.</p>
   <p>Or type anything in the box: <i>I say hi</i>, <i>put Ruth on the farm</i>, <i>Marcus, come with me</i>, <i>build a tent</i>, <i>tie the rope into a fishing net</i>, <i>go to the pharmacy</i>, <i>I teach the kids to whittle</i>. If Claude is on, it works out what you mean; otherwise the built-in rules do their best.</p>
   <p><b>Map (M):</b> each place is its own scene. Travel takes hours, and whoever's following you comes along. Search cars and buildings, carry it home, or burn the place down.</p>
+  <p><b>Living inside:</b> make camp at a place (or type <i>move in</i>) and everyone moves into its building: beds, a woodstove, a table. Walk in through the door, or type <i>go inside</i> or <i>everyone inside</i>. At camp the roofs come off so you can see your people; anywhere else they come off when you step inside. V turns roofs on and off. <i>Light the stove</i> just warms people up; nothing burns unless you say <i>burn it down</i>, and you're asked first.</p>
+  <p><b>Time:</b> at 1× a second is a minute, so a minute is an hour. Use the speed buttons to go faster, or type <i>wait 3 hours</i> or <i>sleep</i>.</p>
+  <p><b>The dead</b> are the people who were somewhere when it started. Busy places (the school, the stores, the motel) are full of them; quiet places (the farm, the mill) aren't. Noise, gunfire and coming and going draw more; a place nobody goes quiets down.</p>
+  <p><b>Guns:</b> search cars, the trooper's cruiser on the highway, the farm's gun cabinet or the police armory. A gun you find stays on you: click one of the dead to shoot it, or type <i>shoot the walker</i>. Shots are loud, and the noise brings more of them. Spare guns go to your guards. You'll never turn one on the living; fights with the Pruitts are a war you rally people for.</p>
   <p><b>Build (B):</b> place it, pick colors, then build it yourself in a quick hands-on build, or leave it for whoever's on building. Right-click or R turns it.</p>
   <p><b>Stores (I):</b> everything the camp owns, in one grid. Anyone takes what they need, but they leave someone's insulin or EpiPen alone. Mostly.</p>
   <p><b>People decide for themselves.</b> Ask something and they weigh it: trust in you, their nature, their family. Put someone in charge of a part of camp and its small problems never reach you. A bigger camp brings in more and needs more from you.</p>
@@ -1465,10 +1704,10 @@ function renderLoot(){if(!UI.loot)return;const st=contState(UI.loot.k,UI.loot.ci
   openSide("loot",`<h2>${esc(CONT[c.k].n)}</h2>${st.c.items.length?"":`<p class="mut">Empty.</p>`}${gridHtml(st.c,"cont")}
    <div class="btns">${st.c.items.length?`<button class="pri" data-act="takeall">Take everything that fits</button>`:""}</div>
    <h3>${d?"What you're carrying":"Camp stores"}</h3>${d?gridHtml(d,"haul"):`<p class="mut" style="font-size:13px">You're at camp: what you take goes straight into the stores.</p>`}<p class="mut" style="font-size:12px">Click a block to move it across. Drag to put it somewhere. ${d?"More people with you means more room.":""}</p>`);UI.side="loot"}
-ACTS.takeall=()=>{const st=contState(UI.loot.k,UI.loot.cid);const d=dest();for(const o of [...st.c.items]){if(d)gMove(st.c,d,o);else{st.c.items.splice(st.c.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n})}}renderLoot();renderHud();save()};
+ACTS.takeall=()=>{const st=contState(UI.loot.k,UI.loot.cid);const d=dest();const guns=[];for(const o of [...st.c.items]){if(d)gMove(st.c,d,o);else{st.c.items.splice(st.c.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n});if(GUNS[o.k])guns.push(o.k)}}armUp(false,guns);renderLoot();renderHud();save()};
 ACTS.gclick=d=>{if(UI.drag?.moved)return;const which=d.g;const u=+d.u;
   if(UI.loot&&(which==="cont"||which==="haul")){const st=contState(UI.loot.k,UI.loot.cid);const ds=dest();const from=which==="cont"?st.c:ds;const to=which==="cont"?ds:st.c;const o=from.items.find(o=>o.u===u);if(!o)return;
-    if(!to){from.items.splice(from.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n})}else if(!gMove(from,to,o))toast("No room.");renderLoot();renderHud();save();return}
+    if(!to){from.items.splice(from.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n})}else if(!gMove(from,to,o))toast("No room.");if(which==="cont")armUp(false,!to&&GUNS[o.k]?[o.k]:[]);renderLoot();renderHud();save();return}
   if(which==="camp"){const o=S.inv.items.find(o=>o.u===u);if(o)itemMenu(o)}};
 // ---------- grids ----------
 const CELL=31;
@@ -1490,6 +1729,7 @@ function initDrag(){document.addEventListener("pointerdown",e=>{const el=e.targe
 // ---------- stores and crafting ----------
 function openStores(){if(!S)return;syncInv();const c=S.inv;const sl=(S.storeLog||[]).slice(-8).reverse();
   openSide("stores",`<h2>Stores</h2><div class="mut" style="font-size:12.5px">Everything the camp owns. Anyone can use it, but people leave alone what someone else needs to live (🔒). ✋ means someone's using it today. ${invFree()} empty blocks${bldDone("shed").length?"":"; a storehouse adds more"}.</div>
+   ${S.player.gun?`<div style="font-size:13px;margin:6px 0">You carry the ${esc(ITEMS[S.player.gun])}, ${S.player.rounds||0} rounds.${S.player.loc===campK()?` <button data-act="gunstow">Leave it for the guards</button>`:""}</div>`:""}
    ${gridHtml(c,"camp")}
    <h3>Make something</h3><div class="mut" style="font-size:12.5px">Say what you do with what's here. ${aiReady()?"Claude judges whether it would really work.":"The built-in recipes decide."}</div>
    <div style="display:flex;gap:5px;margin-top:5px"><input id="craftin" placeholder="tie the rope into a fishing net" autocomplete="off"><button class="pri" data-act="craftgo">Try</button></div>
@@ -1499,10 +1739,16 @@ function openStores(){if(!S)return;syncInv();const c=S.inv;const sl=(S.storeLog|
 ACTS.craftgo=()=>{const v=$("craftin")?.value.trim();if(!v)return;craft(v).then(()=>openStores())};
 function itemMenu(o){const own=o.owner?P(o.owner):null;const r=document.querySelector(`[data-u="${o.u}"][data-g="camp"]`)?.getBoundingClientRect();
   showMenu(`<div class="h">${esc(invNameOf(o.k))}${o.n>1?" ×"+o.n:""}<small>${own?`Kept for ${esc(own.name)}.`:"Anyone can use it."}${CONDS_ITEM[o.k]?" Someone may need this to live.":""}</small></div>
-    <button data-act="reserve" data-u="${o.u}">Keep it for someone ▸</button>${own?`<button data-act="unreserve" data-u="${o.u}">Anyone can use it</button>`:""}<button data-act="toss" data-u="${o.u}">Throw it out</button>`,r?r.right:200,r?r.top:200)}
+    ${GUNS[o.k]&&S.player.gun!==o.k&&S.player.loc===campK()?`<button data-act="guncarry" data-u="${o.u}">Carry it yourself</button>`:""}<button data-act="reserve" data-u="${o.u}">Keep it for someone ▸</button>${own?`<button data-act="unreserve" data-u="${o.u}">Anyone can use it</button>`:""}<button data-act="toss" data-u="${o.u}">Throw it out</button>`,r?r.right:200,r?r.top:200)}
 ACTS.reserve=d=>{const o=S.inv.items.find(o=>o.u===+d.u);const m=$("menu");showMenu(`<div class="h">Keep it for</div>${members().map(p=>`<button data-act="resv" data-u="${o.u}" data-id="${p.id}">${esc(p.name)}</button>`).join("")}`,parseFloat(m.style.left),parseFloat(m.style.top))};
 ACTS.resv=d=>{const o=S.inv.items.find(o=>o.u===+d.u);for(const q of S.inv.items)if(q.k===o.k)q.owner=d.id;closeMenu();openStores();save()};
 ACTS.unreserve=d=>{const o=S.inv.items.find(o=>o.u===+d.u);for(const q of S.inv.items)if(q.k===o.k)q.owner=null;closeMenu();openStores();save()};
+ACTS.guncarry=d=>{const o=S.inv.items.find(o=>o.u===+d.u);closeMenu();if(!o||!GUNS[o.k])return;const pl=S.player;
+  if(o.by){const p=P(o.by);if(p){p.gun=null;stores(`You took the ${ITEMS[o.k]} from ${p.name}.`)}o.by=null}
+  if(pl.gun)giveItem(pl.gun,1);takeItem(o.k,1);pl.gun=o.k;const cap=GUNS[o.k].carry;if((pl.rounds||0)>cap){S.res.ammo+=pl.rounds-cap;pl.rounds=cap}loadUp();syncInv();
+  log(`You take the ${ITEMS[o.k]}: ${pl.rounds} rounds.`);openStores();renderHud();save()};
+ACTS.gunstow=()=>{const pl=S.player;if(!pl.gun||pl.loc!==campK())return;giveItem(pl.gun,1);S.res.ammo+=pl.rounds||0;log(`You leave the ${ITEMS[pl.gun]} in camp stores for whoever's on guard.`);
+  pl.gun=null;pl.rounds=0;syncInv();openStores();renderHud();save()};
 ACTS.toss=d=>{const o=S.inv.items.find(o=>o.u===+d.u);closeMenu();if(RES[o.k])S.res[o.k]-=o.n;else if(o.k.startsWith("c:"))S.crafted=S.crafted.filter(c=>"c:"+c.id!==o.k);else takeItem(o.k,o.n);syncInv();openStores();renderHud();save()};
 // ---------- building ----------
 function openBuild(){if(!S)return;if(S.player.loc==="road")return;
@@ -1513,7 +1759,7 @@ function startPlace(k){if(!BUILDS[k])return;if(!canAfford(BUILDS[k].cost)){toast
   const p=$("place");p.style.display="block";p.innerHTML=`Placing a <b>${BUILDS[k].n.toLowerCase()}</b>. Click to set it down · R turns it · Esc cancels`}
 function placeOk(){const P_=UI.place;if(!P_)return false;const B=BUILDS[P_.type];const [w,d]=P_.rot%2?[B.size[1],B.size[0]]:B.size;const x0=P_.x-w/2,x1=P_.x+w/2,z0=P_.z-d/2,z1=P_.z+d/2;
   if(Math.abs(P_.x)>SH-3-w/2||Math.abs(P_.z)>SH-3-d/2)return false;const k=S.player.loc;
-  const ov=(a)=>x0<a[2]+.3&&x1>a[0]-.3&&z0<a[3]+.3&&z1>a[1]-.3;if(layout(k).blk.some(ov))return false;
+  const ov=(a)=>x0<a[2]+.3&&x1>a[0]-.3&&z0<a[3]+.3&&z1>a[1]-.3;if(layout(k).blk.some(ov)||layout(k).foot.some(ov))return false;
   for(const b of S.blds)if(b.loc===k){const [bw,bd]=bSize(b);if(ov([b.x-bw/2,b.z-bd/2,b.x+bw/2,b.z+bd/2]))return false}
   for(const c of layout(k).conts)if(ov([c.x-1,c.z-1,c.x+1,c.z+1]))return false;return true}
 function placeGhost(){if(!UI.place)return;ghost(UI.place.type,UI.place.x,UI.place.z,UI.place.rot,placeOk())}
@@ -1596,7 +1842,7 @@ let last=0,hudT=0,trvT=0;
 function frame(now){const dt=Math.min(.1,(now-last)/1000||0);last=now;
   try{if(S){if(S.flags.traveling){trvT+=dt;if(trvT>.28){trvT=0;const T=S.flags.traveling;const done=travelTick();const bar=$("trvbar");if(bar&&T)bar.style.width=clamp((S.t-T.start)/(T.hrs*HOUR)*100,0,100)+"%";const tx=$("trv");if(tx&&T)tx.textContent=`Walking to ${LOCS[T.to].n}. ${clockStr(S.t)}.`;
         if(done){$("modal").classList.remove("open");UI.modal=null;setTimeout(nextCard,400)}}}
-    else if(!UI.paused&&!UI.modal&&!$("build").classList.contains("open")&&$("title").style.display==="none"){let mins=dt*10*UI.speed;while(mins>0){const d=Math.min(mins,5);step(d);mins-=d}}
+    else if(!UI.paused&&!UI.modal&&!$("build").classList.contains("open")&&$("title").style.display==="none"){let mins=dt*CLOCK*UI.speed;while(mins>0){const d=Math.min(mins,5);step(d);mins-=d}}
     if(W.ok)renderWorld(dt,now);renderLabels(now);hudT+=dt;if(hudT>.3){hudT=0;renderHud();if(UI.side==="people"&&!document.activeElement?.closest?.("#side"))openPeople()}}}catch(err){console.error(err)}
   requestAnimationFrame(frame)}
 function boot(){aiInit();initWorld($("gl"));initInput();initDrag();titleScreen();requestAnimationFrame(t=>{last=t;frame(t)})}
