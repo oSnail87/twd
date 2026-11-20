@@ -52,27 +52,23 @@ function sceneBrief(){const pl=S.player;const L=LOCS[pl.loc];const ppl=S.people.
   return`Where: ${L.n}${pl.loc===campK()?" (your camp)":""}. Day ${dayOf(S.t)}, ${clockStr(S.t)}.
 People here: ${ppl.map(p=>`${p.name} (${p.status==="member"?(p.follow?"following you":p.act||"camp member"):p.status}${p.kid?", kid":""})`).join("; ")||"nobody"}.
 Things to search here: ${layout(pl.loc).conts.map(c=>CONT[c.k].n).join(", ")||"none"}.
-The dead in sight: ${walkersAt(pl.loc).length}. You carry: ${pl.gun?`a ${ITEMS[pl.gun]}, ${pl.rounds||0} rounds`:"no gun"}.
 Camp: ${S.camp?`${S.camp.n}, ${members().length} people. Stores: ${Object.entries(S.res).map(([k,v])=>`${RES[k].toLowerCase()} ${Math.floor(v)}`).join(", ")}. Items: ${craftList().join(", ")||"none"}.`:"no camp yet"}
 Places on the map: ${Object.entries(LOCS).map(([k,l])=>`${k}=${l.n}`).join(", ")}.`}
 const ACT_SCHEMA=`Actions (use only these; names must be people or keys listed above):
 {"do":"say","to":"<person name, or empty for whoever is nearest>","text":"<what you say>"}
 {"do":"walk","to":"<person name, or a thing to search>"}
 {"do":"travel","to":"<place key>"}
-{"do":"camp"}  (move in here: everyone makes this place home and lives inside)
-{"do":"inside","what":"<optional: house, barn>"}  (walk into the nearest building through its door)
-{"do":"fire"}  (light the stove or a small fire to warm up by; never burns anything)
+{"do":"camp"}  (make camp right here)
 {"do":"build","what":"<one of: ${Object.keys(BUILDS).join(", ")}>"}
 {"do":"job","who":"<name>","job":"<one of: ${Object.keys(JOBS).join(", ")}, or none>"}
 {"do":"lead","who":"<name>","job":"<job key>"}  (put them in charge of it)
 {"do":"invite","who":"<name>"}   {"do":"turnaway","who":"<name>"}
 {"do":"follow","who":["<names>"]}  (ask them to come with you)   {"do":"stay","who":["<names>"]}
 {"do":"search","what":"<thing to search, or all>"}
-{"do":"burn"}  (set this whole place on fire and destroy it; only when the player clearly says to burn the place down. Lighting a fire, a stove or a campfire is "fire", never "burn")
+{"do":"burn"}  (set this place on fire)
 {"do":"craft","text":"<what you try to make and how>"}
 {"do":"wait","hours":<1-12>}
 {"do":"war"}  (rally people to fight the Pruitt crew)
-{"do":"shoot"}  (fire at the nearest of the dead, if you carry a gun; guns are never used on living people)
 {"do":"act","text":"<anything else: what you do, written as 'You ...'>","hours":<0-4>,"mood":<-4 to 4, how it lifts or drags the whole camp>,"trust":{"<name>":<-10 to 10>},"res":{"<food|water|wood|scrap|meds|ammo>":<-3 to 3>}}`;
 async function aiInterpret(text){const prompt=`${WORLD_BRIEF}
 You are the game master. The player typed what their character does. Turn it into game actions. Be generous: if it's possible for a person in this situation, let it happen with an "act" action and honest, small effects. If it's impossible or nonsensical, use "act" with no effects and say why in "say".

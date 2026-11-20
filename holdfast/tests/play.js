@@ -30,7 +30,7 @@ const OUT=process.env.SHOTS||"/tmp/claude-0/shots";
   await pg.keyboard.press("Escape");await pg.keyboard.press("i");await pg.waitForTimeout(300);await pg.fill("#craftin","tie the rope into a fishing net");await pg.click('[data-act="craftgo"]');await pg.waitForTimeout(600);await pg.screenshot({path:OUT+"/12_stores.png"});
   await pg.keyboard.press("Escape");
   // let time run
-  await pg.click('[data-sp="60"]');for(let i=0;i<40;i++){await pg.waitForTimeout(500);if(await pg.$("#modal.open"))break}await pg.screenshot({path:OUT+"/13_later.png"});
+  await pg.click('[data-sp="8"]');for(let i=0;i<40;i++){await pg.waitForTimeout(500);if(await pg.$("#modal.open"))break}await pg.screenshot({path:OUT+"/13_later.png"});
   const card=await pg.$('#modal.open [data-act="cardopt"]');if(card){await card.click();await pg.waitForTimeout(400);await pg.screenshot({path:OUT+"/14_card.png"})}
   await pg.evaluate(()=>{S.t=S.t-(S.t%DAY)+DAY+22*60;});await pg.waitForTimeout(1500);await pg.screenshot({path:OUT+"/15_night.png"});
   const st=await pg.evaluate(()=>({day:dayOf(S.t),loc:S.player.loc,camp:!!S.camp,members:members().length,blds:S.blds.map(b=>b.type+(b.done?"":"*")),crafted:S.crafted.map(c=>c.n),log:S.log.slice(-8).map(l=>l.x)}));

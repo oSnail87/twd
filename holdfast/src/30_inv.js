@@ -55,13 +55,11 @@ function stores(x,kind){S.storeLog=S.storeLog||[];S.storeLog.push({t:S.t,x,k:kin
 // ================= people help themselves =================
 function useHour(h){if(!S.camp)return;const ppl=here();
   // tools and weapons get picked up by whoever's job uses them, and put back at night
-  if(h===7){for(const o of S.inv?.items||[])o.by=null;for(const p of ppl)p.gun=null;
+  if(h===7){for(const o of S.inv?.items||[])o.by=null;
     const want={tool:["build","farm","wood"],weapon:["guard","scav"],light:["guard"],water:["water"]};
-    // guns go out first, and the guards get first pick of them
-    const items=[...(S.inv?.items||[])].sort((a,b)=>(GUNS[b.k]?1:0)-(GUNS[a.k]?1:0));const order=[...ppl].sort((a,b)=>(b.job==="guard")-(a.job==="guard"));
-    for(const o of items){const u=o.k.startsWith("c:")?S.crafted.find(c=>"c:"+c.id===o.k)?.use:ITEM_USE[o.k];if(!u||!want[u])continue;
-      const p=order.find(p=>want[u].includes(p.job)&&!S.inv.items.some(q=>q.by===p.id)&&(!o.owner||o.owner===p.id||p.tr.kind<-.35));if(p){o.by=p.id;if(GUNS[o.k])p.gun=o.k;if(rf()<.3)stores(`${p.name} took the ${invNameOf(o.k).toLowerCase()} for ${JOBS[p.job].v}.`)}}}
-  if(h===22){for(const o of S.inv?.items||[])o.by=null;for(const p of ppl)p.gun=null}
+    for(const o of S.inv?.items||[]){const u=o.k.startsWith("c:")?S.crafted.find(c=>"c:"+c.id===o.k)?.use:ITEM_USE[o.k];if(!u||!want[u])continue;
+      const p=ppl.find(p=>want[u].includes(p.job)&&!S.inv.items.some(q=>q.by===p.id)&&(!o.owner||o.owner===p.id||p.tr.kind<-.35));if(p){o.by=p.id;if(rf()<.3)stores(`${p.name} took the ${invNameOf(o.k).toLowerCase()} for ${JOBS[p.job].v}.`)}}}
+  if(h===22)for(const o of S.inv?.items||[])o.by=null;
   for(const p of ppl){if(p.sleep||p.kid&&rf()<.5)continue;const T=p.tr;
     // a rough day: a drink, if there's one
     if(p.mood<30&&itemCount("alcohol")>0&&rf()<.06*(1-T.faith*.5)&&!protectedFor("alcohol",p)){takeItem("alcohol",1);p.mood+=12;stores(`${p.name} drank the ${ITEMS.alcohol}.`);if(rf()<.5)log(`${p.name} finished off a bottle of vodka by the fire.`)}

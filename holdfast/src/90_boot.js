@@ -22,7 +22,7 @@ let last=0,hudT=0,trvT=0;
 function frame(now){const dt=Math.min(.1,(now-last)/1000||0);last=now;
   try{if(S){if(S.flags.traveling){trvT+=dt;if(trvT>.28){trvT=0;const T=S.flags.traveling;const done=travelTick();const bar=$("trvbar");if(bar&&T)bar.style.width=clamp((S.t-T.start)/(T.hrs*HOUR)*100,0,100)+"%";const tx=$("trv");if(tx&&T)tx.textContent=`Walking to ${LOCS[T.to].n}. ${clockStr(S.t)}.`;
         if(done){$("modal").classList.remove("open");UI.modal=null;setTimeout(nextCard,400)}}}
-    else if(!UI.paused&&!UI.modal&&!$("build").classList.contains("open")&&$("title").style.display==="none"){let mins=dt*CLOCK*UI.speed;while(mins>0){const d=Math.min(mins,5);step(d);mins-=d}}
+    else if(!UI.paused&&!UI.modal&&!$("build").classList.contains("open")&&$("title").style.display==="none"){let mins=dt*10*UI.speed;while(mins>0){const d=Math.min(mins,5);step(d);mins-=d}}
     if(W.ok)renderWorld(dt,now);renderLabels(now);hudT+=dt;if(hudT>.3){hudT=0;renderHud();if(UI.side==="people"&&!document.activeElement?.closest?.("#side"))openPeople()}}}catch(err){console.error(err)}
   requestAnimationFrame(frame)}
 function boot(){aiInit();initWorld($("gl"));initInput();initDrag();titleScreen();requestAnimationFrame(t=>{last=t;frame(t)})}

@@ -33,7 +33,6 @@ function mkPerson(o){o=o||{};const sex=o.sex||(rf()<.5?"F":"M");const age=o.age?
   if(p.motive==="family")p.tr.kind=Math.max(p.tr.kind,.2);
   // they bring a few doses of whatever keeps them alive
   if(p.cond){const it=CONDS[p.cond].item;p.carry={[it]:it==="heartpills"?20:it==="epipen"?1:ri(2,4)}}
-  const cg=CARRY_GUN[job0];if(cg&&!kid&&rf()<cg[1]){p.carry=p.carry||{};p.carry[cg[0]]=1;p.carry.ammo=ri(4,12)}
   return p}
 const REL={parentF:"mother",parentM:"father",kidF:"daughter",kidM:"son",spouseF:"wife",spouseM:"husband",sibF:"sister",sibM:"brother",gpF:"grandmother",gpM:"grandfather",gkF:"granddaughter",gkM:"grandson"};
 function link(a,b,ab,ba){a.fam[b.id]=REL[ab+b.sex];b.fam[a.id]=REL[ba+a.sex]}
@@ -59,50 +58,22 @@ const ENTRY={x:0,z:SH-2};
 function place(k){S.places[k]=S.places[k]||{seen:false,conts:{},burned:false,cleared:0};return S.places[k]}
 // the layout of a place never changes: the same seed draws the same scene every time
 const LAYOUT={};
-function layout(k){if(LAYOUT[k])return LAYOUT[k];const L=LOCS[k];const T=SCENES[L.kind];const R=srng(hashStr(k));const o={b:[],conts:[],trees:[],cars:[],blk:[],foot:[],furn:[],beds:[],stove:null};
-  // every building has walls you can't walk through and a door in the front (toward the road), so you can go in and live there
-  const addB=(b,tag)=>{if(!b)return;const r={x:b.at[0],z:b.at[1],w:b.w,d:b.d,h:b.h,c:b.c||L.col||"#8a8478",roof:b.roof,flat:!!b.flat,steeple:!!b.steeple,tag,barn:!!b.barn,
-      kit:b.kit||T.kit||[],floor:b.floor||T.floor||"#7a6a58"};o.b.push(r);
-    const x0=r.x-r.w/2,x1=r.x+r.w/2,z0=r.z-r.d/2,z1=r.z+r.d/2,t=.3,dw=DOOR/2;o.foot.push([x0,z0,x1,z1]);
-    o.blk.push([x0,z0,x1,z0+t,0],[x0,z0,x0+t,z1,0],[x1-t,z0,x1,z1,0],[x0,z1-t,r.x-dw,z1,0],[r.x+dw,z1-t,x1,z1,0])};
+function layout(k){if(LAYOUT[k])return LAYOUT[k];const L=LOCS[k];const T=SCENES[L.kind];const R=srng(hashStr(k));const o={b:[],conts:[],trees:[],cars:[],blk:[]};
+  const addB=(b,tag)=>{if(!b)return;const r={x:b.at[0],z:b.at[1],w:b.w,d:b.d,h:b.h,c:b.c||L.col||"#8a8478",roof:b.roof,flat:!!b.flat,steeple:!!b.steeple,tag};o.b.push(r);o.blk.push([r.x-r.w/2,r.z-r.d/2,r.x+r.w/2,r.z+r.d/2])};
   addB(T.b,"main");addB(T.b2,"b2");
-  // inside: the place's beds along the back wall, then whatever it has (a table, pews, shelves, desks, hay)
-  const homes=o.b.filter(r=>!r.barn);const nb=L.camp===false?0:(L.beds||0);homes.forEach((r,i)=>fitOut(o,r,Math.floor(nb/homes.length)+(i<nb%homes.length?1:0),R));
-  for(const r of o.b.filter(r=>r.barn))fitOut(o,r,0,R);
   const kinds=SCENE_CONTS[k]||T.conts;const main=o.b[0];let ci=0;
-  for(const ck of kinds){let x,z,rot=0,bi=-1;
-    if(ck==="car"||ck==="cruiser"){x=(R()*2-1)*14;z=8+R()*10;if(k==="start"){x=-20+ci*9+R()*2;z=4+R()*6}const col=pick2(["#7a2a22","#2a3a5a","#c8c8c0","#3a3a3a","#5a6a4a","#8a7a5a"],R);o.cars.push({x,z,rot:R()*.6-.3+(R()<.5?0:Math.PI),c:ck==="cruiser"?"#e4e4de":col,cop:ck==="cruiser"});o.blk.push([x-1.2,z-2.2,x+1.2,z+2.2])}
+  for(const ck of kinds){let x,z;
+    if(ck==="car"){x=(R()*2-1)*14;z=8+R()*10;if(k==="start"){x=-20+ci*9+R()*2;z=4+R()*6}o.cars.push({x,z,rot:R()*.6-.3+(R()<.5?0:Math.PI),c:pick2(["#7a2a22","#2a3a5a","#c8c8c0","#3a3a3a","#5a6a4a","#8a7a5a"],R)});o.blk.push([x-1.2,z-2.2,x+1.2,z+2.2])}
+    else if(ck==="barn"&&o.b[1]){x=o.b[1].x;z=o.b[1].z+o.b[1].d/2+.9}
     else if(ck==="shed"){x=pick2([-18,18,-14,14],R);z=-2+R()*8;o.blk.push([x-1.6,z-1.6,x+1.6,z+1.6])}
-    else if(main){// inside, along the right-hand wall, front to back
-      const r=ck==="barn"&&o.b[1]?o.b[1]:main;bi=o.b.indexOf(r);const i=o.conts.filter(c=>c.bi===bi).length;x=r.x+r.w/2-.78;z=r.z+r.d/2-1.3-i*1.7;rot=Math.PI/2}
+    else if(main){const slots=Math.max(1,kinds.filter(c=>c!=="car"&&c!=="barn"&&c!=="shed").length);const i=o.conts.filter(c=>c.vis==="door").length;x=main.x-main.w/2+(i+.5)*main.w/slots;z=main.z+main.d/2+.9}
     else{x=R()*20-10;z=R()*10}
-    o.conts.push({id:k+":"+ci,k:ck,x,z,rot,bi,vis:ck==="car"||ck==="cruiser"?"car":ck==="shed"?"shed":"door"});ci++}
+    o.conts.push({id:k+":"+ci,k:ck,x,z,vis:ck==="car"?"car":ck==="shed"?"shed":ck==="barn"?"door":"door"});ci++}
   const nt=Math.round(30*(T.tree||.5));for(let i=0;i<nt;i++){let x,z,t=0;do{x=(R()*2-1)*(SH+4);z=(R()*2-1)*(SH+4);t++}while(t<20&&(Math.abs(x)<SH-6&&Math.abs(z)<SH-6||Math.abs(x)<4));o.trees.push([x,z,.8+R()*.7])}
   // a few trees inside the scene too, away from buildings and the road
-  for(let i=0;i<Math.round(6*(T.tree||.5));i++){const x=(R()*2-1)*(SH-4),z=(R()*2-1)*(SH-4);if(Math.abs(x)<5)continue;if([...o.foot,...o.blk].some(b=>x>b[0]-3&&x<b[2]+3&&z>b[1]-3&&z<b[3]+3))continue;o.trees.push([x,z,.7+R()*.6]);o.blk.push([x-.5,z-.5,x+.5,z+.5])}
+  for(let i=0;i<Math.round(6*(T.tree||.5));i++){const x=(R()*2-1)*(SH-4),z=(R()*2-1)*(SH-4);if(Math.abs(x)<5)continue;if(o.blk.some(b=>x>b[0]-3&&x<b[2]+3&&z>b[1]-3&&z<b[3]+3))continue;o.trees.push([x,z,.7+R()*.6]);o.blk.push([x-.5,z-.5,x+.5,z+.5])}
   o.fields=!!T.fields;o.water=!!T.water;o.fence=!!T.fence;o.lot=!!T.lot;o.field=!!T.field;o.canopy=!!T.canopy;
   return LAYOUT[k]=o}
-const DOOR=2.4;// how wide a doorway is
-// furnish a building: beds along the back wall (leaving the right-hand wall for cupboards), then the rest
-function fitOut(o,r,nb,R){const w=r.w,d=r.d,X=x=>r.x+x,Z=z=>r.z+z,F=o.furn;
-  const rooms=r.kit.includes("rooms");const per=rooms?nb:Math.max(1,Math.floor((w-2.6)/1.35)+1);const rows=Math.ceil(nb/per);
-  // a motel is a row of rooms: a bed each, a nightstand, and a wall between you and the next room
-  if(rooms){const sp=(w-2)/nb;for(let i=0;i<nb;i++){const x=-w/2+.4+sp*(i+.5),z=-d/2+1.3;F.push({t:"bed",x:X(x),z:Z(z)});o.beds.push({x:X(x),z:Z(z)});F.push({t:"stand",x:X(x+.85),z:Z(-d/2+.5)});
-      if(i){const wx=X(-w/2+.4+sp*i);F.push({t:"wall",x:wx,z:Z(-d/2+1.4),d:2.8,c:r.c});o.blk.push([wx-.06,Z(-d/2),wx+.06,Z(-d/2+2.8),0])}}}
-  else for(let i=0;i<nb;i++){const row=Math.floor(i/per),n=Math.min(per,nb-row*per),j=i-row*per;const x=-.5+(j-(n-1)/2)*1.35,z=-d/2+1.3+row*2.3;F.push({t:"bed",x:X(x),z:Z(z)});o.beds.push({x:X(x),z:Z(z)})}
-  const back=-d/2+.3+rows*2.3+(rows?0:.6),front=d/2-1.3,mid=(back+front)/2,open=front-back;
-  for(const k of r.kit){
-    if(k==="table"&&open>2.2){F.push({t:"rug",x:X(-w/4+.4),z:Z(mid),w:2.8,d:2.2});F.push({t:"table",x:X(-w/4+.4),z:Z(mid)});o.table=o.table||{x:X(-w/4+.4),z:Z(mid)}}
-    if(k==="pews")for(let z=back+1.2;z<front-1.2;z+=1.6)for(const sx of [-1,1])F.push({t:"pew",x:X(sx*w/4),z:Z(z),w:w/2-2.4});
-    if(k==="aisles"){const len=Math.max(1.5,open-2.4);for(let x=-w/2+2.6;x<w/2-2;x+=3.2){if(Math.abs(x)<DOOR/2+.4)continue;F.push({t:"shelf",x:X(x),z:Z(mid),len});o.blk.push([X(x)-.3,Z(mid)-len/2,X(x)+.3,Z(mid)+len/2,0])}}
-    if(k==="counter"&&w>=12)F.push({t:"counter",x:X(-w/2+3),z:Z(front-.5)});
-    if(k==="desks"){const cols=Math.max(1,Math.floor((w-3.4)/2.2));for(let z=back+1;z<front-.8;z+=1.8)for(let c=0;c<cols;c++){const x=(c-(cols-1)/2)*2.2;if(Math.abs(x)<.9&&z>front-2.5)continue;F.push({t:"desk",x:X(x),z:Z(z)})}}
-    if(k==="altar")F.push({t:"altar",x:X(0),z:Z(-d/2+.7)});
-    if(k==="hay")for(let i=0;i<5;i++)F.push({t:"hay",x:X(-w/2+1.4+R()*(w-3.6)),z:Z(-d/2+1.4+R()*(d-3.4))})}
-  // the stove: in the front corner by the door, away from the beds
-  if(!o.stove&&!r.barn)o.stove={x:X(-w/2+.95),z:Z(front-.3)};
-  // somewhere to sit and somewhere to lie down for whoever doesn't get a bed
-  if(!r.barn){r.floorSpots=[];for(let x=-w/2+1.2;x<w/2-1.6;x+=1.4)for(let z=back+.6;z<front;z+=1.6)r.floorSpots.push({x:X(x),z:Z(z)})}}
 function pick2(a,R){return a[Math.floor(R()*a.length)]}
 function contState(loc,cid){const pl=place(loc);let s=pl.conts[cid];if(!s){const ck=layout(loc).conts.find(c=>c.id===cid)?.k||"shelf";const T=CONT[ck];s=pl.conts[cid]={c:{g:[...T.g],items:[],u:1},rolled:false}}return s}
 function rollCont(loc,cid){const s=contState(loc,cid);if(s.rolled)return s;s.rolled=true;const ck=layout(loc).conts.find(c=>c.id===cid)?.k||"shelf";const d=dayOf(S.t);
@@ -113,7 +84,7 @@ function rollCont(loc,cid){const s=contState(loc,cid);if(s.rolled)return s;s.rol
 const GRID={};const GN=2*(SH+6);
 function blockers(loc){const L=layout(loc).blk.slice();for(const b of S.blds)if(b.loc===loc&&b.done&&BUILDS[b.type].solid){const [w,d]=bSize(b);L.push([b.x-w/2,b.z-d/2,b.x+w/2,b.z+d/2])}return L}
 function bSize(b){const s=BUILDS[b.type].size;return b.rot%2?[s[1],s[0]]:[s[0],s[1]]}
-function grid(loc){let g=GRID[loc];if(g&&g.v===S.bv)return g;g={v:S.bv,a:new Uint8Array(GN*GN)};for(const [x0,z0,x1,z1,pad=.4] of blockers(loc)){for(let i=Math.floor(x0+SH+6-pad);i<=Math.floor(x1+SH+6+pad-1e-6);i++)for(let j=Math.floor(z0+SH+6-pad);j<=Math.floor(z1+SH+6+pad-1e-6);j++)if(i>=0&&j>=0&&i<GN&&j<GN)g.a[j*GN+i]=1}return GRID[loc]=g}
+function grid(loc){let g=GRID[loc];if(g&&g.v===S.bv)return g;g={v:S.bv,a:new Uint8Array(GN*GN)};for(const [x0,z0,x1,z1] of blockers(loc)){for(let i=Math.floor(x0+SH+6-.4);i<=Math.floor(x1+SH+6+.4);i++)for(let j=Math.floor(z0+SH+6-.4);j<=Math.floor(z1+SH+6+.4);j++)if(i>=0&&j>=0&&i<GN&&j<GN)g.a[j*GN+i]=1}return GRID[loc]=g}
 const gc=v=>clamp(Math.floor(v+SH+6),0,GN-1);
 function blockedAt(loc,x,z){return grid(loc).a[gc(z)*GN+gc(x)]===1}
 function clearLine(loc,x0,z0,x1,z1){const g=grid(loc);const n=Math.ceil(dist(x0,z0,x1,z1)/.45);for(let i=1;i<n;i++){const x=lerp(x0,x1,i/n),z=lerp(z0,z1,i/n);if(g.a[gc(z)*GN+gc(x)])return false}return true}
@@ -140,22 +111,17 @@ function newGame(pl){S={v:1,t:7*HOUR+40,nid:1,bv:1,camp:null,res:{food:10,water:
   for(const p of [...h1,...h2]){p.status="member";p.trust=45+ri(0,15);p.mood=45;p.follow=true;S.people.push(p)}
   topUpWalkers("start");
   log(`Day 1. The pileup on Route 9 isn't moving, and the radio keeps saying stay indoors. ${listAnd(S.people.map(p=>p.name))} are stuck here with you.`);
-  log("Open the map (M) and pick somewhere to make camp. Search the cars first, if you like. A state trooper's cruiser sits empty up the line.","hint");
+  log("Open the map (M) and pick somewhere to make camp. Search the cars first, if you like.","hint");
   return S}
 
 // ================= the camp =================
 function campHere(){const k=S.player.loc;const L=LOCS[k];if(!L||L.camp===false)return false;if(S.rival&&S.rival.site===k&&!S.rival.gone)return false;
-  S.camp={site:k,r:17,n:L.n,day:dayOf(S.t)};const lay=layout(k);const st=lay.stove;
-  // you move into the building: the stove inside does what a cookfire would
-  if(st)addBld("fire",st.x,st.z,{done:true,name:"Woodstove",opt:{indoor:true}});else addBld("fire",3,4,{done:true,name:"Campfire"});
-  const spots=lay.b.filter(r=>r.floorSpots).flatMap(r=>r.floorSpots);
-  for(const p of S.people)if(p.status==="member"&&p.loc===k){p.follow=false;p.away=null;if(spots.length){const s=pick(spots);moveTo(p,s.x,s.z);p.act="moving in"}}
-  log(`You make camp at ${L.n}.`,"big");
-  if(st)log(`Everyone moves inside: ${lay.beds.length?`${lay.beds.length} bed${lay.beds.length>1?"s":""}, `:""}a woodstove and four walls between you and the dead. Press V to see inside from anywhere.`,"good");S.nextStranger=S.t+ri(16,26)*HOUR;unloadHaul();
+  S.camp={site:k,r:17,n:L.n,day:dayOf(S.t)};const f=addBld("fire",3,4,{done:true,name:"Campfire"});
+  for(const p of S.people)if(p.status==="member"&&p.loc===k){p.follow=false;p.away=null}
+  log(`You make camp at ${L.n}.`,"big");S.nextStranger=S.t+ri(16,26)*HOUR;unloadHaul();
   for(const p of members()){mem(p,`We made camp at ${L.n}.`,2);bringCarry(p)}
   syncInv();return true}
-function bringCarry(p){if(!p.carry)return;for(const [k,n] of Object.entries(p.carry)){if(RES[k])S.res[k]=(S.res[k]||0)+n;else S.items[k]=(S.items[k]||0)+n;
-    if(GUNS[k])log(`${p.name} puts ${pronoun(p,"p")} ${ITEMS[k]} in with the camp's things${p.carry.ammo?`, with ${p.carry.ammo} rounds`:""}.${S.player.gun?"":" You could carry it yourself (Stores, I)."}`)}p.carry=null}
+function bringCarry(p){if(!p.carry)return;for(const [k,n] of Object.entries(p.carry))S.items[k]=(S.items[k]||0)+n;p.carry=null}
 function addBld(type,x,z,o){o=o||{};const B=BUILDS[type];const b={id:nid("b"),type,loc:o.loc||S.player.loc,x,z,rot:o.rot||0,done:!!o.done,prog:o.done?B.hrs:0,opt:o.opt||{},name:o.name||B.n,grow:0,hp:100};
   S.blds.push(b);S.bv++;if(typeof onBld==="function")onBld(b);return b}
 function campBlds(){return S.camp?S.blds.filter(b=>b.loc===S.camp.site):[]}
@@ -165,15 +131,14 @@ function canAfford(cost){return Object.entries(cost).every(([k,v])=>(S.res[k]||0
 function pay(cost){for(const [k,v] of Object.entries(cost))S.res[k]-=v;syncInv()}
 function costWords(c){return Object.entries(c).map(([k,v])=>`${v} ${RES[k].toLowerCase()}`).join(", ")}
 function defense(){if(!S.camp)return 0;const s=SITES[S.camp.site];const g=here().filter(p=>p.job==="guard"&&!p.kid);
-  return Math.round(s.def*3+g.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+bldDone("tower").length*2.5*(g.length?1:.4)+bldDone("fence").length*1+useVal("defense")*1.2+(S.res.ammo>=1?Math.min(campGuns(),g.length)*1.5:0)+Math.min(2,S.res.ammo/8))}
-function campGuns(){return Object.keys(GUNS).reduce((a,k)=>a+itemCount(k),0)}
+  return Math.round(s.def*3+g.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+bldDone("tower").length*2.5*(g.length?1:.4)+bldDone("fence").length*1+useVal("defense")*1.2+Math.min(3,S.res.ammo/5))}
 function useVal(u){return S.crafted.filter(c=>c.use===u).reduce((a,c)=>a+(c.v||1),0)+(S.inv?S.inv.items.filter(o=>!o.k.startsWith("c:")&&ITEM_USE[o.k]===u).length*.5:0)}
 function campPoint(ang,r){return{x:clamp(Math.cos(ang)*r,-SH+2,SH-2),z:clamp(4+Math.sin(ang)*r,-SH+2,SH-2)}}
 function inCamp(x,z){return S.camp&&dist(x,z,0,4)<S.camp.r+3}
 function campSize(){return members().length+1}
 
 // ================= time =================
-const MOVE=3.6/CLOCK;// units per game minute, walking: about 3.6 a second at 1×
+const MOVE=.36;// units per game minute, walking
 function step(dt){if(!S)return;const t0=S.t;S.t+=dt;moveAll(dt);
   if(Math.floor(S.t/HOUR)!==Math.floor(t0/HOUR))hourly()}
 function mv(o,s){if(o.tx==null)return;const d=dist(o.x,o.z,o.tx,o.tz);if(d<=s){o.x=o.tx;o.z=o.tz;
@@ -186,8 +151,7 @@ function moveAll(dt){const sp=MOVE*dt;const pl=S.player;if(pl.ko<=0&&LOCS[pl.loc
     mv(p,sp*(p.hp<40?.6:1)*(p.kid?.95:1))}
   for(const w of S.walkers){if(w.dead)continue;mv(w,sp*.3);
     if(w.cool)w.cool=Math.max(0,w.cool-dt);
-    const tgt=nearestLiving(w.loc,w.x,w.z,9);if(tgt&&!w.cool){if(!w.tx||dist(w.tx,w.tz,tgt.x,tgt.z)>1.5){w.path=null;w.tx=tgt.x;w.tz=tgt.z}if(dist(w.x,w.z,tgt.x,tgt.z)<1.1)clash(tgt,w)}
-    else if(w.tx==null&&rf()<dt*.03/CLOCK)moveTo(w,w.x+rf()*6-3,w.z+rf()*6-3)}
+    const tgt=nearestLiving(w.loc,w.x,w.z,9);if(tgt&&!w.cool){if(!w.tx||dist(w.tx,w.tz,tgt.x,tgt.z)>1.5){w.path=null;w.tx=tgt.x;w.tz=tgt.z}if(dist(w.x,w.z,tgt.x,tgt.z)<1.1)clash(tgt,w)}}
   // guards step out to meet anything that comes close to camp
   if(S.camp)for(const g of here()){if(g.job!=="guard"||g.sleep&&rf()<.9||g.busy)continue;const w=S.walkers.find(w=>!w.dead&&w.loc===S.camp.site&&dist(w.x,w.z,0,4)<S.camp.r+9&&dist(w.x,w.z,g.x,g.z)<20);
     if(w&&(g.tx==null||g.hunt!==w.id)){g.hunt=w.id;g.tx=w.x;g.tz=w.z;g.path=null;g.act="going after one of the dead"}}}
@@ -198,55 +162,36 @@ function nearestLiving(loc,x,z,r){let b=null,bd=r;const pl=S.player;if(pl.ko<=0&
 function spawnWalker(loc,x,z){if(x==null){const e=rf()*4|0;const t=rf()*2-1;const E=SH-1;[x,z]=[[t*E,-E],[E,t*E],[t*E,E],[-E,t*E]][e]}
   const w={id:nid("w"),loc,x,z,tx:null,tz:null,path:null,cool:0,look:{skin:pick(["#8a9a7a","#9aa08a","#7a8a6a","#a0a890"]),top:pick(LOOK.top),pants:pick(LOOK.pants)}};S.walkers.push(w);return w}
 function walkersAt(loc){return S.walkers.filter(w=>w.loc===loc&&!w.dead)}
-// The dead at a place are the people who were there when it started (not all of them have turned on day one),
-// plus whatever the living have drawn in since. Busy places fill up; places nobody goes stay quiet.
-function placeDead(k){const P=place(k);if(P.dead==null)P.dead=LOCS[k]?.pop??3;return P.dead}
-function turned(){return Math.min(1,.45+(dayOf(S.t)-1)*.3)}
-function deadHere(k){const P=place(k);return Math.round(placeDead(k)*turned()+(P.heat||0)/3)}
-function dangerAt(k){return clamp(deadHere(k)/3.5,.3,5)}
-// one of them goes down for good
-function putDown(w){if(!w||w.dead)return;w.dead=true;w.diedAt=S.t;if(!LOCS[w.loc])return;const P=place(w.loc);if(w.orig)P.dead=Math.max(0,placeDead(w.loc)-1);else P.heat=Math.max(0,(P.heat||0)-2)}
 // when you arrive somewhere, the dead that live there are waiting
-function topUpWalkers(loc){if(loc===campK()||!LOCS[loc])return;const pl=place(loc);
-  const burnt=pl.burned?.4:1;const want=Math.round(deadHere(loc)*burnt);const have=walkersAt(loc);let orig=Math.round(placeDead(loc)*turned()*burnt)-have.filter(w=>w.orig).length;
-  for(let i=have.length;i<want;i++){let x,z,t=0;do{x=(rf()*2-1)*(SH-4);z=(rf()*2-1)*(SH-6)-4;t++}while(t<20&&(blockedAt(loc,x,z)||dist(x,z,ENTRY.x,ENTRY.z)<14));const w=spawnWalker(loc,x,z);if(orig-->0)w.orig=true}}
+function topUpWalkers(loc){if(loc===campK())return;const L=LOCS[loc];const pl=place(loc);const d=dayOf(S.t);
+  const want=Math.round((L.danger||1)*(1.6+d*.18)*(pl.burned?.4:1)*(S.t-pl.cleared<DAY*2?.3:1));const have=walkersAt(loc).length;
+  for(let i=have;i<want;i++){let x,z,t=0;do{x=(rf()*2-1)*(SH-4);z=(rf()*2-1)*(SH-6)-4;t++}while(t<20&&(blockedAt(loc,x,z)||dist(x,z,ENTRY.x,ENTRY.z)<14));spawnWalker(loc,x,z)}}
 function walkerHour(){S.walkers=S.walkers.filter(w=>!w.dead||S.t-w.diedAt<DAY/2);
   // places you're not at forget their dead until you come back
   S.walkers=S.walkers.filter(w=>w.loc===S.player.loc||w.loc===campK());
-  // the living stir things up, and places nobody goes cool off
-  for(const P of Object.values(S.places))P.heat=(P.heat||0)*.985;
-  const here_k=S.player.loc;if(LOCS[here_k]&&here_k!==campK()&&!S.flags.traveling){const P=place(here_k);P.heat+=(1+withYou().length)*.12;
-    if(rf()<P.heat/45&&walkersAt(here_k).length<14){const w=spawnWalker(here_k);moveTo(w,S.player.x+rf()*8-4,S.player.z+rf()*8-4)}}
-  if(S.camp){const live=walkersAt(S.camp.site);const n=campSize();const s=SITES[S.camp.site];const P=place(S.camp.site);
+  if(S.camp){const live=walkersAt(S.camp.site);const n=campSize();const s=SITES[S.camp.site];const d=dayOf(S.t);
     // a bigger camp makes more noise and draws more of them
-    P.heat+=n*.03;const rate=(.03+P.heat/60)/(s.hide||1);if(live.length<4+n/2&&rf()<rate)spawnWalker(S.camp.site)}
+    const rate=(.1+d*.012+n*.012)/(s.hide||1);if(live.length<4+n/2&&rf()<rate)spawnWalker(S.camp.site)}
   for(const w of S.walkers){if(w.dead||w.tx!=null||rf()>.5)continue;let tx=w.x+rf()*12-6,tz=w.z+rf()*12-6;
     if(w.loc===campK()&&rf()<.25){tx=lerp(tx,0,.4);tz=lerp(tz,4,.4)}moveTo(w,tx,tz)}}
 // someone meets one of the dead: a quick, narrated scuffle
-function clash(v,w){if(w.dead||w.cool)return;w.cool=2*CLOCK;const pl=S.player;
+function clash(v,w){if(w.dead||w.cool)return;w.cool=20;const pl=S.player;
   const helpers=[v,...S.people.filter(q=>q!==v&&q.loc===v.loc&&q.status!=="dead"&&q.status!=="left"&&!q.kid&&!q.sleep&&dist(q.x,q.z,v.x,v.z)<7&&(q.job==="guard"||q.tr.brave>0||q.follow))];
   if(v!==pl&&pl.ko<=0&&pl.loc===v.loc&&dist(pl.x,pl.z,v.x,v.z)<7)helpers.push(pl);
   const fighter=helpers.reduce((a,b)=>fightOf(b)>fightOf(a)?b:a,v);
   let chance=.6+fightOf(fighter)*.1+(helpers.length-1)*.1;if(useVal("weapon")>0)chance+=.06;
-  // whoever has a gun gets a shot off first: the player from what they carry, people in camp from camp stores
-  if(fighter===pl&&pl.gun&&(pl.rounds||0)>0){pl.rounds--;chance+=.22;gunNoise(pl,w)}
-  else if(fighter!==pl&&fighter.gun&&fighter.loc===campK()&&S.res.ammo>=1&&rf()<.85){S.res.ammo--;chance+=.25;gunNoise(fighter,w)}
+  if(fighter!==pl&&fighter.job==="guard"&&S.res.ammo>0&&rf()<.4){S.res.ammo--;chance+=.2}
   const nm=x=>x===pl?"You":x.name;if(fighter.hunt)fighter.hunt=null;
-  if(rf()<chance){putDown(w);say(fighter,pick(["Got it.","Stay down.","That's one.","Clear!","Go back to sleep."]));
+  if(rf()<chance){w.dead=true;w.diedAt=S.t;say(fighter,pick(["Got it.","Stay down.","That's one.","Clear!","Go back to sleep."]));
     if(rf()<.3||fighter===pl)log(`${nm(fighter)} put down one of the dead${v.loc===campK()&&inCamp(w.x,w.z)?" at the edge of camp":""}.`);if(fighter!==pl)fighter.sk.fight=Math.min(3,fighter.sk.fight+.04);return}
   // it went badly: someone gets hurt, and the thing is shoved back
-  const dmg=ri(8,20);v.hp=Math.max(0,v.hp-dmg);w.x+=rf()*4-2;w.z+=rf()*4-2;w.cool=4*CLOCK;
+  const dmg=ri(8,20);v.hp=Math.max(0,v.hp-dmg);w.x+=rf()*4-2;w.z+=rf()*4-2;w.cool=40;
   if(v===pl){if(pl.hp<=0)knockOut();else log(`One of them gets a hand on you. You tear free, bruised and shaking.`,"warn");return}
   say(v,pick(["Get it off me!","Help!","Back! Back!"]));
   if(v.hp<=0){die(v,v.kid?"was pulled down by the dead":"was pulled down by the dead before anyone could reach "+pronoun(v,"o"));return}
   log(`${v.name} got hurt fighting off one of the dead.`,"warn");
   if(v.hp<50&&rf()<(v.kid?.04:.12)&&!v.bitten&&v.status==="member"){v.bitten=true;queueCard("bitten",{who:v.id})}}
-function fightOf(x){return x.id==="you"?2+Math.min(1,useVal("weapon")*.3):x.sk.fight+(x.tr.brave>.3?.5:0)+(x.gun&&x.loc===campK()&&S.res.ammo>=1?.6:0)}
-// a shot fired in a scuffle: the flash, and the noise that brings more of them
-function gunNoise(o,w){const G=GUNS[o.id==="you"?S.player.gun:o.gun];if(!G)return;o.aim=typeof performance!=="undefined"?performance.now():0;if(typeof shotFx==="function")shotFx(o,w,true);noiseAt(o.loc,o.x,o.z,G.noise)}
-function noiseAt(loc,x,z,r){if(LOCS[loc])place(loc).heat=(place(loc).heat||0)+r/12;for(const o of S.walkers){if(o.loc!==loc||o.dead||dist(o.x,o.z,x,z)>r)continue;o.path=null;o.tx=clamp(x+rf()*4-2,-SH+1,SH-1);o.tz=clamp(z+rf()*4-2,-SH+1,SH-1)}
-  // further off, more of them hear it and come to see
-  if(rf()<r/90&&walkersAt(loc).length<14){const n=spawnWalker(loc);n.tx=clamp(x+rf()*6-3,-SH+1,SH-1);n.tz=clamp(z+rf()*6-3,-SH+1,SH-1)}}
+function fightOf(x){return x.id==="you"?2+Math.min(1,useVal("weapon")*.3):x.sk.fight+(x.tr.brave>.3?.5:0)}
 function knockOut(){const pl=S.player;pl.ko=1;pl.hp=35;log("Everything goes black.","bad");
   const saver=S.people.filter(p=>p.status==="member"&&p.loc===pl.loc&&!p.kid)[0]||here().filter(p=>!p.kid).sort((a,b)=>b.sk.fight-a.sk.fight)[0];
   setTimeout(()=>{if(!S)return;S.t+=3*HOUR;if(S.camp&&pl.loc!==S.camp.site)arriveAt(S.camp.site,true);pl.x=2;pl.z=6;pl.tx=null;pl.path=null;pl.ko=0;
@@ -255,7 +200,7 @@ function knockOut(){const pl=S.player;pl.ko=1;pl.hp=35;log("Everything goes blac
     if(typeof onScene==="function")onScene()},50)}
 
 // ================= the hour =================
-function hourly(){const h=hourOf(S.t);if(typeof armUp==="function")armUp(true);
+function hourly(){const h=hourOf(S.t);
   if(!S.camp){for(const p of S.people)if(p.status==="member"&&!p.follow&&p.tx==null&&rf()<.4)moveTo(p,p.x+rf()*4-2,p.z+rf()*4-2);walkerHour();return}
   if(h===6)dawn();if(h===8)sendScavs();
   for(const p of S.people){if(p.status==="member"&&atCamp(p))planHour(p,h);else if(p.status==="stranger"&&p.loc===campK())strangerHour(p);else if(p.status==="member"&&p.away&&p.away.out&&S.t>=p.away.back)comeBack(p)}
@@ -278,11 +223,10 @@ function jobSpot(p){const c=S.camp;const j=p.job;const B=t=>bldDone(t);
 function willWork(p){if(p.strike&&S.t<p.strike)return false;return p.mood>18||p.tr.diligent>.3}
 function planHour(p,h){if(p.follow||p.busy){p.sleep=false;return}const c=S.camp;p.sleep=false;p.inside=false;p.at=null;
   if(p.bitten&&p.quarantine){p.act="locked away";return}
-  if(h>=22||h<6){p.sleep=true;p.inBed=false;const lay=layout(c.site);const i=here().indexOf(p);const siteBeds=lay.beds.length;let spot=null,floor=false;
-    if(i<siteBeds){spot=lay.beds[i];p.inBed=true}
-    else{let j=i-siteBeds;for(const b of campBlds().filter(b=>b.done&&BUILDS[b.type].beds)){const cap=BUILDS[b.type].beds;if(j<cap){spot={x:b.x,z:b.z};p.inside=true;break}j-=cap}}
-    if(!spot){const fl=lay.b.filter(r=>r.floorSpots).flatMap(r=>r.floorSpots);if(fl.length){spot=fl[(i-siteBeds)%fl.length];floor=true}else spot=campPoint(rf()*6.28,3)}
-    moveTo(p,spot.x,spot.z,()=>{p.dir=0});p.act=p.inBed||p.inside?"asleep":floor?"asleep on the floor":"sleeping on the ground";return}
+  if(h>=22||h<6){p.sleep=true;const beds=bedsTotal();const i=here().indexOf(p);p.inside=i<beds;const siteBeds=SITES[c.site].beds||0;
+    const bb=campBlds().filter(b=>b.done&&BUILDS[b.type].beds);const main=layout(c.site).b[0];let spot;
+    if(p.inside&&i<siteBeds&&main)spot={x:main.x+rf()*2-1,z:main.z+main.d/2+.6};else if(p.inside&&bb.length)spot={x:bb[(i-siteBeds)%bb.length].x,z:bb[(i-siteBeds)%bb.length].z};else spot=campPoint(rf()*6.28,3);
+    moveTo(p,spot.x,spot.z);p.act=p.inside?"asleep":"sleeping on the ground";return}
   if(p.hp<35){const m=bldDone("clinic")[0];const s=m?{x:m.x,z:m.z+2.4}:campPoint(.8,3);moveTo(p,s.x+rf(),s.z+rf());p.act="resting, hurt";return}
   if(p.job&&h>=7&&h<19&&willWork(p)&&p.job!=="scav"){const s=jobSpot(p);moveTo(p,s.x,s.z);p.at=s.b?s.b.id:"spot";p.act=s.txt||(s.b&&!s.b.done?`building the ${s.b.name.toLowerCase()}`:JOBS[p.job].v);return}
   freeTime(p,h)}
@@ -290,11 +234,7 @@ function planHour(p,h){if(p.follow||p.busy){p.sleep=false;return}const c=S.camp;
 function freeTime(p,h){const T=p.tr;const opts=[];const fire=bldDone("fire")[0];const fam=famHere(p);const others=here().filter(q=>q!==p&&!q.sleep);
   if(fam.length)opts.push([1+T.kind+(p.motive==="family"?1.5:0),()=>{const q=pick(fam);moveTo(p,q.x+1,q.z+1);return q.kid?`watching over ${q.name}`:`keeping close to ${q.name}`}]);
   if(others.length)opts.push([1+T.social*1.5,()=>{const q=pick(others);moveTo(p,q.x+1.2,q.z+.6);if(rf()<.4)chatter(p,q);return`talking with ${q.name}`}]);
-  const indoor=fire&&fire.opt&&fire.opt.indoor;
-  if(fire)opts.push([.8-T.diligent*.6+(h>=18?1.2:0),()=>{if(indoor)moveTo(p,fire.x+1+rf()*1.6,fire.z-.4-rf()*1.6);else moveTo(p,fire.x+rf()*3-1.5,fire.z+rf()*3-1.5);return indoor?(h>=18?"warming up by the stove":"taking it easy inside"):h>=18?"sitting by the fire":"taking it easy"}]);
-  // home life inside: the table, and somewhere quiet
-  const lay=layout(S.camp.site);if(lay.table)opts.push([.6+(h>=17?.8:0),()=>{moveTo(p,lay.table.x+rf()*1.6-.8,lay.table.z+(rf()<.5?-.85:.85));return pick(["sitting at the table","playing cards at the table","mending clothes at the table","having coffee at the table"])}]);
-  const home=lay.b.find(r=>r.floorSpots&&r.floorSpots.length);if(home)opts.push([.35+(T.social<0?.45:0)+(T.brave<0?.3:0),()=>{const s=pick(home.floorSpots);moveTo(p,s.x,s.z);return pick(["resting inside","reading by the window","keeping out of the wind","sitting quietly inside"])}]);
+  if(fire)opts.push([.8-T.diligent*.6+(h>=18?1.2:0),()=>{moveTo(p,fire.x+rf()*3-1.5,fire.z+rf()*3-1.5);return h>=18?"sitting by the fire":"taking it easy"}]);
   const bench=bldDone("bench")[0]||bldDone("garden")[0];if(bench)opts.push([.5+T.social*.3,()=>{moveTo(p,bench.x+rf(),bench.z+1);return bench.type==="garden"?"looking at the flowers":"sitting on the bench"}]);
   const bp=campBlds().find(b=>!b.done);if(bp&&!p.kid)opts.push([.6+T.diligent*1.4+T.kind*.4,()=>{moveTo(p,bp.x+1,bp.z+bSize(bp)[1]/2+.8);p.at=bp.id;return`helping build the ${bp.name.toLowerCase()}`}]);
   const n=campSize();if(!p.kid||p.age>=10){if(S.res.water<n*2)opts.push([1.2+T.diligent+T.kind*.5,()=>{const s=jobSpot({...p,job:"water"});moveTo(p,s.x,s.z);p.at="water";return"fetching water, since we're low"}]);
@@ -371,8 +311,7 @@ function sendScavs(){const sc=here().filter(p=>p.job==="scav"&&willWork(p)&&p.hp
   const spots=Object.keys(LOCS).filter(k=>k!==campK()&&k!=="start"&&!(S.rival&&S.rival.site===k&&!S.rival.gone)&&!place(k).burned);
   const k=S.flags.scavTo&&spots.includes(S.flags.scavTo)?S.flags.scavTo:pick(spots);
   for(const p of sc){p.away={kind:"scav",to:k,back:S.t+(travelHours(campK(),k)*2+3)*HOUR,out:false};p.act=`heading out to the ${LOCS[k].n}`;moveTo(p,ENTRY.x+rf()*2,ENTRY.z,()=>{p.away.out=true})}}
-function comeBack(p){const k=p.away.to;const L=LOCS[k];const r=lootRoll(k,p.sk.scav);const armed=p.gun&&S.res.ammo>=1;const danger=(dangerAt(k)*.05-p.sk.scav*.025)*(armed?.65:1);const P=place(k);P.heat=(P.heat||0)+1.5;if(rf()<(armed?.6:.3))P.dead=Math.max(0,placeDead(k)-1);
-  if(armed)S.res.ammo=Math.max(0,S.res.ammo-ri(1,4));
+function comeBack(p){const k=p.away.to;const L=LOCS[k];const r=lootRoll(k,p.sk.scav);const danger=(L.danger||1)*.05-p.sk.scav*.025+(dayOf(S.t)*.003);
   p.away.out=false;p.x=ENTRY.x;p.z=ENTRY.z;
   if(rf()<danger*.18&&!p.kid){p.away=null;die(p,`never came back from the ${L.n}`);return}
   if(rf()<danger){p.hp-=ri(10,28);log(`${p.name} ran into trouble at the ${L.n} and came back limping.`,"warn")}

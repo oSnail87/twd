@@ -2,7 +2,7 @@
 // Every ask is weighed against who they are: trust in you, their nature, their motive and their family.
 // The reasons come back with the answer, so you can see why someone said no.
 function noise(p,k){const R=srng(hashStr(p.id+k+dayOf(S.t)));return R()*2-1}
-function danger(k){const L=LOCS[k];if(!L)return 1;let d=dangerAt(k);if(S.rival&&!S.rival.gone&&S.rival.site===k)d+=3;return d}
+function danger(k){const L=LOCS[k];if(!L)return 1;let d=L.danger||1;if(S.rival&&!S.rival.gone&&S.rival.site===k)d+=3;return d}
 function weigh(p,kind,ctx){ctx=ctx||{};const R=[];const add=(v,t)=>{if(Math.abs(v)>=.15)R.push({v:Math.round(v*10)/10,t})};const T=p.tr;
   const kids=kidsOf(p).filter(q=>q.status==="member");const fam=famOf(p).filter(q=>q.status==="member"||q.status===p.status);const kid=kids[0]||fam[0];
   const trust=(p.trust-45)/25;
