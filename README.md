@@ -29,6 +29,10 @@ The whole game is one HTML page (three.js for the world view). It runs as a clau
 - Separate female and male body models, and a character creator with build, hair, beard and skin.
 - Doors that lock, get knocked on, pried, kicked in and boarded up. The dead can't open doors but they can break them down.
 
+## Holdfast
+
+`holdfast/` holds a separate, newer game: a camp-management game about the first weeks of the outbreak. See `holdfast/README.md`. It doesn't change anything about TWD.
+
 ## Layout
 
 - `src/` holds the parts of the page, assembled in the order listed in `src/ORDER`:
