@@ -12,9 +12,10 @@ function renderHud(){if(!S)return;const pl=S.player;const L=LOCS[pl.loc]||{n:"On
   setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[3,"3×"],[8,"8×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join(""));
   const n=campSize();const food=S.res.food/Math.max(1,n);
   setHtml($("res"),S.camp?[["People",`${n}`],["Beds",`${bedsTotal()}`,bedsTotal()<n?"bad":""],["Food",`${Math.floor(S.res.food)} <span class="mut">(${food.toFixed(1)}d)</span>`,food<1.5?"bad":food<3?"warn":""],["Water",Math.floor(S.res.water),S.res.water<n?"bad":""],
-      ["Wood",Math.floor(S.res.wood)],["Scrap",Math.floor(S.res.scrap)],["Medicine",Math.floor(S.res.meds)],["Ammo",Math.floor(S.res.ammo)],["Defense",defense()],["Mood",avgMood(),avgMood()<35?"bad":""],["You",`${Math.round(pl.hp)}%`,pl.hp<40?"bad":""]]
-    .map(([k,v,c])=>`<span class="k">${k}</span><span class="v ${c||""}">${v}</span>`).join(""):`<span class="k">No camp yet</span><span class="v"></span><span class="k">People</span><span class="v">${members().length+1}</span><span class="k">You</span><span class="v">${Math.round(pl.hp)}%</span>`);
+      ["Wood",Math.floor(S.res.wood)],["Scrap",Math.floor(S.res.scrap)],["Medicine",Math.floor(S.res.meds)],["Ammo",Math.floor(S.res.ammo)],["Defense",defense()],["Mood",avgMood(),avgMood()<35?"bad":""],["You",`${Math.round(pl.hp)}%`,pl.hp<40?"bad":""],...gunHud()]
+    .map(([k,v,c])=>`<span class="k">${k}</span><span class="v ${c||""}">${v}</span>`).join(""):`<span class="k">No camp yet</span><span class="v"></span><span class="k">People</span><span class="v">${members().length+1}</span><span class="k">You</span><span class="v">${Math.round(pl.hp)}%</span>`+gunHud().map(([k,v,c])=>`<span class="k">${k}</span><span class="v ${c||""}">${v}</span>`).join(""));
   renderTools();renderHint()}
+function gunHud(){const pl=S.player;if(!pl.gun)return[];const r=pl.rounds||0;return[[GUNS[pl.gun].n,`${r} <span class="mut">rds</span>`,r<=0?"bad":r<5?"warn":""]]}
 function avgMood(){const L=members();return L.length?Math.round(L.reduce((a,p)=>a+p.mood,0)/L.length):50}
 function renderTools(){const waiting=S.people.filter(p=>p.status==="stranger"&&p.loc===S.player.loc).length;
   setHtml($("tools"),[["map","Map","M"],["people","People","P"],["build","Build","B"],["stores","Stores","I"],["camp","Camp","C"],["help","Help","H"]].map(([k,n,key])=>`<button data-tool="${k}">${n}<span class="k">${key}</span></button>`).join("")+
@@ -56,7 +57,7 @@ function submitCmd(){const i=$("cmd");const v=i.value.trim();if(!v)return;i.valu
 function clickWorld(cx,cy){if(UI.place){tryPlace();return}const h=pickAt(cx,cy);if(!h)return;const pl=S.player;if(S.flags.traveling||pl.ko>0)return;
   if(h.kind==="ground"){moveTo(pl,h.o.x,h.o.z);W.free=false;return}
   if(h.kind==="person")return personMenu(h.o,cx,cy);
-  if(h.kind==="walker"){approach(h.o,()=>clash(pl,h.o));W.free=false;return}
+  if(h.kind==="walker"){if(pl.gun&&((pl.rounds||0)>0||loadUp()>0))closeAndShoot(h.o);else approach(h.o,()=>clash(pl,h.o));W.free=false;return}
   if(h.kind==="cont"){approach(h.o,()=>openLoot(h.o));W.free=false;return}
   if(h.kind==="bld")return bldMenu(h.o,cx,cy)}
 function closeMenu(){$("menu").style.display="none";UI.menu=null}
@@ -123,6 +124,7 @@ function openHelp(){openSide("help",`<h2>How it works</h2>
   <p>Click the ground to walk. Click people to talk, give them jobs, put them in charge or bring them along. Drag to look around, scroll to zoom, F to follow yourself again.</p>
   <p>Or type anything in the box: <i>I say hi</i>, <i>put Ruth on the farm</i>, <i>Marcus, come with me</i>, <i>build a tent</i>, <i>tie the rope into a fishing net</i>, <i>go to the pharmacy</i>, <i>I teach the kids to whittle</i>. If Claude is on, it works out what you mean; otherwise the built-in rules do their best.</p>
   <p><b>Map (M):</b> each place is its own scene. Travel takes hours, and whoever's following you comes along. Search cars and buildings, carry it home, or burn the place down.</p>
+  <p><b>Guns:</b> search cars, the trooper's cruiser on the highway, the farm's gun cabinet or the police armory. A gun you find stays on you: click one of the dead to shoot it, or type <i>shoot the walker</i>. Shots are loud, and the noise brings more of them. Spare guns go to your guards. You'll never turn one on the living; fights with the Pruitts are a war you rally people for.</p>
   <p><b>Build (B):</b> place it, pick colors, then build it yourself in a quick hands-on build, or leave it for whoever's on building. Right-click or R turns it.</p>
   <p><b>Stores (I):</b> everything the camp owns, in one grid. Anyone takes what they need, but they leave someone's insulin or EpiPen alone. Mostly.</p>
   <p><b>People decide for themselves.</b> Ask something and they weigh it: trust in you, their nature, their family. Put someone in charge of a part of camp and its small problems never reach you. A bigger camp brings in more and needs more from you.</p>
@@ -248,10 +250,10 @@ function renderLoot(){if(!UI.loot)return;const st=contState(UI.loot.k,UI.loot.ci
   openSide("loot",`<h2>${esc(CONT[c.k].n)}</h2>${st.c.items.length?"":`<p class="mut">Empty.</p>`}${gridHtml(st.c,"cont")}
    <div class="btns">${st.c.items.length?`<button class="pri" data-act="takeall">Take everything that fits</button>`:""}</div>
    <h3>${d?"What you're carrying":"Camp stores"}</h3>${d?gridHtml(d,"haul"):`<p class="mut" style="font-size:13px">You're at camp: what you take goes straight into the stores.</p>`}<p class="mut" style="font-size:12px">Click a block to move it across. Drag to put it somewhere. ${d?"More people with you means more room.":""}</p>`);UI.side="loot"}
-ACTS.takeall=()=>{const st=contState(UI.loot.k,UI.loot.cid);const d=dest();for(const o of [...st.c.items]){if(d)gMove(st.c,d,o);else{st.c.items.splice(st.c.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n})}}renderLoot();renderHud();save()};
+ACTS.takeall=()=>{const st=contState(UI.loot.k,UI.loot.cid);const d=dest();const guns=[];for(const o of [...st.c.items]){if(d)gMove(st.c,d,o);else{st.c.items.splice(st.c.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n});if(GUNS[o.k])guns.push(o.k)}}armUp(false,guns);renderLoot();renderHud();save()};
 ACTS.gclick=d=>{if(UI.drag?.moved)return;const which=d.g;const u=+d.u;
   if(UI.loot&&(which==="cont"||which==="haul")){const st=contState(UI.loot.k,UI.loot.cid);const ds=dest();const from=which==="cont"?st.c:ds;const to=which==="cont"?ds:st.c;const o=from.items.find(o=>o.u===u);if(!o)return;
-    if(!to){from.items.splice(from.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n})}else if(!gMove(from,to,o))toast("No room.");renderLoot();renderHud();save();return}
+    if(!to){from.items.splice(from.items.indexOf(o),1);addLoot({[RES[o.k]?o.k:"i:"+o.k]:o.n})}else if(!gMove(from,to,o))toast("No room.");if(which==="cont")armUp(false,!to&&GUNS[o.k]?[o.k]:[]);renderLoot();renderHud();save();return}
   if(which==="camp"){const o=S.inv.items.find(o=>o.u===u);if(o)itemMenu(o)}};
 // ---------- grids ----------
 const CELL=31;
@@ -273,6 +275,7 @@ function initDrag(){document.addEventListener("pointerdown",e=>{const el=e.targe
 // ---------- stores and crafting ----------
 function openStores(){if(!S)return;syncInv();const c=S.inv;const sl=(S.storeLog||[]).slice(-8).reverse();
   openSide("stores",`<h2>Stores</h2><div class="mut" style="font-size:12.5px">Everything the camp owns. Anyone can use it, but people leave alone what someone else needs to live (🔒). ✋ means someone's using it today. ${invFree()} empty blocks${bldDone("shed").length?"":"; a storehouse adds more"}.</div>
+   ${S.player.gun?`<div style="font-size:13px;margin:6px 0">You carry the ${esc(ITEMS[S.player.gun])}, ${S.player.rounds||0} rounds.${S.player.loc===campK()?` <button data-act="gunstow">Leave it for the guards</button>`:""}</div>`:""}
    ${gridHtml(c,"camp")}
    <h3>Make something</h3><div class="mut" style="font-size:12.5px">Say what you do with what's here. ${aiReady()?"Claude judges whether it would really work.":"The built-in recipes decide."}</div>
    <div style="display:flex;gap:5px;margin-top:5px"><input id="craftin" placeholder="tie the rope into a fishing net" autocomplete="off"><button class="pri" data-act="craftgo">Try</button></div>
@@ -282,10 +285,16 @@ function openStores(){if(!S)return;syncInv();const c=S.inv;const sl=(S.storeLog|
 ACTS.craftgo=()=>{const v=$("craftin")?.value.trim();if(!v)return;craft(v).then(()=>openStores())};
 function itemMenu(o){const own=o.owner?P(o.owner):null;const r=document.querySelector(`[data-u="${o.u}"][data-g="camp"]`)?.getBoundingClientRect();
   showMenu(`<div class="h">${esc(invNameOf(o.k))}${o.n>1?" ×"+o.n:""}<small>${own?`Kept for ${esc(own.name)}.`:"Anyone can use it."}${CONDS_ITEM[o.k]?" Someone may need this to live.":""}</small></div>
-    <button data-act="reserve" data-u="${o.u}">Keep it for someone ▸</button>${own?`<button data-act="unreserve" data-u="${o.u}">Anyone can use it</button>`:""}<button data-act="toss" data-u="${o.u}">Throw it out</button>`,r?r.right:200,r?r.top:200)}
+    ${GUNS[o.k]&&S.player.gun!==o.k&&S.player.loc===campK()?`<button data-act="guncarry" data-u="${o.u}">Carry it yourself</button>`:""}<button data-act="reserve" data-u="${o.u}">Keep it for someone ▸</button>${own?`<button data-act="unreserve" data-u="${o.u}">Anyone can use it</button>`:""}<button data-act="toss" data-u="${o.u}">Throw it out</button>`,r?r.right:200,r?r.top:200)}
 ACTS.reserve=d=>{const o=S.inv.items.find(o=>o.u===+d.u);const m=$("menu");showMenu(`<div class="h">Keep it for</div>${members().map(p=>`<button data-act="resv" data-u="${o.u}" data-id="${p.id}">${esc(p.name)}</button>`).join("")}`,parseFloat(m.style.left),parseFloat(m.style.top))};
 ACTS.resv=d=>{const o=S.inv.items.find(o=>o.u===+d.u);for(const q of S.inv.items)if(q.k===o.k)q.owner=d.id;closeMenu();openStores();save()};
 ACTS.unreserve=d=>{const o=S.inv.items.find(o=>o.u===+d.u);for(const q of S.inv.items)if(q.k===o.k)q.owner=null;closeMenu();openStores();save()};
+ACTS.guncarry=d=>{const o=S.inv.items.find(o=>o.u===+d.u);closeMenu();if(!o||!GUNS[o.k])return;const pl=S.player;
+  if(o.by){const p=P(o.by);if(p){p.gun=null;stores(`You took the ${ITEMS[o.k]} from ${p.name}.`)}o.by=null}
+  if(pl.gun)giveItem(pl.gun,1);takeItem(o.k,1);pl.gun=o.k;const cap=GUNS[o.k].carry;if((pl.rounds||0)>cap){S.res.ammo+=pl.rounds-cap;pl.rounds=cap}loadUp();syncInv();
+  log(`You take the ${ITEMS[o.k]}: ${pl.rounds} rounds.`);openStores();renderHud();save()};
+ACTS.gunstow=()=>{const pl=S.player;if(!pl.gun||pl.loc!==campK())return;giveItem(pl.gun,1);S.res.ammo+=pl.rounds||0;log(`You leave the ${ITEMS[pl.gun]} in camp stores for whoever's on guard.`);
+  pl.gun=null;pl.rounds=0;syncInv();openStores();renderHud();save()};
 ACTS.toss=d=>{const o=S.inv.items.find(o=>o.u===+d.u);closeMenu();if(RES[o.k])S.res[o.k]-=o.n;else if(o.k.startsWith("c:"))S.crafted=S.crafted.filter(c=>"c:"+c.id!==o.k);else takeItem(o.k,o.n);syncInv();openStores();renderHud();save()};
 // ---------- building ----------
 function openBuild(){if(!S)return;if(S.player.loc==="road")return;

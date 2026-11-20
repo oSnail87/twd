@@ -33,6 +33,7 @@ function mkPerson(o){o=o||{};const sex=o.sex||(rf()<.5?"F":"M");const age=o.age?
   if(p.motive==="family")p.tr.kind=Math.max(p.tr.kind,.2);
   // they bring a few doses of whatever keeps them alive
   if(p.cond){const it=CONDS[p.cond].item;p.carry={[it]:it==="heartpills"?20:it==="epipen"?1:ri(2,4)}}
+  const cg=CARRY_GUN[job0];if(cg&&!kid&&rf()<cg[1]){p.carry=p.carry||{};p.carry[cg[0]]=1;p.carry.ammo=ri(4,12)}
   return p}
 const REL={parentF:"mother",parentM:"father",kidF:"daughter",kidM:"son",spouseF:"wife",spouseM:"husband",sibF:"sister",sibM:"brother",gpF:"grandmother",gpM:"grandfather",gkF:"granddaughter",gkM:"grandson"};
 function link(a,b,ab,ba){a.fam[b.id]=REL[ab+b.sex];b.fam[a.id]=REL[ba+a.sex]}
@@ -63,12 +64,12 @@ function layout(k){if(LAYOUT[k])return LAYOUT[k];const L=LOCS[k];const T=SCENES[
   addB(T.b,"main");addB(T.b2,"b2");
   const kinds=SCENE_CONTS[k]||T.conts;const main=o.b[0];let ci=0;
   for(const ck of kinds){let x,z;
-    if(ck==="car"){x=(R()*2-1)*14;z=8+R()*10;if(k==="start"){x=-20+ci*9+R()*2;z=4+R()*6}o.cars.push({x,z,rot:R()*.6-.3+(R()<.5?0:Math.PI),c:pick2(["#7a2a22","#2a3a5a","#c8c8c0","#3a3a3a","#5a6a4a","#8a7a5a"],R)});o.blk.push([x-1.2,z-2.2,x+1.2,z+2.2])}
+    if(ck==="car"||ck==="cruiser"){x=(R()*2-1)*14;z=8+R()*10;if(k==="start"){x=-20+ci*9+R()*2;z=4+R()*6}const col=pick2(["#7a2a22","#2a3a5a","#c8c8c0","#3a3a3a","#5a6a4a","#8a7a5a"],R);o.cars.push({x,z,rot:R()*.6-.3+(R()<.5?0:Math.PI),c:ck==="cruiser"?"#e4e4de":col,cop:ck==="cruiser"});o.blk.push([x-1.2,z-2.2,x+1.2,z+2.2])}
     else if(ck==="barn"&&o.b[1]){x=o.b[1].x;z=o.b[1].z+o.b[1].d/2+.9}
     else if(ck==="shed"){x=pick2([-18,18,-14,14],R);z=-2+R()*8;o.blk.push([x-1.6,z-1.6,x+1.6,z+1.6])}
     else if(main){const slots=Math.max(1,kinds.filter(c=>c!=="car"&&c!=="barn"&&c!=="shed").length);const i=o.conts.filter(c=>c.vis==="door").length;x=main.x-main.w/2+(i+.5)*main.w/slots;z=main.z+main.d/2+.9}
     else{x=R()*20-10;z=R()*10}
-    o.conts.push({id:k+":"+ci,k:ck,x,z,vis:ck==="car"?"car":ck==="shed"?"shed":ck==="barn"?"door":"door"});ci++}
+    o.conts.push({id:k+":"+ci,k:ck,x,z,vis:ck==="car"||ck==="cruiser"?"car":ck==="shed"?"shed":ck==="barn"?"door":"door"});ci++}
   const nt=Math.round(30*(T.tree||.5));for(let i=0;i<nt;i++){let x,z,t=0;do{x=(R()*2-1)*(SH+4);z=(R()*2-1)*(SH+4);t++}while(t<20&&(Math.abs(x)<SH-6&&Math.abs(z)<SH-6||Math.abs(x)<4));o.trees.push([x,z,.8+R()*.7])}
   // a few trees inside the scene too, away from buildings and the road
   for(let i=0;i<Math.round(6*(T.tree||.5));i++){const x=(R()*2-1)*(SH-4),z=(R()*2-1)*(SH-4);if(Math.abs(x)<5)continue;if(o.blk.some(b=>x>b[0]-3&&x<b[2]+3&&z>b[1]-3&&z<b[3]+3))continue;o.trees.push([x,z,.7+R()*.6]);o.blk.push([x-.5,z-.5,x+.5,z+.5])}
@@ -111,7 +112,7 @@ function newGame(pl){S={v:1,t:7*HOUR+40,nid:1,bv:1,camp:null,res:{food:10,water:
   for(const p of [...h1,...h2]){p.status="member";p.trust=45+ri(0,15);p.mood=45;p.follow=true;S.people.push(p)}
   topUpWalkers("start");
   log(`Day 1. The pileup on Route 9 isn't moving, and the radio keeps saying stay indoors. ${listAnd(S.people.map(p=>p.name))} are stuck here with you.`);
-  log("Open the map (M) and pick somewhere to make camp. Search the cars first, if you like.","hint");
+  log("Open the map (M) and pick somewhere to make camp. Search the cars first, if you like. A state trooper's cruiser sits empty up the line.","hint");
   return S}
 
 // ================= the camp =================
@@ -121,7 +122,8 @@ function campHere(){const k=S.player.loc;const L=LOCS[k];if(!L||L.camp===false)r
   log(`You make camp at ${L.n}.`,"big");S.nextStranger=S.t+ri(16,26)*HOUR;unloadHaul();
   for(const p of members()){mem(p,`We made camp at ${L.n}.`,2);bringCarry(p)}
   syncInv();return true}
-function bringCarry(p){if(!p.carry)return;for(const [k,n] of Object.entries(p.carry))S.items[k]=(S.items[k]||0)+n;p.carry=null}
+function bringCarry(p){if(!p.carry)return;for(const [k,n] of Object.entries(p.carry)){if(RES[k])S.res[k]=(S.res[k]||0)+n;else S.items[k]=(S.items[k]||0)+n;
+    if(GUNS[k])log(`${p.name} puts ${pronoun(p,"p")} ${ITEMS[k]} in with the camp's things${p.carry.ammo?`, with ${p.carry.ammo} rounds`:""}.${S.player.gun?"":" You could carry it yourself (Stores, I)."}`)}p.carry=null}
 function addBld(type,x,z,o){o=o||{};const B=BUILDS[type];const b={id:nid("b"),type,loc:o.loc||S.player.loc,x,z,rot:o.rot||0,done:!!o.done,prog:o.done?B.hrs:0,opt:o.opt||{},name:o.name||B.n,grow:0,hp:100};
   S.blds.push(b);S.bv++;if(typeof onBld==="function")onBld(b);return b}
 function campBlds(){return S.camp?S.blds.filter(b=>b.loc===S.camp.site):[]}
@@ -131,7 +133,8 @@ function canAfford(cost){return Object.entries(cost).every(([k,v])=>(S.res[k]||0
 function pay(cost){for(const [k,v] of Object.entries(cost))S.res[k]-=v;syncInv()}
 function costWords(c){return Object.entries(c).map(([k,v])=>`${v} ${RES[k].toLowerCase()}`).join(", ")}
 function defense(){if(!S.camp)return 0;const s=SITES[S.camp.site];const g=here().filter(p=>p.job==="guard"&&!p.kid);
-  return Math.round(s.def*3+g.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+bldDone("tower").length*2.5*(g.length?1:.4)+bldDone("fence").length*1+useVal("defense")*1.2+Math.min(3,S.res.ammo/5))}
+  return Math.round(s.def*3+g.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+bldDone("tower").length*2.5*(g.length?1:.4)+bldDone("fence").length*1+useVal("defense")*1.2+(S.res.ammo>=1?Math.min(campGuns(),g.length)*1.5:0)+Math.min(2,S.res.ammo/8))}
+function campGuns(){return Object.keys(GUNS).reduce((a,k)=>a+itemCount(k),0)}
 function useVal(u){return S.crafted.filter(c=>c.use===u).reduce((a,c)=>a+(c.v||1),0)+(S.inv?S.inv.items.filter(o=>!o.k.startsWith("c:")&&ITEM_USE[o.k]===u).length*.5:0)}
 function campPoint(ang,r){return{x:clamp(Math.cos(ang)*r,-SH+2,SH-2),z:clamp(4+Math.sin(ang)*r,-SH+2,SH-2)}}
 function inCamp(x,z){return S.camp&&dist(x,z,0,4)<S.camp.r+3}
@@ -180,7 +183,9 @@ function clash(v,w){if(w.dead||w.cool)return;w.cool=20;const pl=S.player;
   if(v!==pl&&pl.ko<=0&&pl.loc===v.loc&&dist(pl.x,pl.z,v.x,v.z)<7)helpers.push(pl);
   const fighter=helpers.reduce((a,b)=>fightOf(b)>fightOf(a)?b:a,v);
   let chance=.6+fightOf(fighter)*.1+(helpers.length-1)*.1;if(useVal("weapon")>0)chance+=.06;
-  if(fighter!==pl&&fighter.job==="guard"&&S.res.ammo>0&&rf()<.4){S.res.ammo--;chance+=.2}
+  // whoever has a gun gets a shot off first: the player from what they carry, people in camp from camp stores
+  if(fighter===pl&&pl.gun&&(pl.rounds||0)>0){pl.rounds--;chance+=.22;gunNoise(pl,w)}
+  else if(fighter!==pl&&fighter.gun&&fighter.loc===campK()&&S.res.ammo>=1&&rf()<.85){S.res.ammo--;chance+=.25;gunNoise(fighter,w)}
   const nm=x=>x===pl?"You":x.name;if(fighter.hunt)fighter.hunt=null;
   if(rf()<chance){w.dead=true;w.diedAt=S.t;say(fighter,pick(["Got it.","Stay down.","That's one.","Clear!","Go back to sleep."]));
     if(rf()<.3||fighter===pl)log(`${nm(fighter)} put down one of the dead${v.loc===campK()&&inCamp(w.x,w.z)?" at the edge of camp":""}.`);if(fighter!==pl)fighter.sk.fight=Math.min(3,fighter.sk.fight+.04);return}
@@ -191,7 +196,12 @@ function clash(v,w){if(w.dead||w.cool)return;w.cool=20;const pl=S.player;
   if(v.hp<=0){die(v,v.kid?"was pulled down by the dead":"was pulled down by the dead before anyone could reach "+pronoun(v,"o"));return}
   log(`${v.name} got hurt fighting off one of the dead.`,"warn");
   if(v.hp<50&&rf()<(v.kid?.04:.12)&&!v.bitten&&v.status==="member"){v.bitten=true;queueCard("bitten",{who:v.id})}}
-function fightOf(x){return x.id==="you"?2+Math.min(1,useVal("weapon")*.3):x.sk.fight+(x.tr.brave>.3?.5:0)}
+function fightOf(x){return x.id==="you"?2+Math.min(1,useVal("weapon")*.3):x.sk.fight+(x.tr.brave>.3?.5:0)+(x.gun&&x.loc===campK()&&S.res.ammo>=1?.6:0)}
+// a shot fired in a scuffle: the flash, and the noise that brings more of them
+function gunNoise(o,w){const G=GUNS[o.id==="you"?S.player.gun:o.gun];if(!G)return;o.aim=typeof performance!=="undefined"?performance.now():0;if(typeof shotFx==="function")shotFx(o,w,true);noiseAt(o.loc,o.x,o.z,G.noise)}
+function noiseAt(loc,x,z,r){for(const o of S.walkers){if(o.loc!==loc||o.dead||dist(o.x,o.z,x,z)>r)continue;o.path=null;o.tx=clamp(x+rf()*4-2,-SH+1,SH-1);o.tz=clamp(z+rf()*4-2,-SH+1,SH-1)}
+  // further off, more of them hear it and come to see
+  if(rf()<r/70&&walkersAt(loc).length<14){const n=spawnWalker(loc);n.tx=clamp(x+rf()*6-3,-SH+1,SH-1);n.tz=clamp(z+rf()*6-3,-SH+1,SH-1)}}
 function knockOut(){const pl=S.player;pl.ko=1;pl.hp=35;log("Everything goes black.","bad");
   const saver=S.people.filter(p=>p.status==="member"&&p.loc===pl.loc&&!p.kid)[0]||here().filter(p=>!p.kid).sort((a,b)=>b.sk.fight-a.sk.fight)[0];
   setTimeout(()=>{if(!S)return;S.t+=3*HOUR;if(S.camp&&pl.loc!==S.camp.site)arriveAt(S.camp.site,true);pl.x=2;pl.z=6;pl.tx=null;pl.path=null;pl.ko=0;
@@ -200,7 +210,7 @@ function knockOut(){const pl=S.player;pl.ko=1;pl.hp=35;log("Everything goes blac
     if(typeof onScene==="function")onScene()},50)}
 
 // ================= the hour =================
-function hourly(){const h=hourOf(S.t);
+function hourly(){const h=hourOf(S.t);if(typeof armUp==="function")armUp(true);
   if(!S.camp){for(const p of S.people)if(p.status==="member"&&!p.follow&&p.tx==null&&rf()<.4)moveTo(p,p.x+rf()*4-2,p.z+rf()*4-2);walkerHour();return}
   if(h===6)dawn();if(h===8)sendScavs();
   for(const p of S.people){if(p.status==="member"&&atCamp(p))planHour(p,h);else if(p.status==="stranger"&&p.loc===campK())strangerHour(p);else if(p.status==="member"&&p.away&&p.away.out&&S.t>=p.away.back)comeBack(p)}
@@ -311,7 +321,8 @@ function sendScavs(){const sc=here().filter(p=>p.job==="scav"&&willWork(p)&&p.hp
   const spots=Object.keys(LOCS).filter(k=>k!==campK()&&k!=="start"&&!(S.rival&&S.rival.site===k&&!S.rival.gone)&&!place(k).burned);
   const k=S.flags.scavTo&&spots.includes(S.flags.scavTo)?S.flags.scavTo:pick(spots);
   for(const p of sc){p.away={kind:"scav",to:k,back:S.t+(travelHours(campK(),k)*2+3)*HOUR,out:false};p.act=`heading out to the ${LOCS[k].n}`;moveTo(p,ENTRY.x+rf()*2,ENTRY.z,()=>{p.away.out=true})}}
-function comeBack(p){const k=p.away.to;const L=LOCS[k];const r=lootRoll(k,p.sk.scav);const danger=(L.danger||1)*.05-p.sk.scav*.025+(dayOf(S.t)*.003);
+function comeBack(p){const k=p.away.to;const L=LOCS[k];const r=lootRoll(k,p.sk.scav);const armed=p.gun&&S.res.ammo>=1;const danger=((L.danger||1)*.05-p.sk.scav*.025+(dayOf(S.t)*.003))*(armed?.65:1);
+  if(armed)S.res.ammo=Math.max(0,S.res.ammo-ri(1,4));
   p.away.out=false;p.x=ENTRY.x;p.z=ENTRY.z;
   if(rf()<danger*.18&&!p.kid){p.away=null;die(p,`never came back from the ${L.n}`);return}
   if(rf()<danger){p.hp-=ri(10,28);log(`${p.name} ran into trouble at the ${L.n} and came back limping.`,"warn")}

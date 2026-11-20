@@ -61,7 +61,8 @@ function rally(){if(!S.rival||S.rival.gone){toast("There's nobody to fight. Not 
   const L=members().filter(p=>!p.kid&&(atCamp(p)&&pl_().loc===campK()||p.loc===pl_().loc));if(!L.length){toast("There's nobody here to ask.");return}
   const out=L.map(p=>({p,r:weigh(p,"war")}));for(const o of out){o.p.lastTalk=S.t;if(o.r.yes){o.p.follow=true;o.p.away=null}}
   if(typeof warCard==="function")warCard(out)}
-function battle(){const R=S.rival;const party=withYou().filter(p=>!p.kid);let us=2+party.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+Math.min(4,S.res.ammo/6)+useVal("weapon")*.4;const them=rivalStr();
+function battle(){const R=S.rival;const pl=pl_();const party=withYou().filter(p=>!p.kid);let us=2+party.reduce((a,p)=>a+1.5+p.sk.fight*.8,0)+Math.min(4,S.res.ammo/6)+useVal("weapon")*.4+(pl.gun&&pl.rounds>0?1.5:0);const them=rivalStr();
+  if(pl.gun)pl.rounds=Math.max(0,(pl.rounds||0)-ri(3,8));
   if(S.res.ammo>0)S.res.ammo=Math.max(0,S.res.ammo-party.length*2);
   const roll=us*(.75+rf()*.5)-them*(.75+rf()*.5);const beats=[];const foes=S.people.filter(p=>p.status==="rival");const hurtUs=[];
   beats.push(`You come at ${LOCS[R.site].n} ${hourOf(S.t)>=20||hourOf(S.t)<5?"in the dark":"in broad daylight"}, ${party.length?listAnd(party.map(p=>p.name))+" beside you":"alone"}.`);
@@ -79,7 +80,7 @@ function battle(){const R=S.rival;const party=withYou().filter(p=>!p.kid);let us
   syncInv();return{won:roll>0,beats}}
 
 // ---------- places ----------
-function travelTo(k){const pl=pl_();if(S.flags.traveling||k===pl.loc||!LOCS[k])return;const hrs=travelHours(pl.loc,k);const party=withYou();
+function travelTo(k){const pl=pl_();if(S.flags.traveling||k===pl.loc||!LOCS[k])return;armUp(true);const hrs=travelHours(pl.loc,k);const party=withYou();
   S.flags.traveling={to:k,from:pl.loc,hrs,start:S.t};for(const p of party){p.loc="road";p.tx=null;p.path=null;p.onArrive=null}pl.loc="road";pl.tx=null;pl.path=null;pl.onArrive=null;if(UI.loot)closeLoot();
   log(`You set out for ${LOCS[k].n}${party.length?" with "+listAnd(party.map(p=>p.name)):""}. About ${hrs} hour${hrs>1?"s":""} on foot.`);if(typeof onTravel==="function")onTravel(hrs)}
 function travelTick(){const T=S.flags.traveling;if(!T)return true;step(HOUR/2);if(S.t-T.start<T.hrs*HOUR)return false;
@@ -94,6 +95,7 @@ function arriveAt(k,silent){const pl=pl_();const party=S.people.filter(p=>p.loc=
     // sometimes someone's hiding here
     if(first&&k!=="start"&&rf()<.4&&!(S.rival&&S.rival.site===k)){const hh=mkHousehold(null,k,{x:rf()*12-6,z:rf()*6});for(const q of hh){q.status="stranger";q.trust=ri(5,25);q.waitTill=S.t+9999*HOUR;q.act="hiding";S.people.push(q)}log(`Someone's here: ${hh.length>1?`${hh.length} people`:hh[0].sex==="F"?"a woman":"a man"}, hiding and watching you.`,"warn")}
     if(S.rival&&S.rival.site===k&&!S.rival.gone)log("The Pruitt crew lives here now. They're watching you.","warn")}
+  armUp(true);
   if(typeof onScene==="function")onScene();save()}
 function goHome(){if(S.camp)travelTo(S.camp.site)}
 function burnPlace(){const pl=pl_();const k=pl.loc;if(k===campK()){toast("That's your camp.");return}if(k==="road")return;const P2=place(k);if(P2.burned){toast("It's already burned.");return}
@@ -124,6 +126,13 @@ async function doCommand(raw){const text=raw.trim();if(!text)return;if(!S)return
   if(/^(open )?(the )?map$/.test(t))return openMap();
   m=/^(go|head|travel|walk|drive|run|get|move|hike|return)\s+(back\s+)?(to|over to|toward|towards|home|back)\b\s*(.*)$/.exec(t);
   if(m){const rest=(m[4]||"")+" "+(m[3]==="home"?"home":"");if(/\b(home|camp|base)\b/.test(rest)&&S.camp)return goHome();const k=locIn(rest);if(k)return travelTo(k);const tgt=namedIn(rest)[0];if(tgt){if(here_(tgt))approach(tgt);return}const c=contIn(rest);if(c)return approach(c)}
+  // guns are for the dead, never the living
+  if(/^(shoot|open fire|aim|take a shot|blast|snipe|pick off|gun down)\b|^fire\b(?! up)/.test(t)||/\b(shoot|take a shot at)\b/.test(t)||/\bfire (at|on) (the |that |those |a |an )?(dead|walkers?|zombies?|biters?|them|it|one)\b/.test(t)){
+    const living=who||/\b(pruitts?|boyd|stranger|strangers|person|people|guy|man|woman|kid|kids|survivors?)\b/.test(t);
+    if(living&&!/\b(dead|walkers?|zombies?|biters?|corpses?)\b/.test(t)){toast("You won't point a gun at the living. If it comes to the Pruitts, that's a war, and it needs your people behind you.");return}
+    return shootNearest()}
+  if(/^(kill|take out|put down|stab|hit|fight|smash|attack)\b.*\b(dead|walkers?|zombies?|biters?|one of them)\b/.test(t)){const w=nearestWalker();if(!w){toast("There's none of the dead here.");return}
+    if(pl.gun&&((pl.rounds||0)>0||loadUp()))return closeAndShoot(w);return approach(w,()=>clash(pl,w))}
   // orders
   if(/(come with me|follow me|with me|tag along|let's go)/.test(t)){const L=everyoneIn(t)?localPeople().filter(p=>p.status==="member"&&!p.kid):names.filter(p=>p.status==="member");if(!L.length&&who)L.push(who);if(!L.length){toast("Who do you want to come with you? Use a name.");return}return askMany(L,"come")}
   if(/(stay (here|put|behind)|wait here|stop following|go (back )?home|go back to camp)/.test(t)){const L=everyoneIn(t)?withYou():names;if(!L.length)return toast("Who should stay?");return askMany(L,"stay")}
@@ -162,6 +171,7 @@ async function runAction(a){const nm=x=>namedIn(String(x||""))[0];const pl=pl_()
     case"follow":{const L=(Array.isArray(a.who)?a.who:[a.who]).map(nm).filter(Boolean);await askMany(L,"come");break}
     case"stay":{const L=(Array.isArray(a.who)?a.who:[a.who]).map(nm).filter(Boolean);await askMany(L,"stay");break}
     case"search":{const c=a.what&&a.what!=="all"?contIn(String(a.what).toLowerCase()):nearestCont();if(c)approach(c,()=>openLoot(c));break}
+    case"shoot":shootNearest();break;
     case"burn":burnPlace();break;case"craft":await craft(String(a.text||""));break;case"wait":waitHours(+a.hours||1);break;case"war":rally();break;
     case"act":{const p=a.trust&&Object.keys(a.trust)[0]?nm(Object.keys(a.trust)[0]):null;const go=()=>{if(a.text)log(String(a.text).slice(0,300));
         const md=clamp(+a.mood||0,-4,4);if(md)for(const q of members())q.mood=clamp(q.mood+md,0,100);
@@ -175,3 +185,43 @@ async function craft(text){if(!S.camp&&!Object.keys(S.items).length){toast("You 
   if(done&&done.harm.length)log(`That used medicine ${listAnd(done.harm.map(p=>p.name))} needs to stay alive. ${done.harm.length>1?"They":pronoun(done.harm[0],"S")} won't forget it.`,"bad");if(typeof renderAll==="function")renderAll();return res}
 function doCamp(){if(S.camp){toast(`You already have a camp at ${S.camp.n}.`);return}const k=pl_().loc;const L=LOCS[k];if(!L||L.camp===false){toast("You can't live here. Open the map (M) and pick a place.");return}
   if(S.rival&&S.rival.site===k&&!S.rival.gone){toast("The Pruitts live here.");return}if(campHere()){if(typeof onScene==="function")onScene();save()}}
+
+// ================= guns =================
+// Once you find a gun you keep it on you. Rounds come out of what you're carrying, or out of camp stores when you're home
+// (before there's a camp, the stores are just what the group has with them).
+function loadUp(){const pl=pl_();if(!pl.gun)return 0;const cap=GUNS[pl.gun].carry;let need=cap-(pl.rounds||0),got=0;if(need<=0)return 0;
+  const h=S.haul;for(const o of [...h.items]){if(o.k!=="ammo"||need<=0)continue;const d=Math.min(o.n,need);o.n-=d;need-=d;got+=d;if(o.n<=0)h.items.splice(h.items.indexOf(o),1)}
+  if(need>0&&(!S.camp||pl.loc===campK())){const d=Math.min(need,Math.floor(S.res.ammo+1e-6));if(d>0){S.res.ammo-=d;need-=d;got+=d;syncInv()}}
+  pl.rounds=(pl.rounds||0)+got;return got}
+// pick up a gun you've just found (not one someone else brought into camp), and keep it loaded
+function armUp(quiet,looted){if(!S)return;const pl=pl_();if(!LOCS[pl.loc])return;
+  if(!pl.gun){const h=S.haul;const hg=h.items.filter(o=>GUNS[o.k]).sort((a,b)=>GUN_RANK[b.k]-GUN_RANK[a.k])[0];let k=null;
+    if(hg){k=hg.k;hg.n--;if(hg.n<=0)h.items.splice(h.items.indexOf(hg),1)}
+    else if(looted&&looted.length){k=[...looted].sort((a,b)=>GUN_RANK[b]-GUN_RANK[a]).find(k=>itemCount(k)>0)||null;if(k){takeItem(k,1);syncInv()}}
+    if(k){pl.gun=k;pl.rounds=pl.rounds||0;loadUp();log(`You keep the ${ITEMS[k]} on you${pl.rounds?`, with ${pl.rounds} rounds`:", but there's no ammo for it yet"}. Click one of the dead to shoot it.`,"good");return}}
+  if(pl.gun&&(pl.rounds||0)<GUNS[pl.gun].carry){const got=loadUp();if(got&&!quiet)log(`You load up: ${pl.rounds} rounds for the ${ITEMS[pl.gun]}.`)}}
+const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;return d};
+function nearestWalker(){const pl=pl_();return walkersAt(pl.loc).sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z))[0]||null}
+function inSight(w){const pl=pl_();return pl.gun&&dist(pl.x,pl.z,w.x,w.z)<=GUNS[pl.gun].range&&clearLine(pl.loc,pl.x,pl.z,w.x,w.z)}
+function shoot(w){const pl=pl_();const G=GUNS[pl.gun];if(!G||!w||w.dead||w.loc!==pl.loc||pl.ko>0)return false;
+  const now=typeof performance!=="undefined"?performance.now():Date.now();if(now<(pl.gunReady||0))return true;
+  if((pl.rounds||0)<=0&&!loadUp()){toast(`The ${ITEMS[pl.gun]} is empty. ${S.camp&&pl.loc!==campK()?"There may be ammo back at camp.":"Cars and the police station might have ammo."}`);return false}
+  const d=dist(pl.x,pl.z,w.x,w.z);pl.rounds--;pl.gunReady=now+G.cool;pl.aim=now;pl.tx=null;pl.tz=null;pl.path=null;pl.onArrive=null;pl.dir=Math.atan2(w.x-pl.x,w.z-pl.z);
+  // closer is surer, hurt and shaking is worse, and a shotgun can drop more than one
+  const p=clamp(G.hit*(1-.5*(d/G.range)**2)-(pl.hp<40?.12:0),.15,.95);const hits=rf()<p?[w]:[];
+  if(G.spread)for(const o of walkersAt(pl.loc)){if(o===w||dist(pl.x,pl.z,o.x,o.z)>G.range)continue;if(Math.abs(angDiff(Math.atan2(o.x-pl.x,o.z-pl.z),pl.dir))<.3&&rf()<G.spread)hits.push(o)}
+  for(const o of hits){o.dead=true;o.diedAt=S.t}S.stats.shot=(S.stats.shot||0)+hits.length;
+  if(typeof shotFx==="function")shotFx(pl,w,hits.includes(w));noiseAt(pl.loc,pl.x,pl.z,G.noise);
+  if(!hits.length)say(pl,pick(["Missed.","Damn it.","Hold still...","Come on."]));
+  else if(hits.length>1)log(`One blast from the shotgun drops ${hits.length} of them.`,"good");
+  else if(rf()<.25)log(pick([`You drop one of the dead with the ${ITEMS[pl.gun]}.`,"One shot. It goes down and stays down.","The shot rolls away across the empty lot. One less of them."]));
+  if(pl.rounds===0)toast("That was your last round.");
+  return true}
+// walk until you have a clear shot, then take it
+function closeAndShoot(w,tries){const pl=pl_();if(!pl.gun||!w||w.dead)return;tries=tries||0;const R=GUNS[pl.gun].range*.7;const d=dist(pl.x,pl.z,w.x,w.z);
+  if(d<=GUNS[pl.gun].range&&clearLine(pl.loc,pl.x,pl.z,w.x,w.z)){shoot(w);return}
+  if(tries>1){approach(w,()=>{if(!w.dead)shoot(w)});return}
+  const f=Math.max(0,(d-R)/Math.max(d,.01));moveTo(pl,pl.x+(w.x-pl.x)*f,pl.z+(w.z-pl.z)*f,()=>{if(!w.dead&&w.loc===pl.loc)closeAndShoot(w,tries+1)})}
+function shootNearest(){const pl=pl_();if(!pl.gun){toast("You don't have a gun. Try the police station's armory, or that trooper's cruiser on the highway.");return}
+  const L=walkersAt(pl.loc).sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z));const w=L.find(inSight)||L[0];
+  if(!w){toast("There's nothing to shoot here.");return}closeAndShoot(w)}

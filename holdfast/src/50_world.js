@@ -22,7 +22,7 @@ function initWorld(cv){if(!T3){W.ok=false;return}try{
   W.ok=true;resizeWorld()}catch(e){console.error(e);W.ok=false}}
 function resizeWorld(){if(!W.ok)return;const w=innerWidth,h=innerHeight;W.r.setSize(w,h,false);W.aspect=w/h;camUpdate()}
 function camUpdate(){const z=W.zoom,a=W.aspect||1;W.cam.left=-z*a;W.cam.right=z*a;W.cam.top=z;W.cam.bottom=-z;W.cam.updateProjectionMatrix();
-  const t=W.tgt;W.cam.position.set(t.x+60,60,t.z+60);W.cam.lookAt(t.x,0,t.z);W.sun.position.set(t.x+30,60,t.z+18);W.sun.target.position.set(t.x,0,t.z)}
+  const t=W.tgt;const j=W.kick>0?(Math.random()-.5)*W.kick*2:0;W.cam.position.set(t.x+60+j,60,t.z+60-j);W.cam.lookAt(t.x+j,0,t.z-j);W.sun.position.set(t.x+30,60,t.z+18);W.sun.target.position.set(t.x,0,t.z)}
 function clearGroup(g){while(g.children.length){const c=g.children.pop();c.traverse(o=>{if(o.geometry)o.geometry.dispose()})}}
 // ---------- building a place ----------
 function buildScene(){if(!W.ok||!S)return;const k=S.player.loc==="road"?(S.flags.traveling?.from||"start"):S.player.loc;W.loc=k;clearGroup(W.root);clearGroup(W.dyn);W.figs={};W.blds={};W.conts={};W.fx=[];
@@ -47,7 +47,7 @@ function buildScene(){if(!W.ok||!S)return;const k=S.player.loc==="road"?(S.flags
     else{for(let i=0;i<5;i++)g.add(box(.3,R()*b.h,.3,"#1e1a18",(R()-.5)*b.w,0,(R()-.5)*b.d));W.fx.push({smoke:true,x:b.x,z:b.z,h:b.h})}
     g.position.set(b.x,0,b.z);W.root.add(g)}
   if(lay.canopy&&!burned){const g=new T3.Group();g.add(box(12,.4,7,"#d8d8d0",0,4,0));for(const [x,z] of [[-5,-3],[5,-3],[-5,3],[5,3]])g.add(box(.3,4,.3,"#a8a8a0",x,0,z));for(const x of [-2.5,2.5])g.add(box(.8,1.4,.5,"#a83a2a",x,0,0));g.position.set(6,0,4);W.root.add(g)}
-  for(const c of lay.cars){const g=new T3.Group();g.add(box(1.9,.8,4,c.c,0,.3,0));g.add(box(1.7,.6,2.2,"#2a3440",0,1.1,-.2));for(const [x,z] of [[-.95,-1.3],[.95,-1.3],[-.95,1.3],[.95,1.3]]){const w=cyl(.36,.36,.25,"#1a1a1a",0,0,0,10);w.rotation.z=Math.PI/2;w.position.set(x,.36,z);g.add(w)}g.position.set(c.x,0,c.z);g.rotation.y=c.rot;W.root.add(g)}
+  for(const c of lay.cars){const g=new T3.Group();g.add(box(1.9,.8,4,c.c,0,.3,0));g.add(box(1.7,.6,2.2,"#2a3440",0,1.1,-.2));for(const [x,z] of [[-.95,-1.3],[.95,-1.3],[-.95,1.3],[.95,1.3]]){const w=cyl(.36,.36,.25,"#1a1a1a",0,0,0,10);w.rotation.z=Math.PI/2;w.position.set(x,.36,z);g.add(w)}if(c.cop){g.add(box(1.92,.05,1.2,"#1e1e22",0,1.1,1.3));g.add(box(1.92,.05,1,"#1e1e22",0,1.1,-1.5));g.add(box(.55,.16,.26,"#d83a30",-.3,1.7,-.2));g.add(box(.55,.16,.26,"#3a62d8",.3,1.7,-.2))}g.position.set(c.x,0,c.z);g.rotation.y=c.rot;W.root.add(g)}
   for(const c of lay.conts){if(c.vis==="car")continue;let g;if(c.vis==="shed"){g=new T3.Group();g.add(box(3,2.2,3,"#7a6a52",0,0,0));g.add(box(3.4,.2,3.4,"#5a5a58",0,2.2,0));g.add(box(1,1.8,.06,"#4a3426",0,0,1.51))}
     else{g=new T3.Group();g.add(box(1.4,1,.9,"#8a6a42",0,0,0));g.add(box(1.5,.08,1,"#6a4a2a",0,1,0))}g.position.set(c.x,0,c.z);g.userData.cont=c.id;W.root.add(g);W.conts[c.id]=g}
   const tg=new T3.Group();for(const [x,z,s] of lay.trees){const tr=cyl(.18*s,.24*s,1.4*s,"#5a4030",x,0,z,6);tg.add(tr);const c=new T3.Mesh(new T3.ConeGeometry(1.3*s,3.2*s,7),mat(L.kind==="scout"?"#2e4a2a":"#3a5a30"));c.position.set(x,1.2*s+1.6*s,z);c.castShadow=true;tg.add(c)}W.root.add(tg);
@@ -75,7 +75,7 @@ function drawBld(b){if(!W.ok)return;if(W.blds[b.id]){W.root.remove(W.blds[b.id])
   g.position.set(b.x,0,b.z);g.rotation.y=(b.rot||0)*Math.PI/2;g.userData.bld=b.id;W.root.add(g);W.blds[b.id]=g}
 function onBld(b){drawBld(b)}
 // ---------- people ----------
-function figModel(look,kind){const g=new T3.Group();const s=kind==="kid"?.72:1;const skin=look.skin;const top=look.top,pants=look.pants;
+function figModel(look,kind,gear){const g=new T3.Group();const s=kind==="kid"?.72:1;const skin=look.skin;const top=look.top,pants=look.pants;
   const hip=new T3.Group();hip.position.y=.9*s;g.add(hip);
   const mk=(w,h,d,c,y)=>{const m=new T3.Mesh(new T3.BoxGeometry(w,h,d),mat(c));m.position.y=y;m.castShadow=true;return m};
   const legL=new T3.Group(),legR=new T3.Group();legL.position.set(-.12*s,0,0);legR.position.set(.12*s,0,0);legL.add(mk(.18*s,.88*s,.2*s,pants,-.44*s));legR.add(mk(.18*s,.88*s,.2*s,pants,-.44*s));hip.add(legL,legR);
@@ -85,18 +85,29 @@ function figModel(look,kind){const g=new T3.Group();const s=kind==="kid"?.72:1;c
   const head=new T3.Mesh(new T3.SphereGeometry(.16*s,10,8),mat(skin));head.position.y=.84*s;head.castShadow=true;hip.add(head);
   if(look.hair&&kind!=="walker"){const h=new T3.Mesh(new T3.SphereGeometry(.172*s,10,6,0,Math.PI*2,0,Math.PI*.55),mat(look.hair));h.position.y=.86*s;hip.add(h);if(look.long){const l=mk(.3*s,.34*s,.08*s,look.hair,.7*s);l.position.z=-.12*s;hip.add(l)}}
   if(look.hat){const h=cyl(.19*s,.19*s,.1*s,look.hat,0,.94*s,0,10);h.position.y=.98*s;hip.add(h)}
-  g.userData={hip,legL,legR,armL,armR,ph:rf()*6};return g}
+  let gunHand=null,gunBack=null;
+  if(gear&&GUNS[gear]){const dark="#24272a",wood="#5a3e26";gunHand=new T3.Group();armR.add(gunHand);
+    if(gear==="pistol"){gunHand.add(mk(.07*s,.22*s,.12*s,dark,0));gunHand.position.set(0,-.78*s,.02*s)}
+    else{const long=()=>{const q=new T3.Group();q.add(mk(.06*s,.62*s,.07*s,dark,-.12*s));q.add(mk(.09*s,.3*s,.1*s,wood,.3*s));if(gear==="shotgun")q.add(mk(.08*s,.16*s,.09*s,wood,-.2*s));return q};
+      gunHand.add(long());gunHand.position.set(0,-.98*s,.02*s);gunHand.visible=false;
+      gunBack=long();gunBack.position.set(0,.36*s,-.19*s);gunBack.rotation.z=.7;hip.add(gunBack)}}
+  g.userData={hip,legL,legR,armL,armR,gunHand,gunBack,gear:gear||"",ph:rf()*6};return g}
 function syncFigs(dt,now){if(!W.ok||!S)return;const k=W.loc;const pl=S.player;const want=new Set();
   const ents=[];if(pl.loc===k&&pl.ko<=0)ents.push([pl,pl.look,"you"]);
+  const gearOf=(o,kind)=>kind==="walker"?"":(o.id==="you"?pl.gun:o.gun)||"";
   for(const p of S.people)if(p.loc===k&&p.status!=="left"&&!(p.away&&p.away.out)&&!(p.sleep&&p.inside)&&(p.status!=="dead"||now&&false))ents.push([p,p.look,p.kid?"kid":"adult"]);
   for(const w of S.walkers)if(w.loc===k)ents.push([w,w.look,"walker"]);
-  for(const [o,look,kind] of ents){want.add(o.id);let f=W.figs[o.id];if(!f){f=figModel(look,kind);f.position.set(o.x,0,o.z);W.dyn.add(f);W.figs[o.id]=f}
+  for(const [o,look,kind] of ents){want.add(o.id);let f=W.figs[o.id];const gear=gearOf(o,kind);if(f&&f.userData.gear!==gear){W.dyn.remove(f);f=null}
+    if(!f){f=figModel(look,kind,gear);f.position.set(o.x,0,o.z);W.dyn.add(f);W.figs[o.id]=f}
     const u=f.userData;const moving=o.tx!=null;f.position.x+=(o.x-f.position.x)*Math.min(1,dt*12);f.position.z+=(o.z-f.position.z)*Math.min(1,dt*12);
     const dir=o.dir??0;let dr=dir-f.rotation.y;while(dr>Math.PI)dr-=Math.PI*2;while(dr<-Math.PI)dr+=Math.PI*2;f.rotation.y+=dr*Math.min(1,dt*8);
-    if(o.dead){f.rotation.z=0;u.hip.rotation.x=-Math.PI/2;u.hip.position.y=.18;continue}
+    if(o.dead){f.rotation.z=0;u.hip.rotation.x=-Math.PI/2;u.hip.position.y=.18;u.armL.rotation.x=u.armR.rotation.x=0;continue}
     if(o.sleep&&!o.inside){u.hip.rotation.x=-Math.PI/2;u.hip.position.y=.2;continue}else{u.hip.rotation.x=0;u.hip.position.y=kind==="kid"?.65:.9}
     u.ph+=dt*(moving?(kind==="walker"?5:9)*(S.speed||1)**.3:1.5);const sw=moving?Math.sin(u.ph)*.6:0;u.legL.rotation.x=sw;u.legR.rotation.x=-sw;
     if(kind==="walker"){u.armL.rotation.x=-1.3+Math.sin(u.ph*.5)*.15;u.armR.rotation.x=-1.4+Math.cos(u.ph*.5)*.15;f.rotation.z=Math.sin(u.ph*.5)*.08}else{u.armL.rotation.x=-sw*.8;u.armR.rotation.x=sw*.8}
+    // raising a gun to fire
+    const aiming=o.aim&&now-o.aim<700;if(u.gunHand&&u.gunBack){u.gunHand.visible=aiming;u.gunBack.visible=!aiming}
+    if(aiming){u.armR.rotation.x=-1.5;if(u.gunBack)u.armL.rotation.x=-1.3;continue}
     if(o.busyTalk)u.armR.rotation.x=-.5+Math.sin(now/200)*.2;
     if(o.working){u.armR.rotation.x=-1+Math.sin(now/180)*.6}}
   for(const id in W.figs)if(!want.has(id)){W.dyn.remove(W.figs[id]);delete W.figs[id]}}
@@ -108,8 +119,18 @@ function renderWorld(dt,now){if(!W.ok||!S)return;const want=S.player.loc==="road
   W.root.traverse(o=>{if(o.userData&&o.userData.flame){o.scale.y=.8+Math.sin(now/90+o.id)*.25;o.scale.x=o.scale.z=.9+Math.sin(now/130)*.1}});
   // smoke over burned places
   if(W.fx.length&&rf()<.3){for(const f of W.fx){const p=new T3.Mesh(new T3.SphereGeometry(.6+rf()*.5,6,5),new T3.MeshBasicMaterial({color:"#3a3634",transparent:true,opacity:.5}));p.position.set(f.x+rf()*4-2,f.h,f.z+rf()*4-2);p.userData.smk=1;W.dyn.add(p)}}
+  for(const c of [...W.dyn.children])if(c.userData.shot!=null){c.userData.shot-=dt;c.material.opacity=(c.userData.op??1)*Math.max(0,c.userData.shot/c.userData.life);if(c.userData.shot<=0){W.dyn.remove(c);c.geometry.dispose();c.material.dispose()}}
+  if(W.kick>0)W.kick=Math.max(0,W.kick-dt*.9);
   for(const c of [...W.dyn.children])if(c.userData.smk){c.position.y+=dt*1.6;c.scale.multiplyScalar(1+dt*.25);c.material.opacity-=dt*.07;if(c.material.opacity<=0){W.dyn.remove(c);c.geometry.dispose()}}
   W.r.render(W.sc,W.cam)}
+function shotFx(from,to,hit){if(!W.ok||!S||from.loc!==W.loc)return;const a0=Math.atan2(to.x-from.x,to.z-from.z);
+  const a=new T3.Vector3(from.x+Math.sin(a0)*.8,1.42,from.z+Math.cos(a0)*.8),b=new T3.Vector3(to.x,hit?1.15:1.3,to.z);if(!hit){b.x+=rf()*1.8-.9;b.z+=rf()*1.8-.9}
+  const add=(m,life)=>{m.userData.shot=life;m.userData.life=life;m.userData.op=m.material.opacity;W.dyn.add(m);return m};
+  const len=a.distanceTo(b);const tr=add(new T3.Mesh(new T3.BoxGeometry(.07,.07,len),new T3.MeshBasicMaterial({color:"#ffe39a",transparent:true,opacity:1})),.16);tr.position.copy(a).lerp(b,.5);tr.lookAt(b);tr.userData.shot=tr.userData.life=.2;
+  add(new T3.Mesh(new T3.SphereGeometry(.3,8,6),new T3.MeshBasicMaterial({color:"#ffd36e",transparent:true,opacity:1})),.13).position.copy(a);
+  add(new T3.Mesh(new T3.SphereGeometry(.75,10,8),new T3.MeshBasicMaterial({color:"#ffb84a",transparent:true,opacity:.45})),.09).position.copy(a);
+  if(hit)add(new T3.Mesh(new T3.SphereGeometry(.3,7,5),new T3.MeshBasicMaterial({color:"#4a3c30",transparent:true,opacity:.8})),.45).position.copy(b);
+  W.kick=from.id==="you"?.14:.05}
 // ---------- screen and world ----------
 function toScreen(x,y,z){W.v3.set(x,y,z).project(W.cam);return{x:(W.v3.x+1)/2*innerWidth,y:(1-W.v3.y)/2*innerHeight,vis:W.v3.z<1}}
 function groundAt(cx,cy){const v=new T3.Vector2(cx/innerWidth*2-1,-(cy/innerHeight)*2+1);W.ray.setFromCamera(v,W.cam);const out=new T3.Vector3();return W.ray.ray.intersectPlane(W.plane,out)?{x:out.x,z:out.z}:null}
