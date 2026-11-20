@@ -57,8 +57,8 @@ function useHour(h){if(!S.camp)return;const ppl=here();
   // tools and weapons get picked up by whoever's job uses them, and put back at night
   if(h===7){for(const o of S.inv?.items||[])o.by=null;for(const p of ppl)p.gun=null;
     const want={tool:["build","farm","wood"],weapon:["guard","scav"],light:["guard"],water:["water"]};
-    // guns go out first, and the guards get first pick of them
-    const items=[...(S.inv?.items||[])].sort((a,b)=>(GUNS[b.k]?1:0)-(GUNS[a.k]?1:0));const order=[...ppl].sort((a,b)=>(b.job==="guard")-(a.job==="guard"));
+    // guns go out first, the best first, and the guards get first pick of them
+    const gr=o=>GUNS[o.k]?1+(GUN_RANK[o.k]||0):0;const items=[...(S.inv?.items||[])].sort((a,b)=>gr(b)-gr(a));const order=[...ppl].sort((a,b)=>(b.job==="guard")-(a.job==="guard"));
     for(const o of items){const u=o.k.startsWith("c:")?S.crafted.find(c=>"c:"+c.id===o.k)?.use:ITEM_USE[o.k];if(!u||!want[u])continue;
       const p=order.find(p=>want[u].includes(p.job)&&!S.inv.items.some(q=>q.by===p.id)&&(!o.owner||o.owner===p.id||p.tr.kind<-.35));if(p){o.by=p.id;if(GUNS[o.k])p.gun=o.k;if(rf()<.3)stores(`${p.name} took the ${invNameOf(o.k).toLowerCase()} for ${JOBS[p.job].v}.`)}}}
   if(h===22){for(const o of S.inv?.items||[])o.by=null;for(const p of ppl)p.gun=null}

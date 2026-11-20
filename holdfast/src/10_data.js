@@ -99,8 +99,10 @@ const BUILDS={
     steps:[{t:"stakes",n:6,say:"Ring the pit with stones."},{t:"hold",say:"Blow the kindling into a flame."}]},
   tower:{n:"Watchtower",cost:{wood:6,scrap:1},hrs:10,size:[3,3],job:"guard",d:"A guard up here sees them coming. Big boost to defense.",opts:{},
     steps:[{t:"stakes",n:4,say:"Plant the four legs."},{t:"hold",say:"Haul the platform up."},{t:"drag",say:"Lash the ladder on."}]},
-  fence:{n:"Wall section",cost:{wood:3},hrs:3,size:[6,1],d:"Sharpened posts and boards. Slows the dead down.",opts:{},
+  fence:{n:"Wall section",wall:true,cost:{wood:3},hrs:3,size:[6,1],d:"Posts and boards the dead can't get through. Your people can climb over, slowly. Line them up with cars and buildings to close off a yard.",opts:{},
     steps:[{t:"stakes",n:4,say:"Drive the posts."},{t:"drag",say:"Nail the boards across."}]},
+  gate:{n:"Gate",gate:true,cost:{wood:3,scrap:1},hrs:3,size:[3,1],d:"A gap in the wall your people walk through and the dead don't.",opts:{},
+    steps:[{t:"stakes",n:2,say:"Set the gateposts."},{t:"drag",say:"Hang the gate."}]},
   shed:{n:"Storehouse",solid:true,cost:{wood:6,scrap:2},hrs:8,size:[4,4],d:"Keeps food from spoiling and more supplies safe.",opts:{roof:["#7a7a78","#5a3a2a","#3a5a3a"]},
     steps:[{t:"stakes",n:4,say:"Set the corner posts."},{t:"drag",say:"Raise the walls."},{t:"drag",say:"Put the tin roof on."}]},
   shop:{n:"Workshop",solid:true,cost:{wood:6,scrap:4},hrs:10,size:[4,4],job:"build",d:"Builders work faster here and turn scrap into ammo.",opts:{},
@@ -111,13 +113,13 @@ const BUILDS={
     steps:[{t:"stakes",n:4,say:"Set the posts."},{t:"drag",say:"Stretch the wire."}]},
   bench:{n:"Bench",cost:{wood:1},hrs:1,size:[2,1],d:"Somewhere to sit and talk. People like it.",opts:{},steps:[{t:"stakes",n:2,say:"Set the legs."},{t:"drag",say:"Lay the seat plank."}]},
   garden:{n:"Flower bed",cost:{wood:1},hrs:1,size:[2,2],d:"Pointless and wonderful. Lifts spirits a little.",opts:{color:["#d85a7a","#e8c040","#8a6ad8","#e8e0d0"]},steps:[{t:"stakes",n:4,say:"Plant the bulbs."},{t:"hold",say:"Water them."}]}};
-const BWORDS={tent:/tent/,cabin:/cabin|hut|shack|house|home/,plot:/farm|plot|field|crop|garden plot/,well:/well|barrel|water/,fire:/fire|kitchen|cook|pit/,tower:/tower|lookout|watch/,fence:/wall|fence|barricade|palisade/,shed:/store|shed|storage|pantry/,shop:/workshop|shop|bench ?work/,clinic:/infirm|clinic|hospital|medic/,coop:/coop|chicken|hen/,bench:/bench|seat/,garden:/flower/};
+const BWORDS={tent:/tent/,cabin:/cabin|hut|shack|house|home/,plot:/farm|plot|field|crop|garden plot/,well:/well|barrel|water/,fire:/fire|kitchen|cook|pit/,tower:/tower|lookout|watch/,gate:/\bgate\b/,fence:/wall|fence|palisade/,shed:/store|shed|storage|pantry/,shop:/workshop|shop|bench ?work/,clinic:/infirm|clinic|hospital|medic/,coop:/coop|chicken|hen/,bench:/bench|seat/,garden:/flower/};
 
 // ================= jobs =================
 const JOBS={farm:{n:"Farming",sk:"farm",v:"farming",lead:"farms"},wood:{n:"Woodcutting",sk:"build",v:"cutting wood",lead:"wood"},water:{n:"Hauling water",sk:"farm",v:"hauling water",lead:"water"},
   build:{n:"Building",sk:"build",v:"building",lead:"building"},guard:{n:"Guard duty",sk:"fight",v:"on watch",lead:"defense"},scav:{n:"Scavenging",sk:"scav",v:"scavenging",lead:"supply runs"},
-  cook:{n:"Cooking",sk:"cook",v:"cooking",lead:"kitchen"},medic:{n:"Medic",sk:"med",v:"tending the sick",lead:"health"}};
-const JWORDS={farm:/farm|crop|field|plant|garden/,wood:/wood|chop|lumber|log|axe|tree/,water:/water|haul|river/,build:/build|construct|carpent/,guard:/guard|watch|defen|protect|patrol|lookout/,scav:/scav|loot|supply|forage|run/,cook:/cook|kitchen|food|meal/,medic:/medic|doctor|nurse|heal|sick|clinic|infirm/};
+  cook:{n:"Cooking",sk:"cook",v:"cooking",lead:"kitchen"},medic:{n:"Medic",sk:"med",v:"tending the sick",lead:"health"},hunt:{n:"Hunting",sk:"scav",v:"hunting",lead:"hunting"}};
+const JWORDS={farm:/farm|crop|field|plant|garden/,wood:/wood|chop|lumber|log|axe|tree/,water:/water|haul|river/,build:/build|construct|carpent/,guard:/guard|watch|defen|protect|patrol|lookout/,scav:/scav|loot|supply|forage|run/,cook:/cook|kitchen|meal/,medic:/medic|doctor|nurse|heal|sick|clinic|infirm/,hunt:/hunt|deer|game\b|bow/};
 const RES={food:"Food",water:"Water",wood:"Wood",scrap:"Scrap",meds:"Medicine",ammo:"Ammo"};
 
 // ================= loose items, for crafting =================

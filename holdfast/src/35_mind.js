@@ -10,7 +10,7 @@ function weigh(p,kind,ctx){ctx=ctx||{};const R=[];const add=(v,t)=>{if(Math.abs(
     if(p.motive==="freedom")add(-1,"Doesn't like being told what to do");if(T.social<-.5)add(-.5,"Doesn't trust crowds");}
   else if(kind==="job"){const j=JOBS[ctx.job];const sk=p.sk[j.sk];
     if(p.kid&&!["farm","water","cook"].includes(ctx.job))return{yes:false,reasons:[{v:-9,t:`${p.name} is ${p.age}. That's not a job for a kid`}],score:-9};
-    add(trust,trust>0?"Trusts you":"Doesn't trust you yet");add(sk*.45,sk>=2?`Good at ${j.n.toLowerCase()}`:sk>=1?`Knows a little about ${j.n.toLowerCase()}`:"");if(sk===0)add(-.25,`Has never done ${j.n.toLowerCase()}`);
+    add(1,"You run this camp, and somebody has to");add(trust*.6,trust>0?"Trusts you":"Doesn't trust you yet");add(sk*.45,sk>=2?`Good at ${j.n.toLowerCase()}`:sk>=1?`Knows a little about ${j.n.toLowerCase()}`:"");if(sk===0)add(-.25,`Has never done ${j.n.toLowerCase()}`);
     if(["farm","water","wood","cook"].includes(ctx.job))add(.45+(S.res.food<campSize()*2&&ctx.job==="farm"?.4:0),"Someone has to do it");
     add(T.diligent*.7,T.diligent>0?"Hardworking":"Lazy");add(T.loyal*.5,T.loyal>0?"Loyal":"");
     if(ctx.job==="guard"||ctx.job==="scav"){add(T.brave*.9,T.brave>0?"Not afraid of the dead":"Scared of the dead");if(kids.length&&ctx.job==="scav")add(-.6-T.kind*.3,`Doesn't want to be away from ${kids[0].name}`);if(p.motive==="safety")add(-.6,"Wants to stay alive above all");if(p.motive==="revenge")add(.9,"Wants to fight back")}

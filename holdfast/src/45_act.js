@@ -29,6 +29,7 @@ function orderIn(text,p){const t=text.toLowerCase();
   if(/stay (here|put|behind)|wait here|stop following|go back to camp|head home/.test(t))return()=>ask(p,"stay");
   if(p.status==="stranger"&&/join|come in|stay with us|welcome|you can stay|let you in/.test(t))return()=>invite(p);
   if(/(fight|war|attack).*(pruitt|them|boyd)|go to war/.test(t))return()=>rally();
+  if(p.status==="member"&&!JOBBY.test(t)){const tk=taskIn(orderCore(t,[p]));if(tk&&tk.k!=="perim")return()=>{runOrder(tk,[p],null,orderCore(t,[p]))}}
   const lead=/in charge|run the|manage|lead the|head of/.test(t);for(const [j,re] of Object.entries(JWORDS))if(re.test(t)&&/(can you|could you|will you|i need you|you're on|take|work|start|handle|help with|do the|be our|on (the )?\w+ duty)/.test(t))return()=>ask(p,lead?"lead":"job",{job:j});
   return null}
 function thinking(p){say(p,"...",false,true)}
@@ -70,7 +71,7 @@ function battle(){const R=S.rival;const pl=pl_();const party=withYou().filter(p=
   if(roll>0){const killed=foes.filter(()=>rf()<.5);for(const f of killed){f.status="dead";S.stats.deaths++}const left=foes.filter(f=>f.status==="rival");
     beats.push(pick(["It's fast and ugly. Doors kicked in, shouting, a shot that goes wide.","Boyd sees you coming too late. His people scatter."]));
     beats.push(killed.length?`${killed.length} of them don't get up.`:"Nobody dies. They just break and run.");
-    R.gone=true;for(const f of left){f.status="stranger";f.trust=10;f.waitTill=S.t+6*HOUR}
+    R.gone=true;for(const f of left){f.status="stranger";f.trust=10;f.waitTill=S.t+6*HOUR;f.scened=true;f.met=true}
     const loot={food:ri(8,20),water:ri(6,14),ammo:ri(4,12),scrap:ri(2,6),"i:rope":1};addLoot(loot);beats.push(`You take their stores home: ${lootWords(loot)}.`);
     if(left.length)beats.push(`${listAnd(left.map(f=>f.name))} ${left.length>1?"throw down their weapons and ask":"throws down a weapon and asks"} to come with you. You could let them.`);
     for(const p of party){mem(p,"We beat the Pruitts.",4);p.trust+=4}log("The Pruitt crew is finished.","big")}
@@ -89,11 +90,11 @@ function travelTick(){const T=S.flags.traveling;if(!T)return true;step(HOUR/2);i
   S.flags.traveling=null;arriveAt(T.to);return true}
 function arriveAt(k,silent){const pl=pl_();const party=S.people.filter(p=>p.loc==="road"||p.follow&&p.loc===pl.loc);pl.loc=k;pl.x=ENTRY.x;pl.z=ENTRY.z-2;pl.tx=null;pl.path=null;
   party.forEach((p,i)=>{p.loc=k;p.x=ENTRY.x+(i%3-1)*1.6;p.z=ENTRY.z-.5+Math.floor(i/3);p.tx=null;p.path=null;p.away=k===campK()?null:{kind:"party"}});
-  const pl2=place(k);const first=!pl2.seen;pl2.seen=true;topUpWalkers(k);
+  const pl2=place(k);const first=!pl2.seen;pl2.seen=true;topUpWalkers(k);topUpAnimals(k);
   if(k===campK()){unloadHaul();for(const p of party){p.follow=false;p.away=null;p.act="back at camp"}if(!silent&&party.length)log(`You're home. ${listAnd(party.map(p=>p.name))} go back to what they were doing.`)}
   else if(!silent){const L=LOCS[k];log(`${L.n}. ${first?L.d:""} ${walkersAt(k).length>4?"There are a lot of the dead here.":walkersAt(k).length?"Some of the dead are moving around.":"It's quiet."}`,"big");
     // sometimes someone's hiding here
-    if(first&&k!=="start"&&rf()<.4&&!(S.rival&&S.rival.site===k)){const hh=mkHousehold(null,k,{x:rf()*12-6,z:rf()*6});for(const q of hh){q.status="stranger";q.trust=ri(5,25);q.waitTill=S.t+9999*HOUR;q.act="hiding";S.people.push(q)}log(`Someone's here: ${hh.length>1?`${hh.length} people`:hh[0].sex==="F"?"a woman":"a man"}, hiding and watching you.`,"warn")}
+    if(first&&k!=="start"&&rf()<.4&&!(S.rival&&S.rival.site===k)){const hh=mkHousehold(null,k,{x:rf()*12-6,z:rf()*6});for(const q of hh){q.status="stranger";q.trust=ri(5,25);q.waitTill=S.t+9999*HOUR;q.act="hiding";S.people.push(q)}if(typeof maybeHiddenBite==="function")maybeHiddenBite(hh);log(`Someone's here: ${hh.length>1?`${hh.length} people`:hh[0].sex==="F"?"a woman":"a man"}, hiding and watching you.`,"warn")}
     if(S.rival&&S.rival.site===k&&!S.rival.gone)log("The Pruitt crew lives here now. They're watching you.","warn")}
   armUp(true);
   if(typeof onScene==="function")onScene();save();
@@ -116,7 +117,7 @@ async function doCommand(raw){const text=raw.trim();if(!text)return;if(!S)return
   const names=namedIn(t);const who=names[0];const pl=pl_();
   // saying something
   let m=/^(say|tell|ask|yell|shout|whisper|greet|wave)\b(.*)$/.exec(t);
-  if(m&&!/\b(to (come|follow|farm|guard|build|cook|stay|leave|join|fight)|in charge)\b/.test(t)&&!(who&&orderIn(t,who))){let words=text.replace(/^(i|we)\s+/i,"").replace(/^\w+\s*/,"");const target=who||nearestPerson(p=>p.status!=="rival"||true);
+  if(m&&!/\b(to (come|follow|farm|guard|build|cook|stay|leave|join|fight)|in charge)\b/.test(t)&&!(who&&orderIn(t,who))&&!(/^(tell|ask)\b/.test(t)&&taskIn(orderCore(t,names)))){let words=text.replace(/^(i|we)\s+/i,"").replace(/^\w+\s*/,"");const target=who||nearestPerson(p=>p.status!=="rival"||true);
     if(target)words=words.replace(new RegExp("^(to\\s+)?"+target.name+"[,:]?\\s*(that\\s+)?","i"),"");words=words.replace(/^(to\s+(them|him|her|everyone|everybody|y'all|you all|all)[,:]?\s*)/i,"").replace(/\s+to\s+(them|him|her|everyone|everybody|y'all|you all|the group|all of them)[.!]?$/i,"").replace(/^["']|["']$/g,"").trim();
     if(m[1]==="greet"||m[1]==="wave"||!words)words=m[1]==="wave"?"*waves*":"Hi.";
     if(!target){say(pl,cap1(words));return}return speak(target,cap1(words))}
@@ -136,6 +137,8 @@ async function doCommand(raw){const text=raw.trim();if(!text)return;if(!S)return
   if(/^(open )?(the )?map$/.test(t))return openMap();
   m=/^(go|head|travel|walk|drive|run|get|move|hike|return)\s+(back\s+)?(to|over to|toward|towards|home|back)\b\s*(.*)$/.exec(t);
   if(m){const rest=(m[4]||"")+" "+(m[3]==="home"?"home":"");if(/\b(home|camp|base)\b/.test(rest)&&S.camp)return goHome();const k=locIn(rest);if(k)return travelTo(k);const tgt=namedIn(rest)[0];if(tgt){if(here_(tgt))approach(tgt);return}const c=contIn(rest);if(c)return approach(c)}
+  // hunting: "shoot the deer", "go hunting", "butcher it"
+  if(huntCmd(t,names))return;
   // guns are for the dead, never the living
   if(/^(shoot|open fire|aim|take a shot|blast|snipe|pick off|gun down)\b|^fire\b(?! up)/.test(t)||/\b(shoot|take a shot at)\b/.test(t)||/\bfire (at|on) (the |that |those |a |an )?(dead|walkers?|zombies?|biters?|them|it|one)\b/.test(t)){
     const living=who||/\b(pruitts?|boyd|stranger|strangers|person|people|guy|man|woman|kid|kids|survivors?)\b/.test(t);
@@ -143,7 +146,8 @@ async function doCommand(raw){const text=raw.trim();if(!text)return;if(!S)return
     return shootNearest()}
   if(/^(kill|take out|put down|stab|hit|fight|smash|attack)\b.*\b(dead|walkers?|zombies?|biters?|one of them)\b/.test(t)){const w=nearestWalker();if(!w){toast("There's none of the dead here.");return}
     if(pl.gun&&((pl.rounds||0)>0||loadUp()))return closeAndShoot(w);return approach(w,()=>clash(pl,w))}
-  // orders
+  // orders: "Maya, cut some wood", "everyone board up the windows", "push that car", "stop"
+  if(orderCmd(t,names,text))return;
   if(/(come with me|follow me|with me|tag along|let's go)/.test(t)){const L=everyoneIn(t)?localPeople().filter(p=>p.status==="member"&&!p.kid):names.filter(p=>p.status==="member");if(!L.length&&who)L.push(who);if(!L.length){toast("Who do you want to come with you? Use a name.");return}return askMany(L,"come")}
   if(/(stay (here|put|behind)|wait here|stop following|go (back )?home|go back to camp)/.test(t)){const L=everyoneIn(t)?withYou():names;if(!L.length)return toast("Who should stay?");return askMany(L,"stay")}
   if(/(war|attack|fight|raid|hit|go after|kill).*(pruitt|boyd|them|rival|the other camp)/.test(t)||/go to war/.test(t))return rally();
@@ -181,6 +185,11 @@ async function runAction(a){const nm=x=>namedIn(String(x||""))[0];const pl=pl_()
     case"stay":{const L=(Array.isArray(a.who)?a.who:[a.who]).map(nm).filter(Boolean);await askMany(L,"stay");break}
     case"search":{const c=a.what&&a.what!=="all"?contIn(String(a.what).toLowerCase()):nearestCont();if(c)approach(c,()=>openLoot(c));break}
     case"shoot":shootNearest();break;
+    case"hunt":huntCmd("hunt "+String(a.what||"animal").toLowerCase(),[]);break;
+    case"butcher":{const p=a.who?nm(a.who):null;huntCmd("butcher "+String(a.what||"it").toLowerCase(),p?[p]:[]);break}
+    case"order":{const tk=AI_TASK(a);if(!tk)break;const names=(Array.isArray(a.who)?a.who:[a.who]).filter(Boolean).map(String);const all=names.some(n=>/^(everyone|everybody|all)$/i.test(n));
+      const who=all?orderDoers("everyone",[],tk):names.map(nm).filter(Boolean).filter(p=>p.status==="member"&&p.loc===pl.loc&&!(p.away&&p.away.out));
+      if(names.length&&!who.length)break;runOrder(tk,who,null,String(a.what||""));break}
     case"burn":askBurn();break;case"inside":goInside(String(a.what||""));break;case"fire":lightFire();break;case"craft":await craft(String(a.text||""));break;case"wait":waitHours(+a.hours||1);break;case"war":rally();break;
     case"act":{const p=a.trust&&Object.keys(a.trust)[0]?nm(Object.keys(a.trust)[0]):null;const go=()=>{if(a.text)log(String(a.text).slice(0,300));
         const md=clamp(+a.mood||0,-4,4);if(md)for(const q of members())q.mood=clamp(q.mood+md,0,100);
@@ -283,3 +292,127 @@ function closeAndShoot(w,tries){const pl=pl_();if(!pl.gun||!w||w.dead)return;tri
 function shootNearest(){const pl=pl_();if(!pl.gun){toast("You don't have a gun. Try the police station's armory, or that trooper's cruiser on the highway.");return}
   const L=walkersAt(pl.loc).sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z));const w=L.find(inSight)||L[0];
   if(!w){toast("There's nothing to shoot here.");return}closeAndShoot(w)}
+
+// ================= typed orders =================
+// The same work the menus hand out, said in words: "Maya, cut some wood", "everyone board up the windows",
+// "have someone build the fence", "push that car", "shoot the deer", "stop". Nobody named means you do it yourself.
+const ORD_FILL=/^(please|tell|ask|have|get|make|order|can|could|would|will|you're|you are|you|to|and|i|we|want|need|should|both|of|them|then|now|okay|ok|hey|just|go ahead and|start)\b[\s,]*/;
+const JOBBY=/\b(jobs?|duty|from now on|every ?day|all day|full ?time|in charge|for good|permanently|daily|from here on|regular(ly)?|be (our|the) \w+|run(s|ning)? the|head of|manage|boss)\b/;
+function orderCore(t,names){let s=" "+t.toLowerCase().replace(/[,.!?;:]/g," ")+" ";
+  for(const p of names)s=s.replace(new RegExp("\\b"+p.name.toLowerCase()+"('s)?\\b","g")," ");
+  s=s.replace(/\b(everyone|everybody|all of you|you all|y'all|the group|someone|somebody|anyone|anybody|you guys|guys|folks)\b/g," ").replace(/\s+/g," ").trim();
+  for(let i=0;i<12&&ORD_FILL.test(s);i++)s=s.replace(ORD_FILL,"").trim();return s}
+// what to build, and whether it's a new one ("a fence") or the one that's laid out ("the fence")
+function buildIn(s){let best=null,at=1e9;for(const [k,re] of Object.entries(BWORDS)){const m=re.exec(s);if(m&&m.index<at){at=m.index;best=k}}
+  if(!best)return{type:null,fresh:false};return{type:best,fresh:/\b(a|an|another|new|second|third|more|extra|one more)\s+(\w+\s+)?$/.test(s.slice(0,at))}}
+// the work a sentence asks for, or null
+function taskIn(s){if(!s)return null;
+  if(/^(stop|quit|halt|enough|cancel|never ?mind|forget (it|that)|drop (it|that|everything)|knock it off|leave it)\b(?! (following|coming|tagging))/.test(s))return{k:"stop"};
+  if(/\b(check|show|walk|look at|inspect|see|test)\b.{0,20}\b(walls?|perimeter|yard|fences?|fence line|defen[cs]es|gaps?|holes?)\b|\b(is|are) (the |our )?(yard|walls?|fences?|camp|we|it) (sealed|safe|closed|secure|shut)\b|\bcan (they|the dead|walkers?|zombies?|biters?) (get|walk|come) in\b/.test(s))return{k:"perim"};
+  if(/\bpush\b.{0,25}\b(cars?|cruiser|truck|van|vehicle|sedan|suv|wreck)\b|\b(in|into) neutral\b|\broll (the |that |a |this )?(car|truck|van|cruiser)\b/.test(s))return{k:"push"};
+  const B=buildIn(s);
+  if(/\b(build|finish|work on|keep (building|working)|help (build|with|on)|put up|raise|construct|get (to work|started|going) on|start on|carry on with|go build|lay out)\b/.test(s)&&(B.type||/\b(it|that|this|blueprint|the build|site|project)\b|^(build|keep building|finish( up)?)$/.test(s)))return{k:"build",type:B.type,fresh:B.fresh};
+  if(/\b(fortify|batten down|shore up|lock (it|the (house|place|building)|this place) (down|up)|barricade (it|the (house|place|building|windows))|secure (it|the (house|place|building)|this place))\b|\bmake (it|the (house|place|building)|this place) (safe|secure)\b/.test(s))return{k:"fort"};
+  if(/\b(un ?block|clear|move|take|drag|pull)\b.{0,25}\b(dresser|furniture|couch|sofa|cabinet|wardrobe|bookcase|shel(f|ves)|desk|fridge|table)\b.{0,25}\b(away|off|out of the way|back|from (the )?door)\b|\bunblock\b.{0,12}\bdoor|\bclear (the |that )?door(way)?\b/.test(s))return{k:"unfurn"};
+  if(/\b(push|shove|move|drag|put|pile|stack|slide|wedge)\b.{0,25}\b(dresser|furniture|couch|sofa|cabinet|wardrobe|bookcase|shel(f|ves)|desk|fridge|table|chairs?)\b|\bblock (the |that |our )?(front |back )?door(way)?\b/.test(s))return{k:"furn"};
+  if(/\b(fix|repair|mend|patch|rehang|hang)\b.{0,20}\bdoors?\b/.test(s))return{k:"fixdoor"};
+  if(/\b(fix|repair|mend|patch|replace|reglaze)\b.{0,20}\bwindows?\b/.test(s))return{k:"fixwin"};
+  if(/\bboard(s|ing)?\b.{0,25}\b(up|windows?|it|the (house|place|building))\b|\b(nail|put)\b.{0,15}\b(boards|planks)\b/.test(s))return{k:"board"};
+  if(/\b(bar|brace|wedge|lock|secure|barricade|bolt)\b.{0,20}\bdoors?\b|\bbar (it|the place)\b/.test(s))return{k:"bar"};
+  if(/\b(shut|close)\b.{0,20}\bdoors?\b/.test(s))return{k:"door",to:"shut"};
+  if(/\b(open|prop)\b.{0,20}\bdoors?\b/.test(s))return{k:"door",to:"open"};
+  if(/\b(stay|keep|wait|hide|go|get|head|hole up)\b.{0,10}\b(inside|indoors|in the (house|building|farmhouse|barn|place))\b/.test(s))return{k:"inside"};
+  if(/\b(stand|keep|take|go on|be on)\b.{0,6}\b(guard|watch|lookout|look ?out)\b|\b(guard|watch|cover|hold)\b.{0,15}\b(the )?(door|gate|here|this|spot|entrance|window|me|yard|road|car|front|back|place|fort)\b/.test(s))return{k:"guard"};
+  if(/\b(cut|chop|split|fell|gather|collect|get|bring( in)?|fetch|haul|find)\b.{0,20}\b(wood|logs?|firewood|lumber|timber|trees?|kindling|deadfall)\b|^(chop|cut)( some| more| down)?$|\bwood ?cutting\b/.test(s)){const n=+((/\b(\d{1,2})\b/.exec(s)||[])[1])||4;return{k:"chop",n:clamp(n,1,20)}}
+  return null}
+// the building an order is about: the barn if you said so, the one you're standing in, home at camp, or the nearest
+function bldIdxFor(s){const pl=pl_();const k=pl.loc;if(!LOCS[k])return -1;const L=layout(k).b;if(!L.length)return -1;
+  if(/\bbarn\b/.test(s||"")){const i=L.findIndex(r=>r.barn);if(i>=0)return i}
+  const inn=bldAt(k,pl.x,pl.z);if(inn)return L.indexOf(inn);return homeIdx(k)}
+// who does it: the people you named (if they're here), everyone who can, or the one best suited; nobody named means you
+function orderDoers(t,names,tk){const pl=pl_();const heavy=HEAVY[tk.k]||tk.k==="fort"||tk.k==="push";
+  const able=p=>p.status==="member"&&p.loc===pl.loc&&!(p.away&&p.away.out)&&!p.grabbed&&!(p.ko>0);
+  if(everyoneIn(t))return members().filter(p=>able(p)&&p.hp>=35&&!(heavy&&p.kid)&&!(p.bitten&&p.quarantine));
+  if(/\b(someone|somebody|anyone|anybody)\b/.test(t)){const sk=tk.k==="guard"?"fight":"build";
+    return members().filter(p=>able(p)&&p.hp>=35&&!p.kid&&!(p.bitten&&p.quarantine)).sort((a,b)=>(a.order||a.follow?1:0)-(b.order||b.follow?1:0)||(b.sk[sk]||0)-(a.sk[sk]||0)||dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z)).slice(0,1)}
+  if(!names.length&&/^(tell|ask|have|get|order|make)\b/.test(t)){const q=nearestPerson(p=>able(p)&&!(p.bitten&&p.quarantine));return q?[q]:[]}
+  const L=[];for(const p of names){if(p.status!=="member")continue;if(!able(p)){toast(`${p.name} isn't here.`);continue}L.push(p)}return L}
+// "Maya, cut some wood": true if it was an order (and it's been given)
+function orderCmd(t,names,text){if(JOBBY.test(t))return false;const s=orderCore(t,names);const tk=taskIn(s);if(!tk)return false;
+  const some=everyoneIn(t)||/\b(someone|somebody|anyone|anybody)\b/.test(t)||!names.length&&/^(tell|ask|have|get|order|make)\b/.test(t);const named=names.some(p=>p.status==="member");
+  // "help Maya": you pitch in on whatever she's doing
+  if(/^help\b/.test(t)&&named&&!some){const q=names.find(p=>p.status==="member");const o=q.order;
+    if(o&&["build","chop","board"].includes(o.k)&&q.loc===pl_().loc){doMyself(o.k==="build"?{k:"build",bid:o.bid}:o.k==="board"?{k:"board",bi:o.bi,lvl:o.lvl}:{k:"chop",n:o.n||4});log(`You pitch in with ${q.name}.`);return true}}
+  const who=orderDoers(t,names,tk);
+  if(!who.length&&(named||some)){if(some)toast(everyoneIn(t)?"There's nobody here who can.":/^(tell|ask|have|get|order|make)\b/.test(t)&&!/\b(someone|somebody|anyone|anybody)\b/.test(t)?"There's nobody here to tell.":"There's nobody free here to do it.");return true}
+  return runOrder(tk,who,text,s)}
+// carry it out. who is empty when it's you.
+function runOrder(tk,who,text,s){const pl=pl_();const k=pl.loc;const me=!who.length;s=s||"";
+  if(me&&(pl.ko>0||S.flags.traveling||pl.grabbed))return true;
+  if(!me&&text&&!who.some(p=>p.busyTalk))say(pl,cap1(String(text).replace(/^(i|we)\s+/i,"").trim().slice(0,90)));
+  const each=f=>{if(me){const o=f(pl,0);if(o)doMyself(o);return}who.forEach((p,i)=>{const o=f(p,i);if(o)orderPerson(p,o)})};
+  const one=o=>{if(me)doMyself(o);else orderPerson(who[0],o);for(const p of who.slice(1))if(p.status==="member")say(p,pick([`${who[0].name}'s got it.`,"I'll leave it to them."]),true)};
+  const bldOnly=()=>{if(!LOCS[k]||!layout(k).b.length){toast("There's no building here.");return -1}return bldIdxFor(s)};
+  switch(tk.k){
+    case"stop":if(me){if(pl.order){pl.order.queue=null;endOrder(pl,true)}if(S.push)endPush(false);if(UI.pushPick)cancelPushPick();pl.tx=null;pl.tz=null;pl.path=null;pl.onArrive=null;toast("You stop what you're doing.");return true}
+      for(const p of who){p.helpPush=false;if(p.order){p.order.queue=null;endOrder(p,false,pick(["Okay.","Alright, stopping.","Sure."]))}else say(p,pick(["I'm not doing anything.","Stop what?"]),true)}return true;
+    case"perim":showPerimeter();return true;
+    case"chop":each(()=>({k:"chop",n:tk.n||4}));if(me)log("You go to cut some wood.");return true;
+    case"build":{if(k==="road"||!LOCS[k]){toast("Not out here on the highway.");return true}
+      const bps=S.blds.filter(b=>b.loc===k&&!b.done&&!b.gone&&(!tk.type||b.type===tk.type)).sort((a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z));
+      if(bps.length&&!tk.fresh){const b=bps[0];if(me){doMyself({k:"build",bid:b.id});log(`You get to work on the ${b.name.toLowerCase()}.`);return true}each(()=>({k:"build",bid:b.id}));return true}
+      if(!me){UI.assign=who[0].id;UI.assignAlso=who.slice(1).map(p=>p.id)}
+      if(!tk.type){openBuild();if(!me)toast(`Pick what ${listAnd(who.map(p=>p.name))} should build, then where it goes.`);return true}
+      startPlace(tk.type);return true}
+    case"push":{const cs=carsAt(k);if(!cs.length){toast("There are no cars here to push.");return true}if(S.push){for(const p of who)if(!p.kid){p.helpPush=true;say(p,"Coming!",true)}return true}
+      let ci=0,bd=1e9;cs.forEach((c,i)=>{const d=dist(c.x,c.z,pl.x,pl.z);if(d<bd){bd=d;ci=i}});const cont=layout(k).conts.find(c=>c.car===ci);UI.car={k,cid:cont?cont.id:null,ci};
+      for(const p of who){if(p.kid){say(p,"I'm not strong enough.",true);continue}orderPerson(p,{k:"push",txt:"waiting to push a car"})}ACTS.cpush();return true}
+    case"inside":{if(me){goInside(s,false);return true}const bi=bldOnly();if(bi<0)return true;each(()=>({k:"inside",bi,until:S.t+6*HOUR}));return true}
+    case"guard":{if(me&&/\bme\b/.test(s))return false;const bi=LOCS[k]&&layout(k).b.length&&/\b(door|entrance|front|house)\b/.test(s)?bldIdxFor(s):-1;const r=bi>=0?layout(k).b[bi]:null;
+      const gate=/\bgate\b/.test(s)&&S.blds.find(b=>b.loc===k&&b.type==="gate"&&b.done);
+      const base=gate?{x:gate.x,z:gate.z+1.4,face:Math.PI}:r?{x:r.door.ox,z:r.door.oz,face:Math.atan2(r.door.ox-r.x,r.door.oz-r.z)}:{x:pl.x+.8,z:pl.z+.8,face:null};
+      each((p,i)=>{const a=i*2.1;return{k:"guard",x:base.x+(i?Math.cos(a)*1.3:0),z:base.z+(i?Math.sin(a)*1.3:0),face:base.face??(S.camp&&k===campK()?Math.atan2(pl.x,pl.z-4):pl.dir)}});
+      if(me)log("You stand watch.");return true}
+  }
+  // the rest is about a building's doors and windows
+  const bi=bldOnly();if(bi<0)return true;const st=bldState(k,bi);const r=layout(k).b[bi];const nm=r.barn?"the barn":"the house";
+  switch(tk.k){
+    case"board":{if(!st.wins.length){toast(`There are no windows on ${nm}.`);return true}const lo=Math.min(...st.wins.map(w=>w.board));if(lo>=3){toast("The windows are boarded as heavy as they'll go.");return true}
+      each(()=>({k:"board",bi,lvl:Math.min(3,lo+1)}));return true}
+    case"bar":if(st.bar>=2){toast("The door's barred as tight as it'll go.");return true}if(st.door==="broken"){toast("The door's broken. Fix it first.");return true}one({k:"bar",bi});return true;
+    case"furn":if(st.furn){toast("The door's already blocked.");return true}one({k:"furn",bi});return true;
+    case"unfurn":if(!st.furn){toast("Nothing's blocking the door.");return true}one({k:"unfurn",bi});return true;
+    case"fixdoor":if(st.door!=="broken"&&st.dhp>=doorMax(st)){toast("The door's fine.");return true}one({k:"fixdoor",bi});return true;
+    case"fixwin":if(!st.wins.some(w=>w.broken||w.hp<winMax(w)*.5)){toast("The windows are fine.");return true}each(()=>({k:"fixwin",bi}));return true;
+    case"door":if(st.door==="broken"){toast("The door's broken. It won't shut until it's fixed.");return true}if(st.door===tk.to&&!(tk.to==="open"&&(st.bar||st.furn))){toast(tk.to==="shut"?"It's already shut.":"It's already open.");return true}one({k:"door",bi,to:tk.to});return true;
+    case"fort":{const T=fortTasks(k,bi);if(!T.length){toast(`${cap1(nm)} is as tight as you can make it.`);return true}
+      if(me){doMyself({...T[0],queue:T.slice(1)});log(`You set about making ${nm} safe.`);return true}
+      // the door jobs shared out in turn, and then everyone boards windows (they take different ones)
+      const n=who.length,lists=who.map(()=>[]);T.filter(x=>x.k!=="board").forEach((x,j)=>lists[j%n].push(x));const bd=T.find(x=>x.k==="board");if(bd)lists.forEach(l=>l.push(bd));
+      who.forEach((p,i)=>{const L=lists[i];if(!L.length){say(p,"Looks like it's covered.",true);return}orderPerson(p,{...L[0],queue:L.slice(1)})});return true}}
+  return false}
+// making a building safe, in order: the door first, then the windows
+function fortTasks(k,bi){const st=bldState(k,bi);const T=[];
+  if(st.door==="broken")T.push({k:"fixdoor",bi});else{if(st.bar<2)T.push({k:"bar",bi});if(!st.furn)T.push({k:"furn",bi});if(st.door!=="shut"&&!T.length)T.push({k:"door",bi,to:"shut"})}
+  if(st.wins.some(w=>w.broken&&!w.board))T.push({k:"fixwin",bi});const lo=st.wins.length?Math.min(...st.wins.map(w=>w.board)):3;if(lo<3)T.push({k:"board",bi,lvl:Math.min(3,lo+1)});return T}
+// hunting and butchering in words: "shoot the deer", "go hunting", "butcher it", "have Maya skin the rabbit"
+const ANIM_RE=/\b(deer|doe|does|bucks?|fawns?|stags?|turkeys?|rabbits?|bunn(y|ies)|hares?|animals?|wildlife|game)\b/;
+function animalKind(s){return/\b(deer|doe|does|bucks?|fawns?|stags?)\b/.test(s)?"deer":/\bturkeys?\b/.test(s)?"turkey":/\b(rabbits?|bunn(y|ies)|hares?)\b/.test(s)?"rabbit":null}
+function huntCmd(t,names){const pl=pl_();const mem=names.filter(p=>p.status==="member");const near=(a,b)=>dist(a.x,a.z,pl.x,pl.z)-dist(b.x,b.z,pl.x,pl.z);
+  if(/\b(butcher|skin|dress|gut|clean|carve( up)?|cut up|process)\b/.test(t)&&(ANIM_RE.test(t)||/\b(it|the kill|carcass|meat)\b/.test(t))){const kind=animalKind(t);
+    const a=animalsAt(pl.loc).filter(a=>a.dead&&(!kind||a.k===kind)).sort(near)[0];if(!a){toast("There's nothing here to butcher. Hunt something first.");return true}
+    if(mem.length){const p=mem.find(p=>p.loc===pl.loc&&!(p.away&&p.away.out));if(!p){toast(`${mem[0].name} isn't here.`);return true}orderPerson(p,{k:"butcher",aid:a.id,txt:`butchering the ${ANIMALS[a.k].n}`});return true}
+    doMyself({k:"butcher",aid:a.id});return true}
+  const verb=/\b(hunt|hunting|shoot|kill|track|stalk|bag|bring down|take down|go after|get)\b/.test(t);
+  if(!(verb&&ANIM_RE.test(t))&&!/^(go )?(hunt|hunting)( for (food|meat|dinner|supper))?$/.test(t))return false;
+  if(mem.length)return false;// "Maya, go hunting" is a job for her
+  const kind=animalKind(t);const L=animalsAt(pl.loc).filter(a=>!a.dead&&(!kind||a.k===kind)).sort(near);
+  if(!L.length){toast(kind?`There's no ${ANIMALS[kind].n} around here.`:"There's nothing to hunt here. Deer and turkey keep to the farm, the mill and the woods by the cabin.");return true}
+  const how=/\b(gun|rifle|shotgun|pistol)\b/.test(t)&&pl.gun?"gun":haveBow()?"bow":pl.gun?"gun":null;
+  if(!how){toast("You've nothing to hunt with. A bow or a gun would do it.");return true}
+  huntAnimal(L[0],how);return true}
+// what Claude's {"do":"order"} names, as the same task the typed words would give
+function AI_TASK(a){const t=String(a.task||"").toLowerCase();const w=String(a.what||"").toLowerCase();
+  const m={chop:{k:"chop",n:clamp(+a.n||4,1,20)},build:{k:"build",type:BUILDS[w]?w:buildIn(w).type,fresh:!!a.fresh},board:{k:"board"},bar:{k:"bar"},block:{k:"furn"},furn:{k:"furn"},unblock:{k:"unfurn"},unfurn:{k:"unfurn"},
+    shut:{k:"door",to:"shut"},door_shut:{k:"door",to:"shut"},open:{k:"door",to:"open"},door_open:{k:"door",to:"open"},fixdoor:{k:"fixdoor"},fixwin:{k:"fixwin"},guard:{k:"guard"},inside:{k:"inside"},
+    push:{k:"push"},perimeter:{k:"perim"},fortify:{k:"fort"},stop:{k:"stop"}};return m[t]||null}

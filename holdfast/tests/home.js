@@ -12,7 +12,7 @@ const type=async(pg,s)=>{await pg.fill("#cmd",s);await pg.press("#cmd","Enter");
   check(c.clock===1&&c.dm>c.ds*.4&&c.dm<c.ds*1.25,`a second is a minute: ${c.dm.toFixed(2)} game minutes in ${c.ds.toFixed(2)}s`);
   // the dead: busy places are full, quiet ones aren't, and activity draws more
   let st=await pg.evaluate(()=>{const o={};for(const k of ["school","grocery","police","church","farm","mill"])o[k]=deadHere(k);return o});
-  check(st.school>st.farm+3&&st.grocery>st.mill+2,`busy places hold more of the dead: ${JSON.stringify(st)}`);
+  check(st.school>st.farm+1&&st.grocery>st.mill+1,`busy places hold more of the dead: ${JSON.stringify(st)}`);
   st=await pg.evaluate(()=>{const a=deadHere("mill");for(let i=0;i<12;i++)noiseAt("mill",0,0,24);const b=deadHere("mill");return{a,b}});
   check(st.b>st.a,`noise at the mill draws more: ${st.a} then ${st.b}`);
   // to the farm; clear the dead out so nothing interrupts

@@ -1,6 +1,6 @@
 // Runs the game's rules with no screen: a new game, a camp, two weeks of days, and checks nothing breaks.
 const fs=require("fs"),vm=require("vm");
-const src=["10_data.js","20_sim.js","30_inv.js","35_mind.js","40_ai.js","45_act.js"].map(f=>fs.readFileSync(__dirname+"/../src/"+f,"utf8")).join("\n");
+const src=["10_data.js","20_sim.js","22_ground.js","25_orders.js","27_dead.js","28_wild.js","30_inv.js","35_mind.js","40_ai.js","45_act.js"].map(f=>fs.readFileSync(__dirname+"/../src/"+f,"utf8")).join("\n");
 const ctx={console,Math,JSON,Date,setTimeout:(f)=>f(),clearTimeout(){},localStorage:{getItem(){return null},setItem(){},removeItem(){}},window:{},performance:{now:()=>Date.now()}};
 vm.createContext(ctx);vm.runInContext(src+`
 var UI={},closeLoot=()=>{},toast=()=>{},say=()=>{},sayLive=()=>{},renderAll=()=>{},renderTalk=()=>{},whyPanel=()=>{},openLoot=()=>{},openMap=()=>{},openBuild=()=>{},openHelp=()=>{},openTalk=()=>{},startPlace=()=>{},warCard=(o)=>{globalThis.WAR=o};

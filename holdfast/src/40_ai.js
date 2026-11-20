@@ -73,6 +73,9 @@ const ACT_SCHEMA=`Actions (use only these; names must be people or keys listed a
 {"do":"wait","hours":<1-12>}
 {"do":"war"}  (rally people to fight the Pruitt crew)
 {"do":"shoot"}  (fire at the nearest of the dead, if you carry a gun; guns are never used on living people)
+{"do":"order","who":["<names, or everyone; leave empty when the player does it themselves>"],"task":"<one of: chop, build, board, bar, block, unblock, shut, open, fixdoor, fixwin, guard, inside, push, perimeter, fortify, stop>","what":"<for build: one of ${Object.keys(BUILDS).join(", ")}; for door and window work: house or barn>","n":<for chop: how much wood>}  (one piece of work right now: cut wood, build or finish something, board up windows, bar or block or shut the door, push a car in neutral, stand watch, stop)
+{"do":"hunt","what":"<deer, turkey, rabbit, or empty for whatever is nearest>"}  (the player hunts an animal here with a bow or gun)
+{"do":"butcher","who":"<optional name>"}  (butcher an animal that's been killed here, for food)
 {"do":"act","text":"<anything else: what you do, written as 'You ...'>","hours":<0-4>,"mood":<-4 to 4, how it lifts or drags the whole camp>,"trust":{"<name>":<-10 to 10>},"res":{"<food|water|wood|scrap|meds|ammo>":<-3 to 3>}}`;
 async function aiInterpret(text){const prompt=`${WORLD_BRIEF}
 You are the game master. The player typed what their character does. Turn it into game actions. Be generous: if it's possible for a person in this situation, let it happen with an "act" action and honest, small effects. If it's impossible or nonsensical, use "act" with no effects and say why in "say".

@@ -9,7 +9,8 @@ function setHtml(el,h){if(el&&el._h!==h){el.innerHTML=h;el._h=h}}
 function renderHud(){if(!S)return;const pl=S.player;const L=LOCS[pl.loc]||{n:"On the road"};const h=hourOf(S.t);
   const ck=$("clock");if(!$("ctime"))ck.innerHTML=`<div class="t" id="ctime"></div><div class="w" id="cwhere"></div><div class="sp" id="cspeed"></div>`;
   setHtml($("ctime"),`Day ${dayOf(S.t)} · ${clockStr(S.t)}`);setHtml($("cwhere"),`${esc(L.n)}${pl.loc===campK()?" · camp":""}${h>=21||h<5?" · night":""}`);
-  setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[5,"5×"],[20,"20×"],[60,"60×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join(""));
+  setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[5,"5×"],[20,"20×"],[60,"60×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join("")+`<button data-act="snd" title="Sound (N)" class="${SFX.on?"":"off"}">${SFX.on?"♪":"♪̸"}</button>`);
+  if(!$("ctask")){const d=document.createElement("div");d.id="ctask";d.className="w";ck.appendChild(d)}setHtml($("ctask"),myTask()?`<span class="task">${esc(myTask())}</span>`:"");
   const n=campSize();const food=S.res.food/Math.max(1,n);
   setHtml($("res"),S.camp?[["People",`${n}`],["Beds",`${bedsTotal()}`,bedsTotal()<n?"bad":""],["Food",`${Math.floor(S.res.food)} <span class="mut">(${food.toFixed(1)}d)</span>`,food<1.5?"bad":food<3?"warn":""],["Water",Math.floor(S.res.water),S.res.water<n?"bad":""],
       ["Wood",Math.floor(S.res.wood)],["Scrap",Math.floor(S.res.scrap)],["Medicine",Math.floor(S.res.meds)],["Ammo",Math.floor(S.res.ammo)],["Defense",defense()],["Mood",avgMood(),avgMood()<35?"bad":""],["You",`${Math.round(pl.hp)}%`,pl.hp<40?"bad":""],...gunHud()]
@@ -29,24 +30,28 @@ function renderLabels(now){const box=$("labels");if(!box||!W.ok||!S)return;const
   const ents=[S.player,...S.people.filter(p=>p.loc===k&&p.status!=="dead"&&p.status!=="left"&&!(p.away&&p.away.out)&&!(p.sleep&&p.inside))];
   for(const o of ents){if(o.loc!==k)continue;const b=BUB[o.id];const f=W.figs[o.id];const x=f?f.position.x:o.x,z=f?f.position.z:o.z;const top=o.kid?1.5:2;
     if(b&&b.until>now)put("b"+o.id,"bub"+(b.think?" think":""),`${o.id!=="you"?`<b>${esc(o.name)}</b>`:""}${esc(b.x)}`,x,top+.4,z);
-    else if(near&&o.id!=="you"&&(o.status!=="member"||UI.hover===o.id||W.zoom<14))put("t"+o.id,"tag"+(o.status==="stranger"?" str":o.status==="rival"?" riv":""),esc(o.status==="stranger"&&!o.met?"?":o.name),x,top+.1,z)}
+    else if(near&&o.id!=="you"&&(o.status!=="member"||UI.hover===o.id||W.zoom<14||o.order&&!o.order.job&&W.zoom<20))put("t"+o.id,"tag"+(o.status==="stranger"?" str":o.status==="rival"?" riv":""),esc(o.status==="stranger"&&!o.met?"?":o.name)+(o.status==="member"&&(o.order||UI.hover===o.id)?`<small>${esc(o.act||"")}</small>`:""),x,top+.1,z)}
   for(const w of S.walkers)if(w.loc===k&&BUB[w.id]&&BUB[w.id].until>now)put("b"+w.id,"bub",esc(BUB[w.id].x),w.x,2.4,w.z);
-  if(UI.hover&&UI.hover.startsWith?.("c:")){const c=layout(k).conts.find(c=>c.id===UI.hover.slice(2));if(c){const st=place(k).conts[c.id];put("hc","tag",esc(CONT[c.k].n+(st&&st.rolled&&!st.c.items.length?" (empty)":"")),c.x,2.2,c.z)}}
+  if(UI.hover&&UI.hover.startsWith?.("c:")){const c=layout(k).conts.find(c=>c.id===UI.hover.slice(2));if(c){const st=place(k).conts[c.id];put("hc","tag",esc(CONT[c.k].n+(st&&st.rolled&&!st.c.items.length?" (empty)":""))+(c.vis==="car"?"<small>click to search or push</small>":""),c.x,2.2,c.z)}}
+  if(UI.hover&&UI.hover.startsWith?.("a:")){const a=(S.animals||[]).find(a=>a.id===UI.hover.slice(2));if(a)put("ha","tag",esc(cap1(ANIMALS[a.k].n))+(a.dead?" <small>dead: butcher it</small>":""),a.x,1.6,a.z)}
+  if(UI.hover&&UI.hover.startsWith?.("h:")){const r=layout(k).b[+UI.hover.slice(2)];if(r){const st=bldState(k,+UI.hover.slice(2));put("hh","tag",esc(houseName(k,r))+`<small>${esc(doorWords(st))} · ${esc(winWords(st))}</small>`,r.x,r.h+1,r.z+r.d/2)}}
   for(const id in LBL)if(!seen.has(id)){LBL[id].remove();delete LBL[id]}}
 // ---------- clicking the world ----------
 function initInput(){const cv=$("gl");let down=null;
-  cv.addEventListener("pointerdown",e=>{down={x:e.clientX,y:e.clientY,tx:W.tgt.x,tz:W.tgt.z,moved:false,btn:e.button};closeMenu()});
-  cv.addEventListener("pointermove",e=>{if(down&&(Math.abs(e.clientX-down.x)+Math.abs(e.clientY-down.y)>6||down.moved)){down.moved=true;const a=groundAt(down.x,down.y),b=groundAt(e.clientX,e.clientY);if(a&&b){W.free=true;W.tgt.x=down.tx-(b.x-a.x);W.tgt.z=down.tz-(b.z-a.z);camUpdate();const a2=groundAt(down.x,down.y);if(a2){down.tx=W.tgt.x;down.tz=W.tgt.z;down.x=e.clientX;down.y=e.clientY}}}
-    if(UI.place){const g=groundAt(e.clientX,e.clientY);if(g){UI.place.x=Math.round(g.x);UI.place.z=Math.round(g.z);placeGhost()}}else{const h=pickAt(e.clientX,e.clientY);UI.hover=h?(h.kind==="person"?h.o.id:h.kind==="cont"?"c:"+h.o.id:null):null;cv.style.cursor=h&&h.kind!=="ground"?"pointer":"default"}});
+  cv.addEventListener("pointerdown",e=>{down={x:e.clientX,y:e.clientY,tx:W.tgt.x,tz:W.tgt.z,moved:false,btn:e.button};closeMenu();sfxInit()});
+  cv.addEventListener("pointermove",e=>{if(UI.scene)return;if(down&&(Math.abs(e.clientX-down.x)+Math.abs(e.clientY-down.y)>6||down.moved)){down.moved=true;const a=groundAt(down.x,down.y),b=groundAt(e.clientX,e.clientY);if(a&&b){W.free=true;W.tgt.x=down.tx-(b.x-a.x);W.tgt.z=down.tz-(b.z-a.z);camUpdate();const a2=groundAt(down.x,down.y);if(a2){down.tx=W.tgt.x;down.tz=W.tgt.z;down.x=e.clientX;down.y=e.clientY}}}
+    if(UI.pushPick){const g=groundAt(e.clientX,e.clientY);if(g){UI.pushPick.x=Math.round(g.x*2)/2;UI.pushPick.z=Math.round(g.z*2)/2;pushGhost()}}
+    else if(UI.place){const g=groundAt(e.clientX,e.clientY);if(g){UI.place.x=Math.round(g.x);UI.place.z=Math.round(g.z);placeGhost()}}else{const h=pickAt(e.clientX,e.clientY);UI.hover=h?(h.kind==="person"?h.o.id:h.kind==="cont"||h.kind==="car"?"c:"+h.o.id:h.kind==="animal"?"a:"+h.o.id:h.kind==="house"?"h:"+h.o.bi:null):null;cv.style.cursor=h&&h.kind!=="ground"?"pointer":"default"}});
   cv.addEventListener("pointerup",e=>{const d=down;down=null;if(!d||d.moved||!S)return;if(e.button===2)return;clickWorld(e.clientX,e.clientY)});
-  cv.addEventListener("contextmenu",e=>{e.preventDefault();if(UI.place){UI.place.rot=(UI.place.rot+1)%4;placeGhost()}});
-  cv.addEventListener("wheel",e=>{e.preventDefault();W.zoom=clamp(W.zoom*(e.deltaY>0?1.1:.9),7,40);camUpdate()},{passive:false});
+  cv.addEventListener("contextmenu",e=>{e.preventDefault();if(UI.pushPick){UI.pushPick.rot+=Math.PI/4;pushGhost()}else if(UI.place){UI.place.rot=(UI.place.rot+1)%4;placeGhost()}});
+  cv.addEventListener("wheel",e=>{e.preventDefault();if(UI.scene)return;W.zoom=clamp(W.zoom*(e.deltaY>0?1.1:.9),7,40);camUpdate()},{passive:false});
   addEventListener("resize",resizeWorld);
-  addEventListener("keydown",e=>{const typing=/INPUT|TEXTAREA/.test(document.activeElement?.tagName);if(e.key==="Escape"){if(UI.place){cancelPlace();return}closeAll();document.activeElement?.blur();return}
+  addEventListener("keydown",e=>{sfxInit();const typing=/INPUT|TEXTAREA/.test(document.activeElement?.tagName);if(UI.grab){if(e.key===" "||e.key==="Enter"){ACTS.gshove();e.preventDefault()}return}if(UI.scene){sceneKey(e);return}
+    if(e.key==="Escape"){if(UI.pushPick){cancelPushPick();return}if(UI.place){cancelPlace();return}closeAll();document.activeElement?.blur();return}
     if(typing){if(e.key==="Enter"&&document.activeElement.id==="cmd")submitCmd();if(e.key==="Enter"&&document.activeElement.id==="tin")sendTalk();return}
     if($("build").classList.contains("open"))return;
     const k=e.key.toLowerCase();if(k==="enter"){$("cmd").focus();e.preventDefault();return}if(k==="m")openMap();if(k==="p")openPeople();if(k==="b")openBuild();if(k==="i")openStores();if(k==="c")openCamp();if(k==="h"||k==="?")openHelp();if(k==="v"){W.xray=!(W.xray??(W.loc===campK()));toast(W.xray?"Roofs off: you can see inside.":"Roofs on.")}
-    if(k==="r"&&UI.place){UI.place.rot=(UI.place.rot+1)%4;placeGhost()}if(k===" "){UI.paused=!UI.paused;renderHud();e.preventDefault()}if(k==="f"){W.free=false}
+    if(k==="r"&&UI.pushPick){UI.pushPick.rot+=Math.PI/4;pushGhost()}else if(k==="r"&&UI.place){UI.place.rot=(UI.place.rot+1)%4;placeGhost()}if(k==="g")showPerimeter();if(k==="n")sfxToggle();if(k===" "){UI.paused=!UI.paused;renderHud();e.preventDefault()}if(k==="f"){W.free=false}
     const pan={w:[-1,-1],arrowup:[-1,-1],s:[1,1],arrowdown:[1,1],a:[-1,1],arrowleft:[-1,1],d:[1,-1],arrowright:[1,-1]}[k];if(pan){W.free=true;W.tgt.x+=pan[0]*2;W.tgt.z+=pan[1]*2;camUpdate()}});
   $("go").onclick=submitCmd;
   document.body.addEventListener("click",e=>{const b=e.target.closest("[data-sp],[data-tool],[data-act]");if(!b)return;
@@ -54,21 +59,27 @@ function initInput(){const cv=$("gl");let down=null;
     if(b.dataset.tool){const t=b.dataset.tool;({map:openMap,people:openPeople,build:openBuild,stores:openStores,camp:openCamp,help:openHelp,home:goHome,makecamp:doCamp,burn:askBurn})[t]?.();renderHud();return}
     if(b.dataset.act){ACTS[b.dataset.act]?.(b.dataset);}})}
 function submitCmd(){const i=$("cmd");const v=i.value.trim();if(!v)return;i.value="";doCommand(v).then(()=>{renderAll()}).catch(err=>{console.error(err);toast("Something went wrong with that.")})}
-function clickWorld(cx,cy){if(UI.place){tryPlace();return}const h=pickAt(cx,cy);if(!h)return;const pl=S.player;if(S.flags.traveling||pl.ko>0)return;
-  if(h.kind==="ground"){moveTo(pl,h.o.x,h.o.z);W.free=false;return}
+function clickWorld(cx,cy){if(UI.grab)return;if(UI.scene){sceneNext();return}if(UI.pushPick){tryPushPick();return}if(UI.place){tryPlace();return}const h=pickAt(cx,cy);if(!h)return;const pl=S.player;if(S.flags.traveling||pl.ko>0)return;
+  if(h.kind==="ground"){if(pl.order){pl.order.queue=null;endOrder(pl,true)}if(S.push)endPush(false);moveTo(pl,h.o.x,h.o.z);W.free=false;return}
   if(h.kind==="person")return personMenu(h.o,cx,cy);
-  if(h.kind==="walker"){if(pl.gun&&((pl.rounds||0)>0||loadUp()>0))closeAndShoot(h.o);else approach(h.o,()=>clash(pl,h.o));W.free=false;return}
+  if(h.kind==="walker"){if(pl.gun&&((pl.rounds||0)>0||loadUp()>0))closeAndShoot(h.o);else attackWalker(h.o);W.free=false;return}
+  if(h.kind==="car")return carMenu(S.player.loc,h.o,cx,cy);
+  if(h.kind==="animal")return animalMenu(h.o,cx,cy);
+  if(h.kind==="house")return houseMenu(S.player.loc,h.o.bi,cx,cy);
   if(h.kind==="cont"){approach(h.o,()=>openLoot(h.o));W.free=false;return}
-  if(h.kind==="bld")return bldMenu(h.o,cx,cy)}
+  if(h.kind==="bld")return h.o.done?bldMenu(h.o,cx,cy):bpMenu(h.o,cx,cy)}
+// going at one of the dead with your hands (or whatever you're carrying) is a real fight
+function attackWalker(w){const pl=S.player;if(!weaponName()&&!S.flags.warnedBare){S.flags.warnedBare=true;toast("No weapon. That's a bad idea, but it's your call.")}
+  approach(w,()=>{if(!w.dead&&dist(pl.x,pl.z,w.x,w.z)<2.4)startStruggle(w,true)})}
 function closeMenu(){$("menu").style.display="none";UI.menu=null}
 function showMenu(html,cx,cy){const m=$("menu");m.innerHTML=html;m.style.display="block";const w=m.offsetWidth,h=m.offsetHeight;m.style.left=clamp(cx+12,8,innerWidth-w-8)+"px";m.style.top=clamp(cy-20,8,innerHeight-h-8)+"px"}
 const ACTS={};
-function personMenu(p,cx,cy){UI.menu=p.id;const mem_=p.status==="member";const strg=p.status==="stranger";p.met=true;
+function personMenu(p,cx,cy){if(p.status==="stranger"&&!p.scened&&p.loc===S.player.loc&&typeof startScene==="function"&&!UI.scene){closeMenu();startScene(sceneGroup(p),p.loc===campK()?"home":"found");return}UI.menu=p.id;const mem_=p.status==="member";const strg=p.status==="stranger";p.met=true;
   const head=`<div class="h">${esc(p.name)}${p.status==="member"?"":` <span class="chip">${p.status==="stranger"?"stranger":p.status==="rival"?"Pruitt crew":""}</span>`}<small>${esc(p.act||"")}${p.kid?` · ${p.age}`:""}</small></div>`;
   const b=(a,t,extra)=>`<button data-act="${a}" data-id="${p.id}"${extra||""}>${t}</button>`;
   let h=head+b("talk","Talk");
   if(strg)h+=b("invite","Let them in")+b("away","Turn them away");
-  if(mem_){h+=p.follow?b("stay","Stay here"):b("come","Come with me");if(!p.kid||true)h+=b("jobs","Give a job ▸")+b("leads","Put in charge of ▸");h+=b("about","About "+p.name)}
+  if(mem_){h+=p.follow?b("stay","Stay here"):b("come","Come with me");h+=orderButtons(p);h+=`<div class="sep"></div>`+b("jobs","Give a job ▸")+b("leads","Put in charge of ▸");h+=b("about","About "+p.name)}
   if(p.status==="rival"&&S.rival&&!S.rival.gone)h+=b("warmenu","Go to war with them");
   showMenu(h,cx,cy)}
 ACTS.talk=d=>{const p=P(d.id);closeMenu();openTalk(p);approach(p)};
@@ -116,6 +127,7 @@ function openCamp(){if(!S.camp){openSide("camp",`<h2>No camp yet</h2><p>Open the
   const by=Object.keys(JOBS).map(j=>[j,members().filter(p=>p.job===j)]).filter(x=>x[1].length);
   openSide("camp",`<h2>${esc(S.camp.n)}</h2><div class="mut">Camp since day ${S.camp.day}. ${n} people, ${bedsTotal()} beds, defense ${defense()}.</div>
     <p style="font-size:13px">${n<=4?"A small camp. Easy to keep an eye on everyone.":n<=10?"A real camp now. Problems come more often, and people want more from you.":n<=20?"A big camp. Disasters and arguments come thick and fast unless someone runs each part of it.":"A town. You can't be everywhere. Put people in charge or drown."}</p>
+    <div class="btns"><button data-act="perim">Check the walls (G)</button></div>
     <h3>Who runs what</h3>${leads.map(([j,p])=>`<div>${cap1(JOBS[j].lead)}: ${p?`<b>${esc(p.name)}</b>`:`<span class="mut">nobody (problems come to you)</span>`}</div>`).join("")}
     <h3>Who's working</h3>${by.map(([j,L])=>`<div>${JOBS[j].n}: ${esc(listAnd(L.map(p=>p.name)))}</div>`).join("")||"<div class='mut'>Nobody has a job yet. Click someone and give them one.</div>"}
     <h3>Each day</h3><div style="font-size:13px">Eating ${n} food and ${n} water. Rain barrels ${bldDone("well").length}, plots ${bldDone("plot").length} (${bldDone("plot").filter(b=>b.grow>=1).length} producing).</div>
@@ -128,7 +140,14 @@ function openHelp(){openSide("help",`<h2>How it works</h2>
   <p><b>Time:</b> at 1× a second is a minute, so a minute is an hour. Use the speed buttons to go faster, or type <i>wait 3 hours</i> or <i>sleep</i>.</p>
   <p><b>The dead</b> are the people who were somewhere when it started. Busy places (the school, the stores, the motel) are full of them; quiet places (the farm, the mill) aren't. Noise, gunfire and coming and going draw more; a place nobody goes quiets down.</p>
   <p><b>Guns:</b> search cars, the trooper's cruiser on the highway, the farm's gun cabinet or the police armory. A gun you find stays on you: click one of the dead to shoot it, or type <i>shoot the walker</i>. Shots are loud, and the noise brings more of them. Spare guns go to your guards. You'll never turn one on the living; fights with the Pruitts are a war you rally people for.</p>
-  <p><b>Build (B):</b> place it, pick colors, then build it yourself in a quick hands-on build, or leave it for whoever's on building. Right-click or R turns it.</p>
+  <p><b>Orders in words:</b> <i>Maya, cut some wood</i>, <i>everyone fortify the house</i>, <i>have someone build the fence</i>, <i>help me push that car</i>, <i>shoot the deer</i>, <i>stop</i>. No name means you do it yourself.</p>
+  <p><b>Strangers:</b> when someone turns up, you talk it through before you decide. Ask if anyone's bitten, or have them show you their arms: some hide it.</p>
+  <p><b>Telling people what to do:</b> click someone and tell them to build something, cut wood, stand watch, board up the windows or get inside. They do it with their own hands and see it through: a builder gets the wood from the stores, and if there isn't enough they cut down a tree for it. The line under their name says what they're doing. You can type it too: <i>Ruth, build a wall</i>, <i>Marcus cut wood</i>, <i>everyone help build the wall</i>.</p>
+  <p><b>Build (B):</b> place it (R or right-click turns it), then have someone build it, build it yourself, or leave it for the builders. You don't need the materials first: whoever builds it gathers them. Wall sections stop the dead; your people climb over slowly, or walk through a gate.</p>
+  <p><b>Buildings:</b> click one to shut, bar or block its door with furniture, board up the windows, fix what's broken, or go in. Roofs come off when you're inside (V turns them on and off). The dead beat on a shut door until it gives, and claw at windows; boards and bars buy time.</p>
+  <p><b>Cars:</b> click one to search it, or put it in neutral and push it. Pick where it goes and everyone following you pushes with you. Line cars up with walls and buildings to close off the yard, then press G (or Camp, Check the walls) to see if the dead can still walk up to your door. Some still have alarms.</p>
+  <p><b>The dead</b> shamble until they see or hear you: across a lot by day, only up close at night. When one gets hold of you, mash Shove (or space) to get it off, then finish it, shoot it or run. Your people send someone out to meet one before it reaches camp; guards with guns shoot from range.</p>
+  <p><b>Hunting:</b> deer, turkeys and rabbits graze in the quiet places and bolt if you get close. Click one to shoot it (a bow is silent, a gun brings the dead) or sneak closer, then butcher it for meat. Put someone on the hunting job and they go out each morning.</p>
   <p><b>Stores (I):</b> everything the camp owns, in one grid. Anyone takes what they need, but they leave someone's insulin or EpiPen alone. Mostly.</p>
   <p><b>People decide for themselves.</b> Ask something and they weigh it: trust in you, their nature, their family. Put someone in charge of a part of camp and its small problems never reach you. A bigger camp brings in more and needs more from you.</p>
   <p class="mut">Space pauses. Your game saves on its own in this browser.</p>
@@ -243,7 +262,7 @@ function openMap(){if(!S)return;const pl=S.player;UI.mapSel=UI.mapSel||null;cons
 ACTS.mapsel=d=>{UI.mapSel=d.k;openMap()};ACTS.travel=d=>{closeModal();travelTo(d.k)};
 function onTravel(hrs){openModal(`<h2>On the road</h2><p id="trv">Walking...</p><div class="meter"><i id="trvbar" style="width:0%"></i></div>`);UI.modal.travel=true}
 function onScene(){if(W.ok)buildScene();closeAll();renderAll();if(S.flags.battle&&S.rival&&S.player.loc===S.rival.site){S.flags.battle=false;setTimeout(battleCard,500)}}
-function onStranger(hh){toast(`${hh.length===1?"Someone is":"People are"} coming up the road.`)}
+function onStranger(hh){if(S.player.loc===campK()&&!S.flags.traveling&&typeof meet==="function"){meet(hh,"arrive");return}toast(`${hh.length===1?"Someone is":"People are"} coming up the road.`)}
 function onDawn(d){if(S.flags.ration&&d>S.flags.ration)S.flags.ration=0}
 // ---------- looting ----------
 function openLoot(c){const k=S.player.loc;if(!LOCS[k]||!c)return;const st=rollCont(k,c.id);UI.loot={cid:c.id,k};renderLoot()}
@@ -303,8 +322,8 @@ ACTS.toss=d=>{const o=S.inv.items.find(o=>o.u===+d.u);closeMenu();if(RES[o.k])S.
 function openBuild(){if(!S)return;if(S.player.loc==="road")return;
   openSide("build",`<h2>Build</h2><div class="mut" style="font-size:12.5px">Pick something, then click where it goes (R or right-click turns it). Costs come out of camp stores: ${Math.floor(S.res.wood)} wood, ${Math.floor(S.res.scrap)} scrap.</div>
    ${Object.entries(BUILDS).map(([k,B])=>`<div class="row" data-act="bpick" data-k="${k}" style="${canAfford(B.cost)?"":"opacity:.5"}"><div class="n">${B.n} <span class="mut mono">${costWords(B.cost)}</span></div><div class="s">${esc(B.d)}${B.beds?` Sleeps ${B.beds}.`:""}${B.job?` Work: ${JOBS[B.job].n.toLowerCase()}.`:""}</div></div>`).join("")}`)}
-ACTS.bpick=d=>{const B=BUILDS[d.k];if(!canAfford(B.cost)){toast(`Not enough: needs ${costWords(B.cost)}.`);return}startPlace(d.k)};
-function startPlace(k){if(!BUILDS[k])return;if(!canAfford(BUILDS[k].cost)){toast(`You need ${costWords(BUILDS[k].cost)} for a ${BUILDS[k].n.toLowerCase()}.`);return}ACTS.closeside();const pl=S.player;UI.place={type:k,x:Math.round(pl.x+2),z:Math.round(pl.z-2),rot:0};placeGhost();
+ACTS.bpick=d=>{startPlace(d.k)};
+function startPlace(k){if(!BUILDS[k])return;ACTS.closeside();const pl=S.player;UI.place={type:k,x:Math.round(pl.x+2),z:Math.round(pl.z-2),rot:0};placeGhost();
   const p=$("place");p.style.display="block";p.innerHTML=`Placing a <b>${BUILDS[k].n.toLowerCase()}</b>. Click to set it down · R turns it · Esc cancels`}
 function placeOk(){const P_=UI.place;if(!P_)return false;const B=BUILDS[P_.type];const [w,d]=P_.rot%2?[B.size[1],B.size[0]]:B.size;const x0=P_.x-w/2,x1=P_.x+w/2,z0=P_.z-d/2,z1=P_.z+d/2;
   if(Math.abs(P_.x)>SH-3-w/2||Math.abs(P_.z)>SH-3-d/2)return false;const k=S.player.loc;
@@ -313,14 +332,25 @@ function placeOk(){const P_=UI.place;if(!P_)return false;const B=BUILDS[P_.type]
   for(const c of layout(k).conts)if(ov([c.x-1,c.z-1,c.x+1,c.z+1]))return false;return true}
 function placeGhost(){if(!UI.place)return;ghost(UI.place.type,UI.place.x,UI.place.z,UI.place.rot,placeOk())}
 function cancelPlace(){UI.place=null;ghost(null);$("place").style.display="none"}
-function tryPlace(){const P_=UI.place;if(!placeOk()){toast("Can't put it there.");return}const B=BUILDS[P_.type];if(!canAfford(B.cost)){toast("Not enough materials.");cancelPlace();return}
+function tryPlace(){const P_=UI.place;if(!placeOk()){toast("Can't put it there.");return}const B=BUILDS[P_.type];const afford=canAfford(B.cost);
   const opts=Object.entries(B.opts||{});UI.pending={...P_,opt:Object.fromEntries(opts.map(([k,v])=>[k,v[0]]))};cancelPlace();
   openModal(`<h2>${B.n}</h2><p class="mut">${esc(B.d)} Costs ${costWords(B.cost)}.</p>${opts.map(([k,v])=>`<div class="mono mut" style="margin-top:8px">${k.toUpperCase()}</div><div class="seg">${v.map(c=>`<button data-act="bopt" data-k="${k}" data-v="${esc(c)}" class="${UI.pending.opt[k]===c?"on":""}" style="${/^#/.test(c)?`background:${c};width:34px;height:26px`:""}">${/^#/.test(c)?"":esc(c)}</button>`).join("")}</div>`).join("")}
    <div class="mono mut" style="margin-top:8px">NAME</div><input id="bname" value="${esc(B.n)}" maxlength="30">
-   <button class="opt pri" data-act="bself" style="margin-top:12px">Build it yourself<small>A quick hands-on build. Done today.</small></button>
-   <button class="opt" data-act="bleave">Leave it for the builders<small>${members().some(p=>p.job==="build")?`${listAnd(members().filter(p=>p.job==="build").map(p=>p.name))} will get to it.`:"Nobody's on building yet. Anyone with free time may pitch in."}${S.player.loc!==campK()?" Builders only work at camp.":""}</small></button>
+   ${UI.assign&&P(UI.assign)?`<button class="opt pri" data-act="bwho" data-id="${UI.assign}" style="margin-top:12px">Have ${esc(assignNames())} build it<small>${esc(assignNames())} get${(UI.assignAlso||[]).length?"":"s"} the materials from the stores${afford?"":", cuts the wood that's missing"} and builds it.</small></button>`:""}
+   <button class="opt${UI.assign?"":" pri"}" data-act="bwhomenu" style="${UI.assign?"":"margin-top:12px"}">Have someone build it ▸<small>They fetch what's in the stores, cut any wood that's missing, and see it through.</small></button>
+   <button class="opt" data-act="bmine">Build it yourself<small>You walk over and do the work: get the materials, cut wood if you have to, hammer it together.</small></button>
+   ${afford?`<button class="opt" data-act="bself">Quick hands-on build<small>Pays ${costWords(B.cost)} from the stores now. Done in a minute.</small></button>`:""}
+   <button class="opt" data-act="bleave">Leave it for the builders<small>${members().some(p=>p.job==="build")?`${listAnd(members().filter(p=>p.job==="build").map(p=>p.name))} will get to it.`:"Nobody's on building yet. Anyone with free time may pitch in."}</small></button>
    <button class="opt" data-act="modalclose">Cancel</button>`,true)}
+function assignNames(){return listAnd([UI.assign,...(UI.assignAlso||[])].map(P).filter(Boolean).map(p=>p.name))}
 ACTS.bopt=d=>{UI.pending.opt[d.k]=d.v;document.querySelectorAll(`[data-act="bopt"][data-k="${d.k}"]`).forEach(b=>b.classList.toggle("on",b.dataset.v===d.v))};
-function commitPending(){const P_=UI.pending;UI.pending=null;const B=BUILDS[P_.type];pay(B.cost);const name=($("bname")?.value||B.n).trim().slice(0,30)||B.n;const b=addBld(P_.type,P_.x,P_.z,{rot:P_.rot,opt:P_.opt,name});log(`You lay out a ${B.n.toLowerCase()}${name!==B.n?` and call it "${name}"`:""}.`);return b}
-ACTS.bself=()=>{const b=commitPending();closeModal();approach(b,()=>openMinigame(b))};ACTS.bleave=()=>{commitPending();closeModal();renderAll()};
+// paid up front for the quick build; otherwise it's a blueprint, and whoever builds it brings the materials
+function commitPending(paid){const P_=UI.pending;UI.pending=null;UI.assign=null;const B=BUILDS[P_.type];if(paid)pay(B.cost);const name=($("bname")?.value||B.n).trim().slice(0,30)||B.n;const b=addBld(P_.type,P_.x,P_.z,{rot:P_.rot,opt:P_.opt,name});if(!paid){b.need={...B.cost};b.got={}}log(`You lay out a ${B.n.toLowerCase()}${name!==B.n?` and call it "${name}"`:""}.`);return b}
+ACTS.bself=()=>{const b=commitPending(true);closeModal();approach(b,()=>openMinigame(b))};ACTS.bleave=()=>{commitPending();closeModal();renderAll()};
+ACTS.bmine=()=>{const b=commitPending();closeModal();doMyself({k:"build",bid:b.id});renderAll()};
+ACTS.bwho=d=>{const p=P(d.id);const also=(UI.assignAlso||[]).map(P).filter(q=>q&&q!==p&&q.status==="member");UI.assignAlso=null;const b=commitPending();closeModal();orderPerson(p,{k:"build",bid:b.id});for(const q of also)orderPerson(q,{k:"build",bid:b.id});renderAll()};
+ACTS.bwhomenu=()=>{const L=members().filter(p=>p.loc===S.player.loc&&!(p.away&&p.away.out)&&!p.kid);const B=BUILDS[UI.pending.type];
+  $("mcard").querySelectorAll("[data-act='bwho'],[data-act='bwhomenu'],[data-act='bmine'],[data-act='bself'],[data-act='bleave']").forEach(e=>e.remove());
+  const box=document.createElement("div");box.innerHTML=`<div class="mono mut" style="margin-top:10px">WHO BUILDS IT</div>`+(L.length?L.map(p=>`<button class="opt" data-act="bwho" data-id="${p.id}">${esc(p.name)}<small>${p.sk.build>=2?"Good with their hands. ":p.sk.build>=1?"Handy enough. ":"Never built much. "}${p.order?`Now: ${esc(orderAct(p))}.`:p.job?`Now: ${JOBS[p.job].n.toLowerCase()}.`:""}</small></button>`).join(""):`<p class="mut">There's nobody here who can. Build it yourself, or leave it for later.</p>`);
+  const c=$("mcard").querySelector("[data-act='modalclose']");c.parentNode.insertBefore(box,c)};
 function renderAll(){renderHud();renderTicker();if(UI.side==="people")openPeople();else if(UI.side==="camp")openCamp();else if(UI.side==="stores")openStores();if(UI.talkTo)renderTalk()}

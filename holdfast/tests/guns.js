@@ -50,8 +50,8 @@ const fails=[];const check=(ok,what)=>{console.log((ok?"ok   ":"FAIL ")+what);if
   check(await pg.evaluate(a=>S.res.ammo<a,a0),"the guard used camp ammo in a fight");
   // the stores: leave your gun for the guards, then take the shotgun yourself
   await pg.evaluate(()=>{document.activeElement?.blur();S.player.x=2;S.player.z=6});await pg.keyboard.press("i");await pg.waitForTimeout(300);await pg.screenshot({path:OUT+"/g05_stores.png"});
-  await pg.click('[data-act="gunstow"]');await pg.waitForTimeout(200);
-  check(await pg.evaluate(()=>!S.player.gun&&S.items.pistol===1),"left the pistol in camp stores");
+  const np=await pg.evaluate(()=>S.items.pistol||0);await pg.click('[data-act="gunstow"]');await pg.waitForTimeout(200);
+  check(await pg.evaluate(n=>!S.player.gun&&S.items.pistol===n+1,np),"left the pistol in camp stores");
   await pg.evaluate(()=>{armUp(true)});check(await pg.evaluate(()=>!S.player.gun),"doesn't grab it straight back");
   const u=await pg.evaluate(()=>S.inv.items.find(o=>o.k==="shotgun").u);await pg.click(`[data-g="camp"][data-u="${u}"]`);await pg.waitForTimeout(200);
   await pg.click('[data-act="guncarry"]');await pg.waitForTimeout(200);

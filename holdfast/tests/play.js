@@ -5,7 +5,7 @@ const OUT=process.env.SHOTS||"/tmp/claude-0/shots";
   await pg.fill("#crname","Tess");await pg.click('[data-act="start"]');await pg.waitForTimeout(500);await pg.screenshot({path:OUT+"/01_intro.png"});
   await pg.click('[data-act="modalclose"]');await pg.waitForTimeout(800);
   await pg.fill("#cmd","I say hi");await pg.press("#cmd","Enter");await pg.waitForTimeout(2500);await pg.screenshot({path:OUT+"/02_hi.png"});
-  await pg.fill("#cmd","search the car");await pg.press("#cmd","Enter");await pg.waitForTimeout(3500);await pg.screenshot({path:OUT+"/03_loot.png"});
+  await pg.fill("#cmd","search the car");await pg.press("#cmd","Enter");await pg.waitForFunction(()=>UI.side==="loot",null,{timeout:20000}).catch(()=>{});await pg.waitForTimeout(300);await pg.screenshot({path:OUT+"/03_loot.png"});
   const take=await pg.$('[data-act="takeall"]');if(take)await take.click();await pg.waitForTimeout(300);
   await pg.keyboard.press("Escape");await pg.keyboard.press("m");await pg.waitForTimeout(400);await pg.click('[data-act="mapsel"][data-k="farm"]');await pg.waitForTimeout(300);await pg.screenshot({path:OUT+"/04_map.png"});
   await pg.click('[data-act="travel"]');await pg.waitForTimeout(500);console.log(await pg.evaluate(()=>JSON.stringify({loc:S.player.loc,tr:S.flags.traveling,modal:UI.modal,log:S.log.slice(-3).map(l=>l.x)})),errs);await pg.waitForFunction(()=>S.player.loc==="farm",null,{timeout:30000});await pg.waitForTimeout(1500);await pg.screenshot({path:OUT+"/05_farm.png"});
