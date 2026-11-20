@@ -59,14 +59,16 @@ const ACT_SCHEMA=`Actions (use only these; names must be people or keys listed a
 {"do":"say","to":"<person name, or empty for whoever is nearest>","text":"<what you say>"}
 {"do":"walk","to":"<person name, or a thing to search>"}
 {"do":"travel","to":"<place key>"}
-{"do":"camp"}  (make camp right here)
+{"do":"camp"}  (move in here: everyone makes this place home and lives inside)
+{"do":"inside","what":"<optional: house, barn>"}  (walk into the nearest building through its door)
+{"do":"fire"}  (light the stove or a small fire to warm up by; never burns anything)
 {"do":"build","what":"<one of: ${Object.keys(BUILDS).join(", ")}>"}
 {"do":"job","who":"<name>","job":"<one of: ${Object.keys(JOBS).join(", ")}, or none>"}
 {"do":"lead","who":"<name>","job":"<job key>"}  (put them in charge of it)
 {"do":"invite","who":"<name>"}   {"do":"turnaway","who":"<name>"}
 {"do":"follow","who":["<names>"]}  (ask them to come with you)   {"do":"stay","who":["<names>"]}
 {"do":"search","what":"<thing to search, or all>"}
-{"do":"burn"}  (set this place on fire)
+{"do":"burn"}  (set this whole place on fire and destroy it; only when the player clearly says to burn the place down. Lighting a fire, a stove or a campfire is "fire", never "burn")
 {"do":"craft","text":"<what you try to make and how>"}
 {"do":"wait","hours":<1-12>}
 {"do":"war"}  (rally people to fight the Pruitt crew)

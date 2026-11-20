@@ -9,7 +9,7 @@ function setHtml(el,h){if(el&&el._h!==h){el.innerHTML=h;el._h=h}}
 function renderHud(){if(!S)return;const pl=S.player;const L=LOCS[pl.loc]||{n:"On the road"};const h=hourOf(S.t);
   const ck=$("clock");if(!$("ctime"))ck.innerHTML=`<div class="t" id="ctime"></div><div class="w" id="cwhere"></div><div class="sp" id="cspeed"></div>`;
   setHtml($("ctime"),`Day ${dayOf(S.t)} · ${clockStr(S.t)}`);setHtml($("cwhere"),`${esc(L.n)}${pl.loc===campK()?" · camp":""}${h>=21||h<5?" · night":""}`);
-  setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[3,"3×"],[8,"8×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join(""));
+  setHtml($("cspeed"),[[0,"❚❚"],[1,"1×"],[5,"5×"],[20,"20×"],[60,"60×"]].map(([v,l])=>`<button data-sp="${v}" class="${(UI.paused?0:UI.speed)===v?"on":""}">${l}</button>`).join(""));
   const n=campSize();const food=S.res.food/Math.max(1,n);
   setHtml($("res"),S.camp?[["People",`${n}`],["Beds",`${bedsTotal()}`,bedsTotal()<n?"bad":""],["Food",`${Math.floor(S.res.food)} <span class="mut">(${food.toFixed(1)}d)</span>`,food<1.5?"bad":food<3?"warn":""],["Water",Math.floor(S.res.water),S.res.water<n?"bad":""],
       ["Wood",Math.floor(S.res.wood)],["Scrap",Math.floor(S.res.scrap)],["Medicine",Math.floor(S.res.meds)],["Ammo",Math.floor(S.res.ammo)],["Defense",defense()],["Mood",avgMood(),avgMood()<35?"bad":""],["You",`${Math.round(pl.hp)}%`,pl.hp<40?"bad":""],...gunHud()]
@@ -45,13 +45,13 @@ function initInput(){const cv=$("gl");let down=null;
   addEventListener("keydown",e=>{const typing=/INPUT|TEXTAREA/.test(document.activeElement?.tagName);if(e.key==="Escape"){if(UI.place){cancelPlace();return}closeAll();document.activeElement?.blur();return}
     if(typing){if(e.key==="Enter"&&document.activeElement.id==="cmd")submitCmd();if(e.key==="Enter"&&document.activeElement.id==="tin")sendTalk();return}
     if($("build").classList.contains("open"))return;
-    const k=e.key.toLowerCase();if(k==="enter"){$("cmd").focus();e.preventDefault();return}if(k==="m")openMap();if(k==="p")openPeople();if(k==="b")openBuild();if(k==="i")openStores();if(k==="c")openCamp();if(k==="h"||k==="?")openHelp();
+    const k=e.key.toLowerCase();if(k==="enter"){$("cmd").focus();e.preventDefault();return}if(k==="m")openMap();if(k==="p")openPeople();if(k==="b")openBuild();if(k==="i")openStores();if(k==="c")openCamp();if(k==="h"||k==="?")openHelp();if(k==="v"){W.xray=!(W.xray??(W.loc===campK()));toast(W.xray?"Roofs off: you can see inside.":"Roofs on.")}
     if(k==="r"&&UI.place){UI.place.rot=(UI.place.rot+1)%4;placeGhost()}if(k===" "){UI.paused=!UI.paused;renderHud();e.preventDefault()}if(k==="f"){W.free=false}
     const pan={w:[-1,-1],arrowup:[-1,-1],s:[1,1],arrowdown:[1,1],a:[-1,1],arrowleft:[-1,1],d:[1,-1],arrowright:[1,-1]}[k];if(pan){W.free=true;W.tgt.x+=pan[0]*2;W.tgt.z+=pan[1]*2;camUpdate()}});
   $("go").onclick=submitCmd;
   document.body.addEventListener("click",e=>{const b=e.target.closest("[data-sp],[data-tool],[data-act]");if(!b)return;
     if(b.dataset.sp!=null){const v=+b.dataset.sp;if(v===0)UI.paused=true;else{UI.paused=false;UI.speed=v}renderHud();return}
-    if(b.dataset.tool){const t=b.dataset.tool;({map:openMap,people:openPeople,build:openBuild,stores:openStores,camp:openCamp,help:openHelp,home:goHome,makecamp:doCamp,burn:()=>confirmCard("Burn it down?",`Set ${LOCS[S.player.loc].n} on fire. Anything you haven't searched burns with it. It can't be undone.`,burnPlace)})[t]?.();renderHud();return}
+    if(b.dataset.tool){const t=b.dataset.tool;({map:openMap,people:openPeople,build:openBuild,stores:openStores,camp:openCamp,help:openHelp,home:goHome,makecamp:doCamp,burn:askBurn})[t]?.();renderHud();return}
     if(b.dataset.act){ACTS[b.dataset.act]?.(b.dataset);}})}
 function submitCmd(){const i=$("cmd");const v=i.value.trim();if(!v)return;i.value="";doCommand(v).then(()=>{renderAll()}).catch(err=>{console.error(err);toast("Something went wrong with that.")})}
 function clickWorld(cx,cy){if(UI.place){tryPlace();return}const h=pickAt(cx,cy);if(!h)return;const pl=S.player;if(S.flags.traveling||pl.ko>0)return;
@@ -124,6 +124,9 @@ function openHelp(){openSide("help",`<h2>How it works</h2>
   <p>Click the ground to walk. Click people to talk, give them jobs, put them in charge or bring them along. Drag to look around, scroll to zoom, F to follow yourself again.</p>
   <p>Or type anything in the box: <i>I say hi</i>, <i>put Ruth on the farm</i>, <i>Marcus, come with me</i>, <i>build a tent</i>, <i>tie the rope into a fishing net</i>, <i>go to the pharmacy</i>, <i>I teach the kids to whittle</i>. If Claude is on, it works out what you mean; otherwise the built-in rules do their best.</p>
   <p><b>Map (M):</b> each place is its own scene. Travel takes hours, and whoever's following you comes along. Search cars and buildings, carry it home, or burn the place down.</p>
+  <p><b>Living inside:</b> make camp at a place (or type <i>move in</i>) and everyone moves into its building: beds, a woodstove, a table. Walk in through the door, or type <i>go inside</i> or <i>everyone inside</i>. At camp the roofs come off so you can see your people; anywhere else they come off when you step inside. V turns roofs on and off. <i>Light the stove</i> just warms people up; nothing burns unless you say <i>burn it down</i>, and you're asked first.</p>
+  <p><b>Time:</b> at 1× a second is a minute, so a minute is an hour. Use the speed buttons to go faster, or type <i>wait 3 hours</i> or <i>sleep</i>.</p>
+  <p><b>The dead</b> are the people who were somewhere when it started. Busy places (the school, the stores, the motel) are full of them; quiet places (the farm, the mill) aren't. Noise, gunfire and coming and going draw more; a place nobody goes quiets down.</p>
   <p><b>Guns:</b> search cars, the trooper's cruiser on the highway, the farm's gun cabinet or the police armory. A gun you find stays on you: click one of the dead to shoot it, or type <i>shoot the walker</i>. Shots are loud, and the noise brings more of them. Spare guns go to your guards. You'll never turn one on the living; fights with the Pruitts are a war you rally people for.</p>
   <p><b>Build (B):</b> place it, pick colors, then build it yourself in a quick hands-on build, or leave it for whoever's on building. Right-click or R turns it.</p>
   <p><b>Stores (I):</b> everything the camp owns, in one grid. Anyone takes what they need, but they leave someone's insulin or EpiPen alone. Mostly.</p>
@@ -305,7 +308,7 @@ function startPlace(k){if(!BUILDS[k])return;if(!canAfford(BUILDS[k].cost)){toast
   const p=$("place");p.style.display="block";p.innerHTML=`Placing a <b>${BUILDS[k].n.toLowerCase()}</b>. Click to set it down · R turns it · Esc cancels`}
 function placeOk(){const P_=UI.place;if(!P_)return false;const B=BUILDS[P_.type];const [w,d]=P_.rot%2?[B.size[1],B.size[0]]:B.size;const x0=P_.x-w/2,x1=P_.x+w/2,z0=P_.z-d/2,z1=P_.z+d/2;
   if(Math.abs(P_.x)>SH-3-w/2||Math.abs(P_.z)>SH-3-d/2)return false;const k=S.player.loc;
-  const ov=(a)=>x0<a[2]+.3&&x1>a[0]-.3&&z0<a[3]+.3&&z1>a[1]-.3;if(layout(k).blk.some(ov))return false;
+  const ov=(a)=>x0<a[2]+.3&&x1>a[0]-.3&&z0<a[3]+.3&&z1>a[1]-.3;if(layout(k).blk.some(ov)||layout(k).foot.some(ov))return false;
   for(const b of S.blds)if(b.loc===k){const [bw,bd]=bSize(b);if(ov([b.x-bw/2,b.z-bd/2,b.x+bw/2,b.z+bd/2]))return false}
   for(const c of layout(k).conts)if(ov([c.x-1,c.z-1,c.x+1,c.z+1]))return false;return true}
 function placeGhost(){if(!UI.place)return;ghost(UI.place.type,UI.place.x,UI.place.z,UI.place.rot,placeOk())}

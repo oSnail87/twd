@@ -31,8 +31,11 @@ const fails=[];const check=(ok,what)=>{console.log((ok?"ok   ":"FAIL ")+what);if
   await pg.waitForTimeout(1000);await pg.fill("#cmd",`shoot ${nm}`);await pg.press("#cmd","Enter");await pg.waitForTimeout(300);
   const toast=await pg.evaluate(()=>document.getElementById("toast").textContent);
   check(await pg.evaluate(r=>S.player.rounds===r,r2)&&/living/.test(toast),`'shoot ${nm}' is refused: "${toast}"`);
+  // (sitting by a fire passes an hour; keep the dead away so a fight in that hour doesn't count as a shot)
+  const r3=await pg.evaluate(()=>{S.walkers=S.walkers.filter(w=>w.loc!=="start");place("start").heat=0;window.SHOTS=0;const f=shoot;shoot=(...a)=>{SHOTS++;return f(...a)};return S.player.rounds});
   await pg.fill("#cmd","sit by the fire at night");await pg.press("#cmd","Enter");await pg.waitForTimeout(400);
-  check(await pg.evaluate(r=>S.player.rounds===r,r2),"'sit by the fire at night' doesn't fire");
+  st=await pg.evaluate(()=>({shots:SHOTS,log:S.log.slice(-2).map(l=>l.x).join(" | ")}));
+  check(st.shots===0&&await pg.evaluate(r=>S.player.rounds>=r,r3),`'sit by the fire at night' doesn't fire: ${st.log}`);
   // a camp, a guard with a spare gun
   await pg.evaluate(()=>{arriveAt("farm",true);campHere();S.items.shotgun=1;S.res.ammo=30;syncInv();const g=members().find(p=>!p.kid);g.job="guard";useHour(7);renderAll()});
   await pg.waitForTimeout(800);
